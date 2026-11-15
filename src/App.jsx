@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ShieldCheck, Lock, Unlock, Waves, Calculator, Sparkles, CheckCircle2,
+  ShieldCheck, Lock, Unlock, Calculator, Sparkles, CheckCircle2,
   MapPin, FileText, Wallet, Users, Send, Printer, Camera,
   BadgeCheck, ArrowRight, Globe, LogOut, Smartphone, KeyRound, UserCheck,
-  Landmark, Clock, CheckSquare
+  Landmark, Clock, CheckSquare, Fish, Building2
 } from 'lucide-react';
 
 const INITIAL_BATCHES = [
@@ -79,7 +79,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : { accountName: '', accountNo: '', ifsc: '', upiId: '' };
   });
 
-  // Login Form States
   const [loginRole, setLoginRole] = useState('buyer');
   const [loginName, setLoginName] = useState('');
   const [loginPhone, setLoginPhone] = useState('');
@@ -87,7 +86,6 @@ export default function App() {
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [enteredOtp, setEnteredOtp] = useState('');
 
-  // Core App Data
   const [batches, setBatches] = useState(() => {
     const saved = localStorage.getItem('aquamark_batches');
     return saved ? JSON.parse(saved) : INITIAL_BATCHES;
@@ -111,7 +109,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem('aquamark_bookings', JSON.stringify(bookings)); }, [bookings]);
   useEffect(() => { localStorage.setItem('aquamark_broker_farmers', JSON.stringify(brokerFarmers)); }, [brokerFarmers]);
 
-  // Modals & Forms
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [bookingForm, setBookingForm] = useState({
     farmerName: '',
@@ -125,7 +122,6 @@ export default function App() {
   const [activeInvoice, setActiveInvoice] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Calculator, Broker & Hatchery Forms
   const [calcAcres, setCalcAcres] = useState(3);
   const [calcDensity, setCalcDensity] = useState(40);
   const [newFarmer, setNewFarmer] = useState({ name: '', phone: '', village: '', acres: '' });
@@ -157,9 +153,6 @@ export default function App() {
     setTimeout(() => setToast(null), 4500);
   };
 
-  // ==========================================
-  // OTP LOGIN HANDLERS
-  // ==========================================
   const handleSendOtp = (e) => {
     e.preventDefault();
     if (loginPhone.replace(/\D/g, '').length < 10) {
@@ -224,9 +217,6 @@ export default function App() {
     showToast(lang === 'te' ? 'బ్యాంక్ & UPI వివరాలు సేవ్ చేయబడ్డాయి!' : 'Bank & UPI Details Saved!');
   };
 
-  // ==========================================
-  // PCR AI SCAN & GPS CAPTURE
-  // ==========================================
   const handleScanPcrReport = () => {
     if (!pcrFile) {
       showToast(lang === 'te' ? 'ముందుగా PCR రిపోర్ట్ ఫోటో/PDF ఎంచుకోండి' : 'Select PCR report file first');
@@ -301,9 +291,6 @@ export default function App() {
     showToast(lang === 'te' ? 'మీ బ్యాంక్ వివరాలతో సీడ్ బ్యాచ్ లైవ్ అయింది!' : 'Seed Batch Published!');
   };
 
-  // ==========================================
-  // SILENT BACKEND ESCROW SPLIT AFTER SINGLE PAYMENT
-  // ==========================================
   const processSinglePaymentEscrow = (paymentRef, qty, totalSeedCost, tokenAdvance) => {
     const bonusSeeds = Math.round(qty * (selectedBatch.bonusPercent / 100));
     const matchedBrokerFarmer = brokerFarmers.find(
@@ -311,10 +298,7 @@ export default function App() {
     );
     const isBrokerLinked = Boolean(matchedBrokerFarmer) || currentUser?.role === 'mediator';
 
-    // 1. AquaMark Commission -> Credited IMMEDIATELY to AquaMark Account
     const aquamarkImmediateCut = Math.round(totalSeedCost * 0.015);
-
-    // 2. Broker & Hatchery Shares -> Kept ON ESCROW HOLD until Packing Complete + Buyer OK
     const brokerHoldAmount = isBrokerLinked
       ? Math.round(totalSeedCost * 0.025) + Math.round(qty * (Number(bookingForm.brokerMarginPaise) / 100))
       : 0;
@@ -340,9 +324,9 @@ export default function App() {
         aquamarkCredited: aquamarkImmediateCut,
         brokerAmount: brokerHoldAmount,
         hatcheryAmount: hatcheryHoldAmount,
-        payoutStatus: 'ON_HOLD' // 'ON_HOLD' -> changes to 'RELEASED' when Buyer clicks Packing OK
+        payoutStatus: 'ON_HOLD'
       },
-      packingStatus: 'PACKING_PENDING', // 'PACKING_PENDING' | 'PACKING_DONE_BY_SELLER' | 'BUYER_APPROVED_RELEASED'
+      packingStatus: 'PACKING_PENDING',
       status: 'CONFIRMED_UNLOCKED'
     };
 
@@ -357,7 +341,6 @@ export default function App() {
     );
   };
 
-  // SINGLE PAYMENT TRIGGER (FARMER SEES ONLY ONE AMOUNT!)
   const handleConfirmSinglePayment = (e) => {
     e.preventDefault();
     if (!selectedBatch) return;
@@ -375,7 +358,7 @@ export default function App() {
 
     const options = {
       key: rzpKey,
-      amount: tokenAdvance * 100, // Single amount shown to farmer
+      amount: tokenAdvance * 100,
       currency: 'INR',
       name: 'Aqua Mark',
       description: `${selectedBatch.plStage} Seed Booking (${qty.toLocaleString('en-IN')} PL)`,
@@ -409,15 +392,13 @@ export default function App() {
     rzp.open();
   };
 
-  // SELLER MARKS PACKING COMPLETED
   const handleSellerMarkPacked = (bookingId) => {
     setBookings(bookings.map(bk =>
       bk.bookingId === bookingId ? { ...bk, packingStatus: 'PACKING_DONE_BY_SELLER' } : bk
     ));
-    showToast(lang === 'te' ? 'ప్యాకింగ్ పూర్తయినట్లు అప్‌డేట్ చేయబడింది! రైతు OK నొక్కగానే డబ్బులు విడుదల అవుతాయి.' : 'Marked as Packed! Awaiting Buyer OK to release funds.');
+    showToast(lang === 'te' ? 'ప్యాకింగ్ పూర్తయినట్లు అప్‌డేట్ చేయబడింది!' : 'Marked as Packed!');
   };
 
-  // BUYER CLICKS "PACKING OK" -> RELEASES HELD FUNDS TO HATCHERY & BROKER BANKS
   const handleBuyerApprovePackingRelease = (bookingId) => {
     setBookings(bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
@@ -432,8 +413,8 @@ export default function App() {
     }));
     showToast(
       lang === 'te'
-        ? '✅ Packing OK నిర్ధారించబడింది! హోల్డ్‌లో ఉన్న డబ్బులు హేచరీ & బ్రోకర్ బ్యాంక్ అకౌంట్లకు విడుదలయ్యాయి!'
-        : '✅ Packing Verified! Held Escrow funds released to Hatchery & Broker Bank Accounts!'
+        ? '✅ Packing OK నిర్ధారించబడింది! డబ్బులు హేచరీ & బ్రోకర్‌కు విడుదలయ్యాయి!'
+        : '✅ Packing Verified! Held Escrow funds released!'
     );
   };
 
@@ -457,12 +438,11 @@ export default function App() {
     };
     setBrokerFarmers([entry, ...brokerFarmers]);
     setNewFarmer({ name: '', phone: '', village: '', acres: '' });
-    showToast(lang === 'te' ? 'రైతు 1 సంవత్సరం పాటు మీ ID కి లాక్ చేయబడ్డారు!' : 'Farmer Locked to your ID for 365 days!');
+    showToast(lang === 'te' ? 'రైతు లాక్ చేయబడ్డారు!' : 'Farmer Locked!');
   };
 
   const calculatedSeeds = Math.round(calcAcres * 4046.86 * calcDensity);
 
-  // Compute Broker Held vs Released Balances dynamically from bookings
   const brokerHeldTotal = bookings
     .filter(b => b.escrow?.payoutStatus === 'ON_HOLD')
     .reduce((sum, b) => sum + (b.escrow?.brokerAmount || 0), 0);
@@ -471,9 +451,6 @@ export default function App() {
     .filter(b => b.escrow?.payoutStatus === 'RELEASED')
     .reduce((sum, b) => sum + (b.escrow?.brokerAmount || 0), 0);
 
-  // =========================================================================
-  // SCREEN 1: DEDICATED OTP LOGIN PAGE
-  // =========================================================================
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-950 via-cyan-900 to-slate-950 flex items-center justify-center p-4 font-sans relative overflow-hidden">
@@ -486,11 +463,11 @@ export default function App() {
         <div className="max-w-md w-full bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-7 space-y-6 relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="bg-teal-600 p-2.5 rounded-2xl text-white shadow-md">
-                <Waves className="w-6 h-6" />
+              <div className="bg-teal-50 p-2 rounded-2xl border border-teal-200 shadow-sm flex items-center justify-center">
+                <img src="/favicon.svg" alt="AquaMark Logo" className="w-7 h-7 object-contain" />
               </div>
               <div>
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight">✔ Aqua Mark</h1>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">Aqua Mark</h1>
                 <p className="text-xs font-medium text-teal-700">
                   {lang === 'te' ? 'ఆక్వాకల్చర్ సీడ్ బ్రోకరేజ్ పోర్టల్' : 'Aquaculture Seed Brokerage Portal'}
                 </p>
@@ -503,8 +480,8 @@ export default function App() {
 
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { id: 'buyer', titleEn: 'Buyer', titleTe: 'రైతు (Buyer)', descTe: 'సీడ్ బుకింగ్', descEn: 'Book Seed', icon: Waves },
-              { id: 'seller', titleEn: 'Seller', titleTe: 'హేచరీ (Seller)', descTe: 'సీడ్ అమ్మకం', descEn: 'Hatchery', icon: ShieldCheck },
+              { id: 'buyer', titleEn: 'Buyer', titleTe: 'రైతు (Buyer)', descTe: 'సీడ్ బుకింగ్', descEn: 'Book Seed', icon: Fish },
+              { id: 'seller', titleEn: 'Seller', titleTe: 'హేచరీ (Seller)', descTe: 'సీడ్ అమ్మకం', descEn: 'Hatchery', icon: Building2 },
               { id: 'mediator', titleEn: 'Mediator', titleTe: 'బ్రోకర్ (Mediator)', descTe: 'కమిషన్ డీల్స్', descEn: 'Broker', icon: Users }
             ].map((item) => {
               const IconComp = item.icon;
@@ -592,9 +569,6 @@ export default function App() {
     );
   }
 
-  // =========================================================================
-  // SCREEN 2: ROLE-LOCKED DASHBOARD
-  // =========================================================================
   const roleBadgeLabel =
     currentUser.role === 'buyer' ? 'రైతు పోర్టల్ (Buyer)' : currentUser.role === 'seller' ? 'హేచరీ పోర్టల్ (Seller)' : 'బ్రోకర్ పోర్టల్ (Mediator)';
 
@@ -607,16 +581,16 @@ export default function App() {
         </div>
       )}
 
-      {/* TOP NAVBAR */}
+      {/* TOP NAVBAR - WITH ORIGINAL SVG FAVICON LOGO (NO INVERT/FILTER) */}
       <header className="bg-gradient-to-r from-teal-900 via-cyan-900 to-slate-900 text-white shadow-lg sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-500/20 p-2 rounded-xl border border-emerald-400/30">
-              <Waves className="w-6 h-6 text-emerald-300" />
+            <div className="bg-white/90 p-1.5 rounded-xl border border-white/20 flex items-center justify-center shadow">
+              <img src="/favicon.svg" alt="AquaMark Logo" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-extrabold tracking-tight">✔ Aqua Mark</h1>
+                <h1 className="text-lg font-extrabold tracking-tight">Aqua Mark</h1>
                 <span className="text-xs bg-emerald-500 text-slate-950 px-2.5 py-0.5 rounded-full font-bold">{roleBadgeLabel}</span>
               </div>
               <p className="text-xs text-cyan-200">👤 {currentUser.name} (+91 {currentUser.phone})</p>
@@ -635,12 +609,8 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* =========================================================
-            1. BUYER (FARMER) EXCLUSIVE VIEW
-           ========================================================= */}
         {currentUser.role === 'buyer' && (
           <div className="space-y-6">
-            {/* Pond Calculator */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
               <div>
                 <div className="flex items-center gap-2 text-teal-700 font-bold text-sm mb-1">
@@ -676,7 +646,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Verified Batches */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {batches.map((batch) => {
                 const isUnlocked = bookings.some((bk) => bk.batch.id === batch.id && bk.farmerPhone === currentUser.phone);
@@ -742,7 +711,6 @@ export default function App() {
               })}
             </div>
 
-            {/* Confirmed Bookings + PACKING OK APPROVAL BUTTON */}
             {bookings.filter(b => b.farmerPhone === currentUser.phone).length > 0 && (
               <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -755,8 +723,8 @@ export default function App() {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-teal-800">{bk.bookingId}</span>
                         <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${bk.escrow?.payoutStatus === 'RELEASED'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
                           }`}>
                           {bk.escrow?.payoutStatus === 'RELEASED'
                             ? (lang === 'te' ? '✅ Packing OK — డబ్బు విడుదలైంది' : '✅ Packing OK — Funds Released')
@@ -768,7 +736,6 @@ export default function App() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      {/* BUYER PACKING OK BUTTON TO RELEASE HELD FUNDS */}
                       {bk.escrow?.payoutStatus !== 'RELEASED' && (
                         <button
                           onClick={() => handleBuyerApprovePackingRelease(bk.bookingId)}
@@ -793,12 +760,8 @@ export default function App() {
           </div>
         )}
 
-        {/* =========================================================
-            2. SELLER (HATCHERY) EXCLUSIVE VIEW + ESCROW HOLD TRACKER
-           ========================================================= */}
         {currentUser.role === 'seller' && (
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* Hatchery Bank Setup */}
             <form onSubmit={handleSaveBankDetails} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
@@ -818,7 +781,6 @@ export default function App() {
               </button>
             </form>
 
-            {/* Incoming Orders & Held Payouts Status */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-600" />
@@ -834,8 +796,8 @@ export default function App() {
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-teal-800">{bk.bookingId}</span>
                           <span className={`font-bold px-2.5 py-0.5 rounded-full ${bk.escrow?.payoutStatus === 'RELEASED'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-900'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-900'
                             }`}>
                             {bk.escrow?.payoutStatus === 'RELEASED'
                               ? `✅ CREDITED TO BANK (₹${bk.escrow?.hatcheryAmount})`
@@ -865,9 +827,8 @@ export default function App() {
               )}
             </div>
 
-            {/* Publish Seed Batch Form */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
-              <h2 className="text-lg font-bold text-slate-900">{lang === 'te' ? 'కొత్త సీడ్ బ్యాచ్ & PCR రిపోర్ట్ అప్‌లోడ్' : 'Publish New Seed Batch'}</h2>
+              <h2 className="text-lg font-bold text-slate-900">{lang === 'te' ? 'కొత్త సీడ్ బ్యాచ్ & రిపోర్ట్ అప్‌లోడ్' : 'Publish New Seed Batch'}</h2>
               <form onSubmit={handlePublishBatch} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -950,27 +911,22 @@ export default function App() {
           </div>
         )}
 
-        {/* =========================================================
-            3. MEDIATOR (BROKER) EXCLUSIVE VIEW (HELD vs RELEASED COMMISSION)
-           ========================================================= */}
         {currentUser.role === 'mediator' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Held in Escrow */}
               <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 shadow-xs">
                 <span className="text-xs text-amber-800 font-bold flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" /> {lang === 'te' ? 'Escrow Hold లో ఉన్న కమిషన్' : 'Commission ON HOLD (Pending Packing OK)'}
+                  <Clock className="w-4 h-4" /> {lang === 'te' ? 'Escrow Hold లో ఉన్న కమిషన్' : 'Commission ON HOLD'}
                 </span>
                 <div className="text-3xl font-extrabold text-amber-950 mt-2">₹{brokerHeldTotal.toLocaleString('en-IN')}</div>
                 <p className="text-xs text-amber-800 mt-1.5">
-                  {lang === 'te' ? 'రైతు ప్యాకింగ్ OK నొక్కగానే మీ బ్యాంక్ అకౌంట్‌లోకి విడుదల అవుతుంది.' : 'Auto-releases to your bank once Buyer clicks Packing OK.'}
+                  {lang === 'te' ? 'రైతు ప్యాకింగ్ OK నొక్కగానే మీ బ్యాంక్ అకౌంట్‌లోకి విడుదల అవుతుంది.' : 'Auto-releases once Buyer clicks Packing OK.'}
                 </p>
               </div>
 
-              {/* Released to Bank */}
               <div className="bg-gradient-to-br from-emerald-700 to-teal-900 text-white rounded-2xl p-5 shadow-md">
                 <span className="text-xs text-emerald-200 font-medium flex items-center gap-1.5">
-                  <Wallet className="w-4 h-4" /> {lang === 'te' ? 'బ్యాంక్‌కు విడుదలైన కమిషన్ (Released)' : 'Released to Your Bank Account'}
+                  <Wallet className="w-4 h-4" /> {lang === 'te' ? 'బ్యాంక్‌కు విడుదలైన కమిషన్' : 'Released to Your Bank Account'}
                 </span>
                 <div className="text-3xl font-extrabold mt-2">₹{brokerReleasedTotal.toLocaleString('en-IN')}</div>
                 <p className="text-xs text-emerald-100 mt-1.5">
@@ -978,7 +934,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Broker Bank Setup */}
               <form onSubmit={handleSaveBankDetails} className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-2.5">
                 <h3 className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
                   <Landmark className="w-4 h-4 text-teal-700" /> {lang === 'te' ? 'బ్రోకర్ బ్యాంక్ & UPI వివరాలు' : 'Broker Bank & UPI Details'}
@@ -995,7 +950,6 @@ export default function App() {
               </form>
             </div>
 
-            {/* Locked Farmers CRM */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <form onSubmit={handleAddBrokerFarmer} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
                 <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
@@ -1048,9 +1002,6 @@ export default function App() {
         )}
       </main>
 
-      {/* =========================================================
-          CLEAN SINGLE-PAYMENT BOOKING MODAL (NO SPLIT SHOWN TO FARMER!)
-         ========================================================= */}
       {selectedBatch && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -1085,11 +1036,10 @@ export default function App() {
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">ప్యాకింగ్ తేదీ</label>
-                  <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className="w-full border border-slate-300 rounded-lg px-2 py-2 text-xs font-bold" />
+                  <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className="w-full border border-slate-300 rounded-lg px-2.5 py-2 text-xs font-bold" />
                 </div>
               </div>
 
-              {/* Clean Single Amount Box (Zero Split Details Shown) */}
               {(() => {
                 const effRate = selectedBatch.pricePer1000 + (Number(bookingForm.brokerMarginPaise) / 100);
                 const total = Math.round(bookingForm.quantity * effRate);
@@ -1123,9 +1073,6 @@ export default function App() {
         </div>
       )}
 
-      {/* =========================================================
-          PRINTABLE INVOICE MODAL
-         ========================================================= */}
       {activeInvoice && (
         <div className="fixed inset-0 bg-slate-950/70 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
