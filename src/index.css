@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+label,
+div,
+button {
+    caret-color: transparent;
+}
+
+input,
+textarea,
+select {
+    caret-color: #0f766e;
+}
