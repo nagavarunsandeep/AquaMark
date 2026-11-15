@@ -7,7 +7,8 @@ import {
   AlertTriangle, Package, Edit3, Check, ChevronRight, Layers,
   Trash2, ArrowUpDown, Scale, FileCheck2, Upload, PlusCircle,
   Heart, Truck, TrendingUp, FlaskConical, Eye, CreditCard, QrCode,
-  MessageSquare, BarChart3, ShieldAlert, Calendar, Award, Sparkles
+  MessageSquare, BarChart3, Calendar, Droplets, History,
+  Receipt, Moon, Sun, Info, Compass
 } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {
@@ -83,9 +84,17 @@ const COASTAL_ZONES = [
   'OTHER_CUSTOM'
 ];
 
+const PACKING_TIME_SLOTS = [
+  'All Day (24 Hours Flexible)',
+  'Early Morning (04:00 AM – 08:00 AM)',
+  'Morning (08:00 AM – 12:00 PM)',
+  'Afternoon (12:00 PM – 04:00 PM)',
+  'Evening / Night (04:00 PM – 09:00 PM)'
+];
+
 const DICT = {
   en: {
-    brandSub: 'B2B Aquaculture Seed & Settlement Exchange',
+    brandSub: 'B2B Aquaculture Seed & Direct Settlement Exchange',
     selectRoleTitle: 'Sign in to Aqua Mark',
     selectRoleSub: 'Select your portal to access verified seed inventory and direct settlements',
     roles: {
@@ -103,9 +112,11 @@ const DICT = {
     verifyLogin: 'Verify & Enter Portal',
     logout: 'Sign Out',
     portalBadges: { buyer: 'Farmer Portal', seller: 'Hatchery Portal', mediator: 'Broker Portal' },
+    tickerTitle: 'AP Farmgate Count Rates:',
     tabMarketplace: 'Hatchery Marketplace',
-    tabBookings: 'My Bookings & Status',
+    tabBookings: 'My Bookings & Receipts',
     tabAnalytics: 'Harvest, Feed & Profit Estimator',
+    tabWaterLab: 'Pond Water Health & DOC Table',
     tabGuide: 'Crop & Water Protocol',
     searchPlaceholder: 'Search Batch ID, Species, Stage, or Zone...',
     allZones: 'All Coastal Zones',
@@ -121,25 +132,30 @@ const DICT = {
     emptyMarketTitle: 'No Registered Hatchery Batches Live Yet',
     emptyMarketSub: 'Once a CAA-certified Hatchery registers and publishes a batch, it appears here immediately.',
     caaVerified: 'CAA Certified',
-    unlockHint: 'Hatchery identity & contact unlock after advance booking',
-    inspectBtn: 'Inspect Hatchery & PCR',
+    soldOutBadge: 'SOLD OUT',
+    unlockHint: 'Hatchery identity & contact unlock after 6% advance booking',
+    inspectBtn: 'View Hatchery History, Reviews & PCR Images',
     perSeed: 'per seed',
     stage: 'Seed / PL Stage',
     salinity: 'Salinity',
     bonus: 'Bonus',
-    stock: 'Stock',
+    stock: 'Remaining Stock',
+    availPackingLabel: 'Available Packing',
     sampleBtn: '₹500 Sample',
     bookSlotBtn: 'Book Packing Slot',
-    myBookingsTitle: 'Your Bookings & Packing Confirmation',
+    myBookingsTitle: 'Your Bookings & Official Receipts (Click Any Booking for Full Details)',
     noBookingsYet: 'No bookings placed yet.',
-    packingReadyAlert: '📦 Hatchery Marked Packing Complete! Verify seed & click OK to release payment.',
-    escrowHoldBadge: 'Funds Held Pending Packing OK',
-    escrowReleasedBadge: 'Packing Verified • Payment Released',
-    approvePackingBtn: 'Packing Complete — OK (Release Payment)',
+    paidLabel: 'Advance Paid (6%)',
+    balancePackingLabel: 'Balance at Packing (94%)',
+    packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete final balance at packing.',
+    pendingSettlementBadge: '6% Advance Paid • Balance Pending at Packing',
+    clearedSettlementBadge: '✅ Remaining Balance Cleared',
     rateSeedLabel: 'Rate Hatchery (1-5★) & Feedback:',
     submitReviewBtn: 'Submit Feedback',
     ratedLabel: 'Feedback Sent',
-    invoiceBtn: 'Certificate',
+    advanceReceiptBtn: 'Advance Receipt',
+    finalReceiptBtn: 'Final Cleared Receipt',
+    // Seller
     unifiedRegTitle: 'Hatchery & Bank Registration (One-Time Setup)',
     unifiedRegSub: 'Register your CAA-certified hatchery and settlement bank account in one step. Bound permanently to this mobile.',
     hatcheryNameLabel: 'Hatchery Legal Name',
@@ -153,34 +169,44 @@ const DICT = {
     completeRegBtn: 'Verify & Register Hatchery + Bank',
     hatcheryLockedBanner: 'Verified Hatchery Locked to +91',
     savedBadge: 'Saved',
-    editBtn: 'Edit Profile & Bank',
+    editProfileBankBtn: 'Edit Profile & Bank',
+    editBatchBtn: 'Edit Batch',
     saveBtn: 'Save Changes',
-    addBatchTitle: 'Publish New Seed Batch',
+    addBatchTitle: 'Publish New Seed Batch & Packing Schedule',
     speciesLabel: 'Shrimp Species',
     customSpeciesPlaceholder: 'Enter custom shrimp species...',
     customStagePlaceholder: 'Enter custom stage (e.g. PL22)...',
     customZonePlaceholder: 'Enter custom zone / district...',
     ratePerSeedLabel: 'Rate (₹ / seed)',
     stockLabel: 'Available Stock (PL)',
-    pcrUploadLabel: 'Attach PCR Lab Photo / PDF (Mandatory)',
+    availDateLabel: 'Available Packing Date',
+    availTimeLabel: 'Available Time Slot',
+    pcrUploadBtnLabel: 'Upload PCR Lab Images',
+    pcrHintLabel: 'Select 1 or more PCR lab report images',
     gpsLockedBtn: 'GPS Locked',
     captureGpsBtn: 'Tag Tank GPS',
     publishBtn: 'Publish Batch Live',
-    myBatchesTitle: 'Your Active Seed Batches (Edit Stage / Salinity / Rate or Remove)',
+    myBatchesTitle: 'Your Active Seed Batches (Edit Batch or Remove)',
     noBatchesSeller: 'No active batches published yet.',
-    saveChangesBtn: 'Save Updates',
+    saveChangesBtn: 'Save Batch',
     removeBtn: 'Remove',
-    sellerOrdersTitle: 'Packing Orders Assigned to Your Hatchery',
+    sellerOrdersTitle: 'Orders Assigned to Your Hatchery (Click Any Order for Details)',
     noOrdersYet: 'No packing orders received for your hatchery yet.',
-    creditedBadge: 'Credited to Bank',
-    onHoldBadge: 'On Hold (Awaiting Buyer OK)',
+    creditedBadge: 'Payment Credited',
+    onHoldBadge: 'Advance Hold (Pending Payment Received)',
     markPackedBtn: 'Mark Packing Complete',
-    packedSentBadge: 'Packing Marked Done • Buyer Notified',
+    paymentReceivedBtn: 'Payment Received',
     sellerFeedbackTitle: 'Private Farmer Ratings & Feedback (Visible Only to You)',
     noFeedbackYet: 'No farmer feedback submitted yet.',
-    brokerHoldCard: 'Commission on Hold',
-    brokerHoldSub: 'Releases automatically when buyer confirms packing OK',
-    brokerReleasedCard: 'Released to Bank Account',
+    // Broker
+    brokerRegTitle: 'Mandatory Broker Bank & UPI Registration',
+    brokerRegSub: 'Enter your settlement bank account & UPI ID to activate your Broker account and receive earnings.',
+    brokerActivateBtn: 'Save Bank Details & Activate Broker Account',
+    brokerHoldCard: 'Earnings on Hold (Pending Payment Received)',
+    brokerHoldSub: 'Credits automatically once hatchery confirms Payment Received',
+    brokerReleasedCard: 'Credited to Bank Account',
+    brokerBookingsTitle: 'My Broker Bookings & Earnings Tracker (Click Any Row for Breakdown)',
+    noBrokerBookings: 'No bookings placed under your Broker account yet.',
     brokerMarketplaceTitle: 'All Registered Hatcheries (Select Hatchery First to Book)',
     selectAndBookBtn: 'Select Hatchery & Book →',
     lockFarmerTitle: 'Register & Lock Farmer (365 Days)',
@@ -191,47 +217,60 @@ const DICT = {
     myFarmersTitle: 'Protected Farmer Network',
     step1Label: 'Step 1: Selected Hatchery Batch',
     changeHatcheryBtn: 'Change Hatchery',
-    step2Label: 'Step 2: Enter Farmer & Payment Details',
+    step2Label: 'Step 2: Enter Farmer, Schedule & Payment Details',
     selectSavedFarmer: 'Quick-Fill from Locked Farmers',
     manualFarmerOption: '-- Enter Farmer Manually --',
+    // Modal & Payment
     modalTitle: 'Confirm Seed Packing Slot',
     farmerNameLabel: 'Farmer Name',
     whatsappLabel: 'WhatsApp Number (10 Digits)',
     quantityLabel: 'Seed Quantity (PL)',
     pondSalinityLabel: 'Pond Salinity (PPT)',
     packingDateLabel: 'Packing Date',
-    brokerMarginLabel: 'Your Extra Margin (Paise / seed)',
+    packingTimeLabel: 'Packing Time Slot',
+    brokerMarginLabel: 'Your Extra Margin Profit (Paise / seed)',
     transportAddonLabel: 'Include Oxygen Van Delivery (+₹1,500)',
     paymentMethodLabel: 'Select Payment Method',
-    payRazorpay: 'Razorpay Checkout (UPI / Cards / NetBanking)',
-    payDirectUpi: 'Direct UPI Transfer (PhonePe / GPay / BHIM)',
-    payBankToBank: 'Direct Bank-to-Bank (NEFT / IMPS / RTGS)',
-    utrPlaceholder: 'Enter 12-digit UPI / Bank UTR Reference No',
     salinityWarn: 'Salinity variance exceeds 4 PPT. Hatchery will perform 48-hour gradual acclimatization.',
     totalSeedValue: 'Total Order Value',
-    advancePayable: 'Advance Payable Now (10%)',
-    balanceAtGate: 'Balance Payable at Packing Gate',
+    advancePaidLabel: 'Advance Paid (6%)',
+    balanceAtPacking: 'Balance Payable at Packing (94%)',
     payNowBtn: 'Confirm & Complete Booking',
-    receiptTitle: 'VERIFIED SEED BOOKING CERTIFICATE',
+    receiptTitle: 'OFFICIAL SEED BOOKING RECEIPT',
+    finalReceiptTitle: 'FINAL BALANCE CLEARED RECEIPT',
+    sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'Close',
+    calculateBtn: 'Calculate Harvest & Profit',
+    protocolTitle: 'Standard Aquaculture Water, Stocking & DOC Feeding Protocol',
+    proto1Title: '1. Salinity Acclimatization Rule',
+    proto1Body: 'Never stock directly if salinity variance exceeds 3 PPT. Hatchery must adjust 1 PPT per 4 hours in conditioning tanks prior to oxygen packing.',
+    proto2Title: '2. Ideal Pond Water Parameters',
+    proto2Body: 'pH: 7.5 – 8.3 | Dissolved Oxygen: above 4.5 ppm | Total Alkalinity: 120 – 180 ppm | Unionized Ammonia: below 0.1 ppm | Nitrite: below 0.25 ppm.',
+    proto3Title: '3. DOC 1–30 Blind Feeding Schedule',
+    proto3Body: 'Start with 2.0 kg starter crumble per 1,00,000 PL on Day 1 and increment 200g daily. Begin check-tray monitoring from DOC 25 onwards.',
+    proto4Title: '4. Bio-Security & Probiotic Protocol',
+    proto4Body: 'Apply water probiotics every 7 days and gut probiotics mixed in feed twice daily to prevent EHP and White Gut outbreaks.',
     toasts: {
       invalidPhone: 'Please enter a valid 10-digit mobile number.',
       otpSent: 'Verification OTP sent:',
       invalidOtp: 'Incorrect OTP. Please enter the 4-digit code shown.',
       regComplete: 'Hatchery & Bank details verified and locked to your mobile!',
+      brokerRegComplete: 'Broker Bank & UPI details verified! Broker Portal activated.',
       profileUpdated: 'Hatchery Name, Address & Bank details updated!',
       gpsLocked: 'Tank GPS coordinates locked.',
-      uploadPcrFirst: 'Please attach the PCR Lab Report image or PDF.',
-      batchPublished: 'Seed batch published live & file input cleared!',
+      uploadPcrFirst: 'Please upload at least 1 PCR Lab Report image.',
+      batchPublished: 'Seed batch published live & upload cleared!',
       batchUpdated: 'Batch values updated live!',
       batchRemoved: 'Seed batch removed.',
       sampleOrdered: '₹500 100-Seed Sample courier requested!',
       packingMarked: 'Packing marked complete! Buyer notified on their dashboard.',
-      fundsReleased: 'Packing OK confirmed! Held payment released to Hatchery & Broker.',
+      paymentReceivedDone: 'Payment Received confirmed! Balances credited & Final Cleared Receipt generated for Farmer.',
       farmerLocked: 'Farmer locked to your Broker ID for 365 days!',
-      paymentSuccess: 'Booking confirmed! Hatchery unlocked & Verified Certificate ready.',
-      enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.'
+      paymentSuccess: '6% Advance booking confirmed! Stock deducted & Receipt ready.',
+      enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.',
+      upiCollectSent: 'Collect payment request sent to your UPI App! Approve it and enter UTR.',
+      calcUpdated: 'Harvest, Feed & Net Profit estimates recalculated!'
     }
   },
   te: {
@@ -253,10 +292,12 @@ const DICT = {
     verifyLogin: 'నిర్ధారించి లాగిన్ అవ్వండి',
     logout: 'లాగౌట్',
     portalBadges: { buyer: 'రైతు పోర్టల్ (Buyer)', seller: 'హేచరీ పోర్టల్ (Seller)', mediator: 'బ్రోకర్ పోర్టల్ (Mediator)' },
+    tickerTitle: 'నేటి ఆంధ్రప్రదేశ్ రొయ్యల కౌంట్ ధరలు:',
     tabMarketplace: 'హేచరీల మార్కెట్',
-    tabBookings: 'నా బుకింగ్స్ & స్టేటస్',
+    tabBookings: 'నా బుకింగ్స్ & రసీదులు',
     tabAnalytics: 'దిగుబడి, ఫీడ్ & లాభాల కాలిక్యులేటర్',
-    tabGuide: 'సాగు & నీటి యాజమాన్యం',
+    tabWaterLab: 'నీటి పరీక్ష & DOC పట్టిక',
+    tabGuide: 'సాగు, నీటి & ఫీడ్ ప్రోటోకాల్',
     searchPlaceholder: 'బ్యాచ్ ID, రకం, దశ లేదా ప్రాంతం వెతకండి...',
     allZones: 'అన్ని ప్రాంతాలు',
     allStages: 'అన్ని సీడ్ / PL దశలు',
@@ -271,25 +312,29 @@ const DICT = {
     emptyMarketTitle: 'ఇంకా ఎటువంటి హేచరీ బ్యాచ్‌లు నమోదు కాలేదు',
     emptyMarketSub: 'హేచరీ యజమానులు రిజిస్టర్ అయ్యి సీడ్ బ్యాచ్ యాడ్ చేసిన వెంటనే ఇక్కడ కనిపిస్తాయి.',
     caaVerified: 'CAA సర్టిఫైడ్',
-    unlockHint: 'అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు & ఫోన్ నంబర్ అన్‌లాక్ అవుతాయి',
-    inspectBtn: 'హేచరీ వివరాలు & PCR ఫోటో చూడండి',
+    soldOutBadge: 'స్టాక్ పూర్తయింది (SOLD OUT)',
+    unlockHint: '6% అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు & ఫోన్ నంబర్ అన్‌లాక్ అవుతాయి',
+    inspectBtn: 'హేచరీ చరిత్ర, రివ్యూలు & PCR ఫోటోలు చూడండి',
     perSeed: 'ఒక్క సీడ్ ధర',
     stage: 'సీడ్ / PL దశ',
     salinity: 'ఉప్పదనం',
     bonus: 'బోనస్ సీడ్',
-    stock: 'నిల్వ',
+    stock: 'మిగిలిన నిల్వ',
+    availPackingLabel: 'ప్యాకింగ్ సమయం',
     sampleBtn: '₹500 శాంపిల్',
     bookSlotBtn: 'ప్యాకింగ్ స్లాట్ బుక్ చేయండి',
-    myBookingsTitle: 'మీ బుకింగ్స్ & ప్యాకింగ్ నిర్ధారణ',
+    myBookingsTitle: 'మీ బుకింగ్స్ & రసీదులు (పూర్తి వివరాల కోసం క్లిక్ చేయండి)',
     noBookingsYet: 'మీరు ఇంకా ఎటువంటి సీడ్ బుకింగ్ చేయలేదు.',
-    packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! సీడ్ చూసి OK నొక్కండి.',
-    escrowHoldBadge: 'డబ్బులు హోల్డ్‌లో ఉన్నాయి',
-    escrowReleasedBadge: 'ప్యాకింగ్ OK • పేమెంట్ విడుదలైంది',
-    approvePackingBtn: 'ప్యాకింగ్ పూర్తయింది — OK (Release Payment)',
+    paidLabel: 'చెల్లించిన అడ్వాన్స్ (6%)',
+    balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (94%)',
+    packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! ప్యాకింగ్ వద్ద బ్యాలెన్స్ చెల్లించండి.',
+    pendingSettlementBadge: '6% అడ్వాన్స్ చెల్లించబడింది • ప్యాకింగ్ వద్ద బ్యాలెన్స్ బాకీ',
+    clearedSettlementBadge: '✅ మిగిలిన బ్యాలెన్స్ పూర్తయింది (Cleared)',
     rateSeedLabel: 'రేటింగ్ (1-5★) & అభిప్రాయం రాయండి:',
     submitReviewBtn: 'ఫీడ్‌బ్యాక్ పంపండి',
     ratedLabel: 'ఫీడ్‌బ్యాక్ పంపబడింది',
-    invoiceBtn: 'సర్టిఫికెట్',
+    advanceReceiptBtn: 'అడ్వాన్స్ రసీదు (Receipt)',
+    finalReceiptBtn: 'ఫైనల్ క్లియర్డ్ రసీదు (Receipt)',
     unifiedRegTitle: 'హేచరీ & బ్యాంక్ రిజిస్ట్రేషన్ (ఒకే స్టెప్‌లో పూర్తి చేయండి)',
     unifiedRegSub: 'మీ హేచరీ వివరాలు మరియు బ్యాంక్ అకౌంట్ వివరాలు ఒకేసారి నమోదు చేయండి. ఈ మొబైల్ నంబర్ ఈ ఒక్క హేచరీకి మాత్రమే ఫిక్స్ అవుతుంది.',
     hatcheryNameLabel: 'హేచరీ పేరు',
@@ -303,34 +348,43 @@ const DICT = {
     completeRegBtn: 'హేచరీ & బ్యాంక్ వివరాలు నిర్ధారించండి',
     hatcheryLockedBanner: 'ఈ హేచరీ మీ మొబైల్ నంబర్‌కు ఫిక్స్ చేయబడింది: +91',
     savedBadge: 'Saved',
-    editBtn: 'Edit Hatchery & Bank',
+    editProfileBankBtn: 'Edit Profile & Bank',
+    editBatchBtn: 'Edit Batch',
     saveBtn: 'మార్పులు సేవ్ చేయండి',
-    addBatchTitle: 'కొత్త సీడ్ బ్యాచ్ పబ్లిష్ చేయండి',
+    addBatchTitle: 'కొత్త సీడ్ బ్యాచ్ & ప్యాకింగ్ సమయం పబ్లిష్ చేయండి',
     speciesLabel: 'రొయ్య రకం (Species)',
     customSpeciesPlaceholder: 'కొత్త రొయ్య రకం పేరు టైప్ చేయండి...',
     customStagePlaceholder: 'కొత్త దశ టైప్ చేయండి (ఉదా: PL22)...',
     customZonePlaceholder: 'కొత్త ప్రాంతం / జిల్లా పేరు టైప్ చేయండి...',
     ratePerSeedLabel: 'ధర (₹ / ఒక్క సీడ్)',
     stockLabel: 'అందుబాటులో ఉన్న స్టాక్ (PL)',
-    pcrUploadLabel: 'PCR ల్యాబ్ ఫోటో / PDF జతచేయండి (తప్పనిసరి)',
+    availDateLabel: 'ప్యాకింగ్ అందుబాటు తేదీ',
+    availTimeLabel: 'ప్యాకింగ్ అందుబాటు సమయం',
+    pcrUploadBtnLabel: 'PCR ల్యాబ్ ఫోటోలు అప్‌లోడ్ చేయండి',
+    pcrHintLabel: 'ఒకటి లేదా అంతకంటే ఎక్కువ PCR ఫోటోలు ఎంచుకోండి',
     gpsLockedBtn: 'GPS లాక్ అయింది',
     captureGpsBtn: 'GPS ట్యాగ్ చేయండి',
     publishBtn: 'బ్యాచ్ లైవ్ చేయండి',
-    myBatchesTitle: 'మీ హేచరీ సీడ్ బ్యాచ్‌లు (PL దశ / Salinity మార్చుకోండి లేదా తొలగించండి)',
+    myBatchesTitle: 'మీ హేచరీ సీడ్ బ్యాచ్‌లు (Edit Batch లేదా Remove)',
     noBatchesSeller: 'మీరు ఇంకా ఎటువంటి బ్యాచ్‌లు యాడ్ చేయలేదు.',
     saveChangesBtn: 'మార్పులు సేవ్ చేయండి',
     removeBtn: 'తొలగించు',
-    sellerOrdersTitle: 'మీ హేచరీకి వచ్చిన ప్యాకింగ్ ఆర్డర్లు',
+    sellerOrdersTitle: 'మీ హేచరీకి వచ్చిన ఆర్డర్లు (వివరాల కోసం క్లిక్ చేయండి)',
     noOrdersYet: 'మీ హేచరీకి ఇంకా ఎటువంటి ఆర్డర్లు రాలేదు.',
-    creditedBadge: 'బ్యాంక్‌కు జమ అయింది',
-    onHoldBadge: 'హోల్డ్‌లో ఉంది (రైతు OK కోసం వేచి ఉంది)',
+    creditedBadge: 'పేమెంట్ జమ అయింది',
+    onHoldBadge: 'అడ్వాన్స్ హోల్డ్ (బ్యాలెన్స్ కోసం వేచి ఉంది)',
     markPackedBtn: 'ప్యాకింగ్ పూర్తయింది (Notify Buyer)',
-    packedSentBadge: 'ప్యాకింగ్ పూర్తయింది • రైతుకు తెలియజేయబడింది',
+    paymentReceivedBtn: 'Payment Received (బ్యాలెన్స్ అందింది)',
     sellerFeedbackTitle: 'రైతుల రేటింగ్స్ & అభిప్రాయాలు (మీకు మాత్రమే కనిపిస్తాయి)',
     noFeedbackYet: 'ఇంకా ఎటువంటి రైతు అభిప్రాయాలు రాలేదు.',
-    brokerHoldCard: 'హోల్డ్‌లో ఉన్న కమిషన్',
-    brokerHoldSub: 'రైతు ప్యాకింగ్ OK నొక్కగానే మీ బ్యాంక్ అకౌంట్‌లోకి విడుదల అవుతుంది',
-    brokerReleasedCard: 'బ్యాంక్ అకౌంట్‌కు విడుదలైన కమిషన్',
+    brokerRegTitle: 'బ్రోకర్ బ్యాంక్ & UPI రిజిస్ట్రేషన్ (తప్పనిసరి)',
+    brokerRegSub: 'మీ బ్రోకర్ అకౌంట్ యాక్టివేట్ అవ్వడానికి మరియు ఆదాయం పొందడానికి మీ బ్యాంక్ & UPI వివరాలు నమోదు చేయండి.',
+    brokerActivateBtn: 'బ్యాంక్ వివరాలు సేవ్ చేసి బ్రోకర్ అకౌంట్ ప్రారంభించండి',
+    brokerHoldCard: 'హోల్డ్‌లో ఉన్న ఆదాయం (Pending Payment Received)',
+    brokerHoldSub: 'హేచరీ ఓనర్ Payment Received నొక్కగానే మీ బ్యాంక్ అకౌంట్‌లోకి జమ అవుతుంది',
+    brokerReleasedCard: 'బ్యాంక్ అకౌంట్‌కు జమ అయిన ఆదాయం',
+    brokerBookingsTitle: 'నా బ్రోకర్ బుకింగ్స్ & కమిషన్ ట్రాకర్ (వివరాల కోసం క్లిక్ చేయండి)',
+    noBrokerBookings: 'మీ బ్రోకర్ అకౌంట్ ద్వారా ఇంకా ఎటువంటి బుకింగ్స్ జరగలేదు.',
     brokerMarketplaceTitle: 'రిజిస్టర్ అయిన హేచరీల లిస్ట్ (ముందుగా హేచరీ ఎంచుకుని బుక్ చేయండి)',
     selectAndBookBtn: 'ఈ హేచరీని ఎంచుకుని బుక్ చేయండి →',
     lockFarmerTitle: 'కొత్త రైతును లాక్ చేయండి (365 రోజులు)',
@@ -341,7 +395,7 @@ const DICT = {
     myFarmersTitle: 'మీ రైతుల నెట్‌వర్క్',
     step1Label: 'దశ 1: ఎంచుకున్న హేచరీ బ్యాచ్',
     changeHatcheryBtn: 'హేచరీ మార్చండి',
-    step2Label: 'దశ 2: రైతు & పేమెంట్ వివరాలు నమోదు చేయండి',
+    step2Label: 'దశ 2: రైతు, సమయం & పేమెంట్ వివరాలు నమోదు చేయండి',
     selectSavedFarmer: 'లాక్ అయిన రైతుల నుండి ఎంచుకోండి',
     manualFarmerOption: '-- రైతు పేరు స్వయంగా టైప్ చేయండి --',
     modalTitle: 'సీడ్ ప్యాకింగ్ స్లాట్ బుకింగ్',
@@ -350,38 +404,50 @@ const DICT = {
     quantityLabel: 'పరిమాణం (Seeds)',
     pondSalinityLabel: 'చెరువు ఉప్పదనం (PPT)',
     packingDateLabel: 'ప్యాకింగ్ తేదీ',
-    brokerMarginLabel: 'మీ అదనపు మార్జిన్ (పైసలు / ఒక్క సీడ్)',
+    packingTimeLabel: 'ప్యాకింగ్ సమయం (Time Slot)',
+    brokerMarginLabel: 'మీ అదనపు మార్జిన్ లాభం (పైసలు / ఒక్క సీడ్)',
     transportAddonLabel: 'ఆక్సిజన్ వ్యాన్ రవాణా జతచేయండి (+₹1,500)',
     paymentMethodLabel: 'పేమెంట్ విధానం ఎంచుకోండి',
-    payRazorpay: 'Razorpay గేట్‌వే (UPI / Cards / NetBanking)',
-    payDirectUpi: 'డైరెక్ట్ UPI (PhonePe / GPay / BHIM)',
-    payBankToBank: 'డైరెక్ట్ Bank-to-Bank (NEFT / IMPS / RTGS)',
-    utrPlaceholder: '12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి',
     salinityWarn: 'హేచరీ నీటికి మరియు చెరువు నీటికి మధ్య 4 PPT కంటే ఎక్కువ తేడా ఉంది. 48 గంటల ముందుగా Acclimatization చేయాలని హేచరీకి అలర్ట్ వెళ్తుంది.',
     totalSeedValue: 'మొత్తం ఆర్డర్ విలువ',
-    advancePayable: 'ఇప్పుడు చెల్లించాల్సిన అడ్వాన్స్ (10%)',
-    balanceAtGate: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్',
+    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (Advance Paid - 6%)',
+    balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (94%)',
     payNowBtn: 'పేమెంట్ నిర్ధారించి బుకింగ్ పూర్తి చేయండి',
-    receiptTitle: 'అధికారిక సీడ్ బుకింగ్ వెరిఫైడ్ సర్టిఫికెట్',
+    receiptTitle: 'అధికారిక సీడ్ బుకింగ్ రసీదు (RECEIPT)',
+    finalReceiptTitle: 'ఫైనల్ బ్యాలెన్స్ క్లియర్డ్ రసీదు (FINAL RECEIPT)',
+    sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'మూసివేయండి',
+    calculateBtn: 'దిగుబడి & లాభం లెక్కించండి (Calculate)',
+    protocolTitle: 'ప్రామాణిక ఆక్వాకల్చర్ నీటి నాణ్యత, స్టాకింగ్ & DOC ఫీడింగ్ ప్రోటోకాల్',
+    proto1Title: '1. ఉప్పదనం సర్దుబాటు (Salinity Acclimatization) నియమం',
+    proto1Body: 'హేచరీ నీటికి మరియు మీ చెరువు నీటికి మధ్య 3 PPT కంటే ఎక్కువ తేడా ఉంటే నేరుగా చెరువులో వదలకూడదు. ప్యాకింగ్ కంటే ముందే హేచరీ ట్యాంకుల్లో ప్రతి 4 గంటలకు 1 PPT చొప్పున అలవాటు చేయించాలి.',
+    proto2Title: '2. చెరువు నీటి ఆదర్శ ప్రమాణాలు (Water Quality Parameters)',
+    proto2Body: 'pH: 7.5 – 8.3 | కరిగిన ఆక్సిజన్ (DO): 4.5 ppm కంటే ఎక్కువ | ఆల్కలీనిటీ: 120 – 180 ppm | అమ్మోనియా: 0.1 ppm కంటే తక్కువ | నైట్రైట్: 0.25 ppm కంటే తక్కువ ఉండాలి.',
+    proto3Title: '3. DOC 1–30 రోజుల ఫీడింగ్ పట్టిక (Blind Feeding)',
+    proto3Body: 'మొదటి రోజు ప్రతి 1,00,000 రొయ్య పిల్లలకు 2.0 కిలోల స్టార్టర్ క్రంబుల్ ఫీడ్ వేయాలి. రోజుకు 200 గ్రాముల చొప్పున పెంచుతూ, 25వ రోజు నుండి చెక్-ట్రే పరిశీలన ప్రారంభించాలి.',
+    proto4Title: '4. బయో-సెక్యూరిటీ & ప్రోబయోటిక్ నివారణ చర్యలు',
+    proto4Body: 'EHP మరియు వైట్ గట్ (White Gut) వ్యాధులు రాకుండా ప్రతి 7 రోజులకు ఒకసారి వాటర్ ప్రోబయోటిక్స్ మరియు రోజుకు రెండుసార్లు ఫీడ్‌లో గట్ ప్రోబయోటిక్స్ కలిపి వేయాలి.',
     toasts: {
       invalidPhone: 'దయచేసి సరైన 10-అంకెల మొబైల్ నంబర్ ఎంటర్ చేయండి.',
       otpSent: 'OTP పంపబడింది:',
       invalidOtp: 'తప్పు OTP! స్క్రీన్‌పై ఉన్న 4-అంకెల కోడ్ ఎంటర్ చేయండి.',
       regComplete: 'హేచరీ & బ్యాంక్ వివరాలు మీ నంబర్‌కు శాశ్వతంగా ఫిక్స్ చేయబడ్డాయి!',
+      brokerRegComplete: 'బ్రోకర్ బ్యాంక్ & UPI వివరాలు సేవ్ అయ్యాయి! బ్రోకర్ పోర్టల్ సిద్ధంగా ఉంది.',
       profileUpdated: 'హేచరీ పేరు, అడ్రస్ & బ్యాంక్ వివరాలు అప్‌డేట్ అయ్యాయి!',
       gpsLocked: 'హేచరీ GPS లొకేషన్ లాక్ అయింది.',
-      uploadPcrFirst: 'దయచేసి PCR ల్యాబ్ ఫోటో లేదా PDF జతచేయండి.',
+      uploadPcrFirst: 'దయచేసి కనీసం 1 PCR ల్యాబ్ ఫోటో అప్‌లోడ్ చేయండి.',
       batchPublished: 'కొత్త సీడ్ బ్యాచ్ లైవ్ అయింది!',
       batchUpdated: 'బ్యాచ్ వివరాలు అప్‌డేట్ అయ్యాయి!',
       batchRemoved: 'సీడ్ బ్యాచ్ తొలగించబడింది.',
       sampleOrdered: '₹500 శాంపిల్ రిక్వెస్ట్ పంపబడింది!',
       packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతు డాష్‌బోర్డ్‌కు పంపబడింది!',
-      fundsReleased: 'ప్యాకింగ్ OK నిర్ధారించబడింది! డబ్బులు విడుదలయ్యాయి.',
+      paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! రైతుకు Final Cleared Receipt జనరేట్ అయింది.',
       farmerLocked: 'రైతు 365 రోజుల పాటు మీ ID కి లాక్ చేయబడ్డారు!',
-      paymentSuccess: 'పేమెంట్ పూర్తయింది! వెరిఫైడ్ సర్టిఫికెట్ సిద్ధంగా ఉంది.',
-      enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR నంబర్ ఎంటర్ చేయండి.'
+      paymentSuccess: '6% అడ్వాన్స్ బుకింగ్ పూర్తయింది! రసీదు సిద్ధంగా ఉంది.',
+      enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి.',
+      upiCollectSent: 'మీ UPI యాప్‌కు పేమెంట్ రిక్వెస్ట్ పంపబడింది! అప్రూవ్ చేసి UTR ఎంటర్ చేయండి.',
+      calcUpdated: 'దిగుబడి, ఫీడ్ & నికర లాభాల లెక్కలు అప్‌డేట్ అయ్యాయి!'
     }
   }
 };
@@ -399,29 +465,37 @@ function safeLoadStorage(key, fallback) {
 
 function AquaMarkApp() {
   const [lang, setLang] = useState('en');
+  const [darkMode, setDarkMode] = useState(() => safeLoadStorage('aqm_v7_dark', false));
   const t = DICT[lang] || DICT.en;
   const otpInputRef = useRef(null);
   const pcrInputRef = useRef(null);
 
-  const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v4_user', null));
+  const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v7_user', null));
 
-  // ZERO SAMPLE DATA: Starts completely empty until real hatcheries register & publish
-  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeLoadStorage('aqm_v4_hatcheries', {}));
-  const [batches, setBatches] = useState(() => safeLoadStorage('aqm_v4_batches', []));
-  const [bookings, setBookings] = useState(() => safeLoadStorage('aqm_v4_bookings', []));
-  const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v4_farmers', []));
-  const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v4_wishlist', []));
+  // ZERO SAMPLE DATA
+  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeLoadStorage('aqm_v7_hatcheries', {}));
+  const [brokerProfiles, setBrokerProfiles] = useState(() => safeLoadStorage('aqm_v7_brokers', {}));
+  const [batches, setBatches] = useState(() => safeLoadStorage('aqm_v7_batches', []));
+  const [bookings, setBookings] = useState(() => safeLoadStorage('aqm_v7_bookings', []));
+  const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v7_farmers', []));
+  const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v7_wishlist', []));
 
-  // Broker Bank Details
-  const [brokerBank, setBrokerBank] = useState(() =>
-    safeLoadStorage('aqm_v4_broker_bank', { accountName: '', accountNo: '', ifsc: '', upiId: '' })
-  );
-  const [isBrokerBankSaved, setIsBrokerBankSaved] = useState(() => {
-    const b = safeLoadStorage('aqm_v4_broker_bank', null);
-    return Boolean(b?.accountNo && b?.ifsc && b?.upiId);
+  // Inspection Modals for Clickable Rows across Buyer, Seller & Broker
+  const [inspectedBatch, setInspectedBatch] = useState(null);
+  const [inspectedBuyerBooking, setInspectedBuyerBooking] = useState(null);
+  const [inspectedSellerOrder, setInspectedSellerOrder] = useState(null);
+  const [selectedBrokerTx, setSelectedBrokerTx] = useState(null);
+
+  // Broker Mandatory Bank Setup Form
+  const [brokerBankForm, setBrokerBankForm] = useState({
+    accountName: '',
+    accountNo: '',
+    ifsc: '',
+    upiId: ''
   });
+  const [isEditingBrokerBank, setIsEditingBrokerBank] = useState(false);
 
-  // Seller Unified Registration & Edit State (Includes Hatchery Name, Address, Zone + Bank)
+  // Seller Unified Registration & Edit Form
   const [unifiedSellerForm, setUnifiedSellerForm] = useState({
     realName: '',
     caaLicense: '',
@@ -453,11 +527,11 @@ function AquaMarkApp() {
   const [compareIds, setCompareIds] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
 
-  // Hatchery Detail Inspection Modal (Shows PCR Photo/PDF, History, Reviews)
-  const [inspectedBatch, setInspectedBatch] = useState(null);
-
-  // Buyer Rating & Feedback State (Per Booking)
+  // Buyer Rating & Feedback State
   const [ratingDrafts, setRatingDrafts] = useState({});
+
+  // Buyer Pond Water Health Checker State
+  const [waterTest, setWaterTest] = useState({ ph: 7.9, doLevel: 5.2, alkalinity: 145, ammonia: 0.04 });
 
   // Seller Batch Inline Editing
   const [editingBatchId, setEditingBatchId] = useState(null);
@@ -466,24 +540,29 @@ function AquaMarkApp() {
     salinity: 16,
     pricePer1000: 0.42,
     availableStock: 1000000,
-    bonusPercent: 15
+    bonusPercent: 15,
+    availableDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    availableTimeSlot: 'All Day (24 Hours Flexible)'
   });
 
   useEffect(() => {
+    try { localStorage.setItem('aqm_v7_dark', JSON.stringify(darkMode)); } catch { }
+  }, [darkMode]);
+
+  useEffect(() => {
     try {
-      if (currentUser) localStorage.setItem('aqm_v4_user', JSON.stringify(currentUser));
-      else localStorage.removeItem('aqm_v4_user');
+      if (currentUser) localStorage.setItem('aqm_v7_user', JSON.stringify(currentUser));
+      else localStorage.removeItem('aqm_v7_user');
     } catch { }
   }, [currentUser]);
 
-  useEffect(() => { try { localStorage.setItem('aqm_v4_hatcheries', JSON.stringify(hatcheryProfiles)); } catch { } }, [hatcheryProfiles]);
-  useEffect(() => { try { localStorage.setItem('aqm_v4_batches', JSON.stringify(batches)); } catch { } }, [batches]);
-  useEffect(() => { try { localStorage.setItem('aqm_v4_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
-  useEffect(() => { try { localStorage.setItem('aqm_v4_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
-  useEffect(() => { try { localStorage.setItem('aqm_v4_wishlist', JSON.stringify(savedBatchIds)); } catch { } }, [savedBatchIds]);
-  useEffect(() => { try { localStorage.setItem('aqm_v4_broker_bank', JSON.stringify(brokerBank)); } catch { } }, [brokerBank]);
+  useEffect(() => { try { localStorage.setItem('aqm_v7_hatcheries', JSON.stringify(hatcheryProfiles)); } catch { } }, [hatcheryProfiles]);
+  useEffect(() => { try { localStorage.setItem('aqm_v7_brokers', JSON.stringify(brokerProfiles)); } catch { } }, [brokerProfiles]);
+  useEffect(() => { try { localStorage.setItem('aqm_v7_batches', JSON.stringify(batches)); } catch { } }, [batches]);
+  useEffect(() => { try { localStorage.setItem('aqm_v7_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
+  useEffect(() => { try { localStorage.setItem('aqm_v7_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
+  useEffect(() => { try { localStorage.setItem('aqm_v7_wishlist', JSON.stringify(savedBatchIds)); } catch { } }, [savedBatchIds]);
 
-  // Auto-focus OTP input immediately when OTP screen opens
   useEffect(() => {
     if (otpSent && otpInputRef.current) {
       setTimeout(() => otpInputRef.current?.focus(), 60);
@@ -497,29 +576,79 @@ function AquaMarkApp() {
     quantity: 200000,
     pondSalinity: 15,
     packingDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+    packingTimeSlot: 'All Day (24 Hours Flexible)',
     brokerMarginPaise: 0,
     includeTransport: false,
-    paymentMethod: 'RAZORPAY', // 'RAZORPAY' | 'DIRECT_UPI' | 'BANK_TO_BANK'
+    paymentMethod: 'RAZORPAY',
+    payerUpiId: '',
+    upiRequestSent: false,
     utrReference: ''
   });
 
   const [activeInvoice, setActiveInvoice] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Advanced Harvest, Feed & Profit Estimator States
-  const [calcPonds, setCalcPonds] = useState(2);
-  const [calcAcresPerPond, setCalcAcresPerPond] = useState(2.5);
-  const [calcDensity, setCalcDensity] = useState(40);
-  const [calcSurvival, setCalcSurvival] = useState(85);
-  const [calcTargetCount, setCalcTargetCount] = useState(30); // 30 prawns per kg
-  const [calcFcr, setCalcFcr] = useState(1.4);
-  const [calcMarketRatePerKg, setCalcMarketRatePerKg] = useState(390);
-  const [calcFeedCostPerKg, setCalcFeedCostPerKg] = useState(88);
+  // Harvest, Feed & Profit Estimator
+  const [calcInputs, setCalcInputs] = useState({
+    ponds: 2,
+    acresPerPond: 2.5,
+    density: 40,
+    survival: 85,
+    targetCount: 30,
+    fcr: 1.4,
+    marketRatePerKg: 395,
+    feedCostPerKg: 88,
+    powerProbioticCostPerAcre: 35000
+  });
+  const [calcResult, setCalcResult] = useState({
+    totalAcres: 5,
+    totalSeedsNeeded: 809372,
+    harvestKg: 22932,
+    harvestTons: '22.93',
+    totalFeedKg: 32105,
+    totalFeedBags: 1285,
+    grossRevenue: 9058140,
+    totalExpenses: 3348270,
+    netProfit: 5709870,
+    profitPerAcre: 1141974,
+    breakEvenPerKg: 146
+  });
 
-  // Broker Add Farmer State
+  const handleRunEstimatorCalculate = () => {
+    const tAcres = (Number(calcInputs.ponds) || 1) * (Number(calcInputs.acresPerPond) || 1);
+    const tSeeds = Math.round(tAcres * 4046.86 * (Number(calcInputs.density) || 40));
+    const survPrawns = Math.round(tSeeds * ((Number(calcInputs.survival) || 85) / 100));
+    const hKg = Math.round(survPrawns / (Number(calcInputs.targetCount) || 30));
+    const hTons = (hKg / 1000).toFixed(2);
+    const tFeedKg = Math.round(hKg * (Number(calcInputs.fcr) || 1.4));
+    const tFeedBags = Math.ceil(tFeedKg / 25);
+    const gRev = hKg * (Number(calcInputs.marketRatePerKg) || 395);
+    const seedCost = Math.round(tSeeds * 0.43);
+    const feedCost = tFeedKg * (Number(calcInputs.feedCostPerKg) || 88);
+    const overheadCost = Math.round(tAcres * (Number(calcInputs.powerProbioticCostPerAcre) || 35000));
+    const totExp = seedCost + feedCost + overheadCost;
+    const netProf = gRev - totExp;
+    const perAcre = Math.round(netProf / Math.max(0.5, tAcres));
+    const breakEven = hKg > 0 ? Math.round(totExp / hKg) : 0;
+
+    setCalcResult({
+      totalAcres: tAcres,
+      totalSeedsNeeded: tSeeds,
+      harvestKg: hKg,
+      harvestTons: hTons,
+      totalFeedKg: tFeedKg,
+      totalFeedBags: tFeedBags,
+      grossRevenue: gRev,
+      totalExpenses: totExp,
+      netProfit: netProf,
+      profitPerAcre: perAcre,
+      breakEvenPerKg: breakEven
+    });
+    showToast(t.toasts.calcUpdated);
+  };
+
   const [newFarmer, setNewFarmer] = useState({ name: '', phone: '', village: '', acres: '' });
 
-  // New Batch Form (Supports Standard + Custom Species & Custom Stage)
   const [newBatchForm, setNewBatchForm] = useState({
     species: 'Litopenaeus vannamei (SPF)',
     customSpecies: '',
@@ -528,16 +657,25 @@ function AquaMarkApp() {
     pricePer1000: 0.43,
     availableStock: 1000000,
     salinity: 16,
-    bonusPercent: 15
+    bonusPercent: 15,
+    availableDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    availableTimeSlot: 'All Day (24 Hours Flexible)'
   });
-  const [pcrFile, setPcrFile] = useState(null);
-  const [pcrPreviewUrl, setPcrPreviewUrl] = useState('');
+  const [pcrImages, setPcrImages] = useState([]);
   const [gpsLocation, setGpsLocation] = useState('');
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 4000);
   };
+
+  // Theme Helper Classes for Dark Mode
+  const pageBg = darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900';
+  const cardBg = darkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900';
+  const subCardBg = darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800';
+  const inputCls = darkMode
+    ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-teal-500'
+    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-600';
 
   // ==========================================
   // OTP LOGIN HANDLERS
@@ -574,6 +712,9 @@ function AquaMarkApp() {
     if (loginRole === 'seller') {
       setUnifiedSellerForm(prev => ({ ...prev, accountName: userObj.name }));
     }
+    if (loginRole === 'mediator') {
+      setBrokerBankForm(prev => ({ ...prev, accountName: userObj.name }));
+    }
     setOtpSent(false);
     setEnteredOtp('');
   };
@@ -585,7 +726,6 @@ function AquaMarkApp() {
     setSelectedBatch(null);
   };
 
-  // Unified One-Step Hatchery + Bank Registration
   const handleCompleteUnifiedSellerReg = (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
@@ -600,6 +740,7 @@ function AquaMarkApp() {
       caaLicense: unifiedSellerForm.caaLicense.toUpperCase(),
       zone: finalZone,
       realAddress: unifiedSellerForm.realAddress,
+      registeredAt: new Date().toLocaleDateString('en-IN'),
       bankDetails: {
         accountName: unifiedSellerForm.accountName,
         accountNo: unifiedSellerForm.accountNo,
@@ -611,7 +752,24 @@ function AquaMarkApp() {
     showToast(t.toasts.regComplete);
   };
 
-  // Seller Edits Hatchery Name, Address, Zone & Bank Details Together
+  const handleCompleteBrokerReg = (e) => {
+    e.preventDefault();
+    if (!currentUser?.phone) return;
+    const profile = {
+      brokerPhone: currentUser.phone,
+      brokerName: currentUser.name,
+      bankDetails: {
+        accountName: brokerBankForm.accountName,
+        accountNo: brokerBankForm.accountNo,
+        ifsc: brokerBankForm.ifsc.toUpperCase(),
+        upiId: brokerBankForm.upiId
+      }
+    };
+    setBrokerProfiles(prev => ({ ...prev, [currentUser.phone]: profile }));
+    setIsEditingBrokerBank(false);
+    showToast(t.toasts.brokerRegComplete);
+  };
+
   const handleUpdateSellerProfileAndBank = (e) => {
     e.preventDefault();
     if (!currentUser?.phone || !hatcheryProfiles[currentUser.phone]) return;
@@ -634,7 +792,6 @@ function AquaMarkApp() {
     };
     setHatcheryProfiles(prev => ({ ...prev, [currentUser.phone]: updatedProfile }));
 
-    // Sync updated hatchery name/address/zone to all batches owned by this seller
     setBatches(prev => prev.map(b =>
       b.ownerPhone === currentUser.phone
         ? {
@@ -651,19 +808,25 @@ function AquaMarkApp() {
     showToast(t.toasts.profileUpdated);
   };
 
-  // Handle PCR File Selection & Store Data URL for Buyer Inspection Modal
-  const handlePcrFileSelect = (file) => {
-    if (!file) {
-      setPcrFile(null);
-      setPcrPreviewUrl('');
-      return;
-    }
-    setPcrFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPcrPreviewUrl(reader.result || '');
-    };
-    reader.readAsDataURL(file);
+  const handleMultiplePcrUpload = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const filesArray = Array.from(fileList);
+    const readPromises = filesArray.map((file, index) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({
+            label: `Image-${pcrImages.length + index + 1}`,
+            url: reader.result || ''
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    const loadedImages = await Promise.all(readPromises);
+    setPcrImages(prev => [...prev, ...loadedImages]);
+    if (pcrInputRef.current) pcrInputRef.current.value = '';
   };
 
   const handleCaptureGps = () => {
@@ -685,12 +848,11 @@ function AquaMarkApp() {
     );
   };
 
-  // Publish New Batch & AUTOMATICALLY CLEAR FILE INPUT
   const handlePublishBatch = (e) => {
     e.preventDefault();
     const myHatchery = hatcheryProfiles[currentUser?.phone];
     if (!myHatchery) return;
-    if (!pcrFile) {
+    if (pcrImages.length === 0) {
       showToast(t.toasts.uploadPcrFirst);
       return;
     }
@@ -711,6 +873,7 @@ function AquaMarkApp() {
       realAddress: myHatchery.realAddress,
       realPhone: currentUser.phone,
       caaLicense: myHatchery.caaLicense,
+      registeredAt: myHatchery.registeredAt || new Date().toLocaleDateString('en-IN'),
       bankDetails: { ...myHatchery.bankDetails },
       zone: myHatchery.zone,
       rating: 5.0,
@@ -722,21 +885,16 @@ function AquaMarkApp() {
       availableStock: Number(newBatchForm.availableStock) || 1000000,
       salinity: Number(newBatchForm.salinity) || 16,
       bonusPercent: Number(newBatchForm.bonusPercent) || 15,
-      pcrFileName: pcrFile.name,
-      pcrFileType: pcrFile.type || 'image/jpeg',
-      pcrPreviewUrl: pcrPreviewUrl,
+      availableDate: newBatchForm.availableDate,
+      availableTimeSlot: newBatchForm.availableTimeSlot,
+      pcrImages: [...pcrImages],
       gpsCoords: gpsLocation || '17.0005° N, 82.2510° E',
       createdAt: new Date().toLocaleDateString('en-IN')
     };
 
     setBatches([created, ...batches]);
-
-    // AUTOMATICALLY RESET UPLOADED PCR DOCUMENT & FILE INPUT
-    setPcrFile(null);
-    setPcrPreviewUrl('');
-    if (pcrInputRef.current) {
-      pcrInputRef.current.value = '';
-    }
+    setPcrImages([]);
+    if (pcrInputRef.current) pcrInputRef.current.value = '';
     showToast(t.toasts.batchPublished);
   };
 
@@ -747,7 +905,9 @@ function AquaMarkApp() {
       salinity: batch.salinity,
       pricePer1000: batch.pricePer1000,
       availableStock: batch.availableStock,
-      bonusPercent: batch.bonusPercent
+      bonusPercent: batch.bonusPercent,
+      availableDate: batch.availableDate || new Date().toISOString().split('T')[0],
+      availableTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)'
     });
   };
 
@@ -760,7 +920,9 @@ function AquaMarkApp() {
         salinity: Number(editBatchValues.salinity),
         pricePer1000: Number(editBatchValues.pricePer1000),
         availableStock: Number(editBatchValues.availableStock),
-        bonusPercent: Number(editBatchValues.bonusPercent)
+        bonusPercent: Number(editBatchValues.bonusPercent),
+        availableDate: editBatchValues.availableDate,
+        availableTimeSlot: editBatchValues.availableTimeSlot
       };
     }));
     setEditingBatchId(null);
@@ -772,27 +934,41 @@ function AquaMarkApp() {
     showToast(t.toasts.batchRemoved);
   };
 
-  // ==========================================
-  // PAYMENT PROCESSING (RAZORPAY / DIRECT UPI / BANK-TO-BANK)
-  // ==========================================
-  const finalizeBookingRecord = (paymentRef, qty, totalOrderCost, tokenAdvance) => {
+  // =========================================================================
+  // 6% ADVANCE SPLIT LOGIC:
+  // - 2% Silent Platform Cut (Invisible to Hatchery, Broker & Farmer)
+  // - 2% Broker Base Commission + Custom Broker Margin (Held until Hatchery clicks Payment Received)
+  // - 2% Hatchery Share (Held until Hatchery clicks Payment Received; 4% if no broker)
+  // =========================================================================
+  const finalizeBookingRecord = (paymentRef, qty, baseSeedOrderCost, transportCost, tokenAdvance) => {
     const bonusSeeds = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
     const matchedBrokerFarmer = brokerFarmers.find(
       (f) => (f.phone || '').slice(-10) === (bookingForm.farmerPhone || '').slice(-10)
     );
     const isBrokerLinked = Boolean(matchedBrokerFarmer) || currentUser?.role === 'mediator';
 
-    const aquamarkImmediateCut = Math.round(totalOrderCost * 0.015);
-    const brokerHoldAmount = isBrokerLinked
-      ? Math.round(totalOrderCost * 0.025) + Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100))
-      : 0;
-    const hatcheryHoldAmount = Math.max(0, tokenAdvance - aquamarkImmediateCut - brokerHoldAmount);
+    // 2% Silent Platform Cut (Never displayed in UI)
+    const silentPlatformCut = Math.round(baseSeedOrderCost * 0.02);
+
+    // 2% Broker Base Commission + Custom Margin Profit
+    const brokerBaseCommission = isBrokerLinked ? Math.round(baseSeedOrderCost * 0.02) : 0;
+    const brokerMarginEarn = isBrokerLinked ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
+    const brokerTotalHold = brokerBaseCommission + brokerMarginEarn;
+
+    // Remaining 2% (or 4% if direct farmer without broker) goes to Hatchery on hold
+    const hatcheryHoldAmount = Math.max(0, tokenAdvance - silentPlatformCut - brokerTotalHold);
+
+    const totalOrderCost = baseSeedOrderCost + brokerMarginEarn + transportCost;
+    const now = new Date();
+    const issueDateStr = now.toLocaleDateString('en-IN');
+    const issueTimeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     const newBooking = {
       bookingId: `AQ-${Math.floor(10000 + Math.random() * 90000)}`,
       paymentId: paymentRef,
       paymentMode: bookingForm.paymentMethod,
-      date: new Date().toLocaleDateString('en-IN'),
+      date: issueDateStr,
+      time: issueTimeStr,
       hatcheryOwnerPhone: selectedBatch.ownerPhone,
       batch: selectedBatch,
       farmerName: bookingForm.farmerName,
@@ -804,24 +980,33 @@ function AquaMarkApp() {
       includeTransport: bookingForm.includeTransport,
       pondSalinity: bookingForm.pondSalinity,
       packingDate: bookingForm.packingDate,
+      packingTimeSlot: bookingForm.packingTimeSlot,
       totalSeedCost: totalOrderCost,
       tokenAdvance,
-      balanceAtGate: totalOrderCost - tokenAdvance,
-      escrow: {
-        aquamarkCredited: aquamarkImmediateCut,
-        brokerAmount: brokerHoldAmount,
+      balanceAtPacking: totalOrderCost - tokenAdvance,
+      settlement: {
+        // Note: silentPlatformCut is intentionally never rendered in UI
+        brokerBaseCommission,
+        brokerMarginEarn,
+        brokerAmount: brokerTotalHold,
         hatcheryAmount: hatcheryHoldAmount,
-        payoutStatus: 'ON_HOLD'
+        status: 'ADVANCE_HOLD' // Changes to 'BALANCE_CLEARED' when Hatchery Owner clicks "Payment Received"
       },
       packingStatus: 'PACKING_PENDING',
       rated: false
     };
 
-    setBatches(batches.map(b => b.id === selectedBatch.id ? { ...b, availableStock: Math.max(0, b.availableStock - qty) } : b));
+    // Immediately deduct booked seeds from hatchery stock
+    setBatches(prev => prev.map(b =>
+      b.id === selectedBatch.id
+        ? { ...b, availableStock: Math.max(0, (b.availableStock || 0) - qty) }
+        : b
+    ));
+
     setBookings([newBooking, ...bookings]);
     setSelectedBatch(null);
-    setBookingForm(prev => ({ ...prev, utrReference: '' }));
-    setActiveInvoice(newBooking);
+    setBookingForm(prev => ({ ...prev, utrReference: '', upiRequestSent: false }));
+    setActiveInvoice({ booking: newBooking, receiptType: 'ADVANCE' });
     showToast(t.toasts.paymentSuccess);
   };
 
@@ -834,24 +1019,31 @@ function AquaMarkApp() {
       return;
     }
 
-    const qty = Number(bookingForm.quantity) || 100000;
-    const effectiveRate = (selectedBatch.pricePer1000 || 0.42) + ((Number(bookingForm.brokerMarginPaise) || 0) / 100);
-    const transportCost = bookingForm.includeTransport ? 1500 : 0;
-    const totalOrderCost = Math.round(qty * effectiveRate) + transportCost;
-    const tokenAdvance = Math.max(2500, Math.round(totalOrderCost * 0.10));
+    const qty = Math.min(selectedBatch.availableStock || 0, Number(bookingForm.quantity) || 100000);
+    if (qty <= 0) {
+      showToast('This batch is currently out of stock.');
+      return;
+    }
 
-    // MODE 1: DIRECT UPI OR DIRECT BANK-TO-BANK TRANSFER
+    const baseRate = selectedBatch.pricePer1000 || 0.42;
+    const baseSeedOrderCost = Math.round(qty * baseRate);
+    const brokerMarginEarn = Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100));
+    const transportCost = bookingForm.includeTransport ? 1500 : 0;
+    const totalOrderCost = baseSeedOrderCost + brokerMarginEarn + transportCost;
+
+    // 6% ADVANCE PAYMENT
+    const tokenAdvance = Math.max(1200, Math.round(totalOrderCost * 0.06));
+
     if (bookingForm.paymentMethod === 'DIRECT_UPI' || bookingForm.paymentMethod === 'BANK_TO_BANK') {
       if (!bookingForm.utrReference.trim()) {
         showToast(t.toasts.enterUtr);
         return;
       }
       const prefix = bookingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT';
-      finalizeBookingRecord(`${prefix}_${bookingForm.utrReference.trim().toUpperCase()}`, qty, totalOrderCost, tokenAdvance);
+      finalizeBookingRecord(`${prefix}_${bookingForm.utrReference.trim().toUpperCase()}`, qty, baseSeedOrderCost, transportCost, tokenAdvance);
       return;
     }
 
-    // MODE 2: RAZORPAY CHECKOUT
     const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
     if (rzpKey && window.Razorpay) {
       const options = {
@@ -859,7 +1051,7 @@ function AquaMarkApp() {
         amount: tokenAdvance * 100,
         currency: 'INR',
         name: 'Aqua Mark',
-        description: `${selectedBatch.plStage} Seed Booking (${qty.toLocaleString('en-IN')} PL)`,
+        description: `${selectedBatch.plStage} Seed 6% Advance (${qty.toLocaleString('en-IN')} PL)`,
         prefill: {
           name: bookingForm.farmerName || 'Farmer',
           contact: bookingForm.farmerPhone,
@@ -867,7 +1059,7 @@ function AquaMarkApp() {
         },
         theme: { color: '#0d9488' },
         handler: function (response) {
-          finalizeBookingRecord(response.razorpay_payment_id, qty, totalOrderCost, tokenAdvance);
+          finalizeBookingRecord(response.razorpay_payment_id, qty, baseSeedOrderCost, transportCost, tokenAdvance);
         }
       };
 
@@ -878,15 +1070,17 @@ function AquaMarkApp() {
       rzp.open();
     } else {
       const simulatedRef = `RZP_${Math.floor(100000 + Math.random() * 900000)}`;
-      finalizeBookingRecord(simulatedRef, qty, totalOrderCost, tokenAdvance);
+      finalizeBookingRecord(simulatedRef, qty, baseSeedOrderCost, transportCost, tokenAdvance);
     }
   };
 
   const handleRequestSample = (batch) => {
+    const now = new Date();
     const sampleBooking = {
       bookingId: `SMP-${Math.floor(1000 + Math.random() * 9000)}`,
       paymentId: `SAMPLE_${Math.floor(100000 + Math.random() * 900000)}`,
-      date: new Date().toLocaleDateString('en-IN'),
+      date: now.toLocaleDateString('en-IN'),
+      time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       hatcheryOwnerPhone: batch.ownerPhone,
       batch,
       farmerName: currentUser.name,
@@ -897,10 +1091,11 @@ function AquaMarkApp() {
       bonusSeeds: 0,
       pondSalinity: batch.salinity,
       packingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      packingTimeSlot: 'Morning (08:00 AM – 12:00 PM)',
       totalSeedCost: 500,
       tokenAdvance: 500,
-      balanceAtGate: 0,
-      escrow: { aquamarkCredited: 200, brokerAmount: 0, hatcheryAmount: 300, payoutStatus: 'ON_HOLD' },
+      balanceAtPacking: 0,
+      settlement: { brokerBaseCommission: 0, brokerMarginEarn: 0, brokerAmount: 0, hatcheryAmount: 300, status: 'ADVANCE_HOLD' },
       packingStatus: 'PACKING_PENDING',
       rated: false
     };
@@ -915,19 +1110,31 @@ function AquaMarkApp() {
     showToast(t.toasts.packingMarked);
   };
 
-  const handleBuyerApprovePackingRelease = (bookingId) => {
+  // =========================================================================
+  // HATCHERY OWNER CLICKS "PAYMENT RECEIVED":
+  // - Confirms remaining 94% balance received from farmer
+  // - Credits held amounts to Hatchery & Broker
+  // - Generates Final Balance Cleared Receipt for Farmer
+  // =========================================================================
+  const handleHatcheryPaymentReceived = (bookingId) => {
+    const now = new Date();
+    const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+
     setBookings(bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
       return {
         ...bk,
-        packingStatus: 'BUYER_APPROVED_RELEASED',
-        escrow: { ...bk.escrow, payoutStatus: 'RELEASED' }
+        packingStatus: 'FINAL_CLEARED',
+        clearedAt: clearedStamp,
+        settlement: {
+          ...bk.settlement,
+          status: 'BALANCE_CLEARED'
+        }
       };
     }));
-    showToast(t.toasts.fundsReleased);
+    showToast(t.toasts.paymentReceivedDone);
   };
 
-  // 1-5 STAR RATING + WRITTEN FEEDBACK (VISIBLE ONLY TO HATCHERY OWNER)
   const handleSubmitRatingAndFeedback = (bookingId, batchId) => {
     const draft = ratingDrafts[bookingId] || { stars: 5, comment: '' };
     const stars = Number(draft.stars) || 5;
@@ -964,130 +1171,165 @@ function AquaMarkApp() {
   };
 
   // ==========================================
-  // SINGLE-PAGE VERIFIED PDF (WITHOUT "& ESCROW PROTECTED", ONLY "PRINT" BUTTON)
+  // FULL-PAGE A4 RECEIPT PDF ("RECEIPT" TERMINOLOGY + FINAL CLEARED RECEIPT SUPPORT)
   // ==========================================
-  const handleDownloadVerifiedPdf = (bk) => {
-    const printWin = window.open('', '_blank', 'width=860,height=960');
+  const handleDownloadVerifiedPdf = (bk, isFinalCleared = false) => {
+    const printWin = window.open('', '_blank', 'width=860,height=1050');
     if (!printWin) return;
 
     const logoFullUrl = `${window.location.origin}/favicon.svg`;
     const verifyHash = `AQM-${bk.bookingId.replace('AQ-', '')}-${bk.paymentId.slice(-6).toUpperCase()}`;
     const totalWithBonus = (bk.quantity || 0) + (bk.bonusSeeds || 0);
+    const issueTime = bk.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const pcrLabels = (bk.batch?.pcrImages || []).map(img => img.label).join(', ') || 'Image-1';
+    const docHeading = isFinalCleared ? 'FINAL BALANCE CLEARED RECEIPT' : 'OFFICIAL SEED BOOKING RECEIPT';
 
     printWin.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>AquaMark_Verified_Certificate_${bk.bookingId}</title>
+        <title>AquaMark_Receipt_${bk.bookingId}</title>
         <style>
-          @page { size: A4; margin: 14mm; }
+          @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
           body { margin: 0; padding: 0; color: #0f172a; background: #fff; }
-          .sheet { border: 2px solid #0f766e; border-radius: 14px; padding: 28px; position: relative; overflow: hidden; }
-          .watermark { position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%) rotate(-24deg); font-size: 68px; font-weight: 900; color: rgba(13, 148, 136, 0.05); pointer-events: none; white-space: nowrap; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; }
-          .brand { display: flex; align-items: center; gap: 14px; }
-          .brand-logo { width: 46px; height: 46px; border-radius: 10px; border: 1px solid #99f6e4; padding: 6px; background: #f0fdfa; object-fit: contain; }
-          .brand-title { font-size: 24px; font-weight: 900; color: #0f766e; margin: 0; letter-spacing: -0.5px; }
+          .sheet { border: 2px solid #0f766e; border-radius: 12px; padding: 22px 24px; min-height: 274mm; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+          .watermark { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%) rotate(-24deg); font-size: 62px; font-weight: 900; color: rgba(13, 148, 136, 0.045); pointer-events: none; white-space: nowrap; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; }
+          .brand { display: flex; align-items: center; gap: 12px; }
+          .brand-logo { width: 44px; height: 44px; border-radius: 10px; border: 1px solid #99f6e4; padding: 5px; background: #f0fdfa; object-fit: contain; }
+          .brand-title { font-size: 22px; font-weight: 900; color: #0f766e; margin: 0; }
           .brand-sub { font-size: 11px; color: #475569; margin: 2px 0 0; }
-          .verified-stamp { background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; padding: 8px 14px; border-radius: 10px; text-align: right; }
-          .verified-stamp strong { display: block; font-size: 12px; letter-spacing: 0.5px; }
-          .verified-stamp span { font-size: 10px; font-family: monospace; }
-          .meta-bar { display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-top: 18px; font-size: 12px; }
-          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
-          .box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; }
-          .box-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #0f766e; letter-spacing: 0.6px; margin-bottom: 6px; }
-          .box p { margin: 3px 0; font-size: 12px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
-          th { background: #0f766e; color: #fff; text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; }
-          td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-          .totals { margin-top: 16px; margin-left: auto; width: 330px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; background: #f8fafc; font-size: 12px; }
-          .totals-row { display: flex; justify-content: space-between; padding: 4px 0; }
-          .totals-highlight { border-top: 1.5px solid #cbd5e1; margin-top: 6px; padding-top: 8px; font-weight: 800; font-size: 14px; color: #065f46; }
-          .protocol { margin-top: 18px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 12px 16px; font-size: 11px; color: #115e59; }
-          .footer { margin-top: 26px; padding-top: 14px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; color: #64748b; }
+          .verified-stamp { background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; padding: 7px 12px; border-radius: 10px; text-align: right; }
+          .verified-stamp strong { display: block; font-size: 11px; letter-spacing: 0.5px; }
+          .verified-stamp span { font-size: 10px; font-family: monospace; display: block; margin-top: 2px; }
+          .meta-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; margin-top: 14px; font-size: 11px; }
+          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+          .box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 14px; }
+          .box-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #0f766e; letter-spacing: 0.6px; margin-bottom: 5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+          .box p { margin: 3px 0; font-size: 11.5px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 11.5px; }
+          th { background: #0f766e; color: #fff; text-align: left; padding: 8px 10px; font-size: 10.5px; text-transform: uppercase; }
+          td { padding: 8px 10px; border: 1px solid #e2e8f0; }
+          .summary-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; margin-top: 14px; }
+          .totals { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; background: #f8fafc; font-size: 11.5px; }
+          .totals-row { display: flex; justify-content: space-between; padding: 3.5px 0; }
+          .totals-highlight { border-top: 1.5px solid #cbd5e1; margin-top: 5px; padding-top: 6px; font-weight: 800; font-size: 13px; color: #065f46; }
+          .protocol { margin-top: 14px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 10px 14px; font-size: 10.5px; color: #115e59; line-height: 1.45; }
+          .checklist { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 10.5px; color: #334155; }
+          .footer { margin-top: 18px; padding-top: 12px; border-top: 1.5px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10.5px; color: #475569; }
           .sig-box { text-align: center; }
-          .sig-line { width: 170px; border-top: 1px solid #475569; margin-bottom: 4px; }
+          .sig-line { width: 155px; border-top: 1px solid #334155; margin-bottom: 4px; }
         </style>
       </head>
       <body>
         <div class="sheet">
-          <div class="watermark">AQUA MARK VERIFIED</div>
-          <div class="header">
-            <div class="brand">
-              <img src="${logoFullUrl}" alt="Aqua Mark" class="brand-logo" />
-              <div>
-                <h1 class="brand-title">AQUA MARK</h1>
-                <p class="brand-sub">Official Aquaculture Seed Booking & Quality Certificate</p>
+          <div>
+            <div class="watermark">${isFinalCleared ? 'BALANCE CLEARED RECEIPT' : 'AQUA MARK RECEIPT'}</div>
+            <div class="header">
+              <div class="brand">
+                <img src="${logoFullUrl}" alt="Aqua Mark" class="brand-logo" />
+                <div>
+                  <h1 class="brand-title">AQUA MARK</h1>
+                  <p class="brand-sub">${docHeading}</p>
+                </div>
+              </div>
+              <div class="verified-stamp">
+                <strong>${isFinalCleared ? '100% BALANCE CLEARED' : 'VERIFIED RECEIPT'}</strong>
+                <span>Date: ${bk.date} • Time: ${issueTime}</span>
+                <span>Hash: ${verifyHash}</span>
               </div>
             </div>
-            <div class="verified-stamp">
-              <strong>100% VERIFIED</strong>
-              <span>Hash: ${verifyHash}</span>
+
+            <div class="meta-bar">
+              <div><strong>Receipt / Booking ID:</strong><br/>${bk.bookingId}</div>
+              <div><strong>Payment Ref:</strong><br/>${bk.paymentId}</div>
+              <div><strong>Generated At:</strong><br/>${bk.date} (${issueTime})</div>
+              <div><strong>Packing Schedule:</strong><br/>${bk.packingDate} (${bk.packingTimeSlot || 'All Day'})</div>
             </div>
-          </div>
 
-          <div class="meta-bar">
-            <div><strong>Booking ID:</strong> ${bk.bookingId}</div>
-            <div><strong>Payment Ref:</strong> ${bk.paymentId}</div>
-            <div><strong>Issue Date:</strong> ${bk.date}</div>
-            <div><strong>Packing Date:</strong> ${bk.packingDate}</div>
-          </div>
-
-          <div class="grid-2">
-            <div class="box">
-              <div class="box-title">Buyer / Farmer Details</div>
-              <p><strong>Name:</strong> ${bk.farmerName}</p>
-              <p><strong>Mobile:</strong> +91 ${bk.farmerPhone}</p>
-              <p><strong>Target Pond Salinity:</strong> ${bk.pondSalinity} PPT</p>
-              <p><strong>Logistics:</strong> ${bk.includeTransport ? 'Oxygen Van Included (+₹1,500)' : 'Self Pickup at Hatchery Gate'}</p>
+            <div class="grid-2">
+              <div class="box">
+                <div class="box-title">Buyer / Farmer Details</div>
+                <p><strong>Farmer Name:</strong> ${bk.farmerName}</p>
+                <p><strong>WhatsApp / Mobile:</strong> +91 ${bk.farmerPhone}</p>
+                <p><strong>Target Pond Salinity:</strong> ${bk.pondSalinity} PPT</p>
+                <p><strong>Pickup / Delivery:</strong> ${bk.includeTransport ? 'Oxygen Van Delivery (+₹1,500)' : 'Self Pickup'}</p>
+              </div>
+              <div class="box">
+                <div class="box-title">Seller (Hatchery) Details</div>
+                <p><strong>Hatchery Name:</strong> ${bk.batch?.realName}</p>
+                <p><strong>CAA Reg. Number:</strong> ${bk.batch?.caaLicense}</p>
+                <p><strong>Hatchery Phone:</strong> +91 ${bk.batch?.realPhone}</p>
+                <p><strong>Facility Address:</strong> ${bk.batch?.realAddress} (${bk.batch?.zone})</p>
+              </div>
             </div>
-            <div class="box">
-              <div class="box-title">Unlocked Hatchery (Seller) Details</div>
-              <p><strong>Hatchery:</strong> ${bk.batch?.realName}</p>
-              <p><strong>CAA Reg No:</strong> ${bk.batch?.caaLicense}</p>
-              <p><strong>Contact:</strong> +91 ${bk.batch?.realPhone}</p>
-              <p><strong>Address:</strong> ${bk.batch?.realAddress}</p>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Batch & Species</th>
+                  <th>Stage</th>
+                  <th>Hatchery PPT</th>
+                  <th>Booked Qty</th>
+                  <th>Bonus (+${bk.batch?.bonusPercent}%)</th>
+                  <th>Total Packing Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>${bk.batch?.id} — ${bk.batch?.species}</strong><br/><span style="font-size:10px;color:#64748b;">PCR Lab Attachments: ${pcrLabels}</span></td>
+                  <td><strong>${bk.batch?.plStage}</strong></td>
+                  <td>${bk.batch?.salinity} PPT</td>
+                  <td>${(bk.quantity || 0).toLocaleString('en-IN')} PL</td>
+                  <td style="color:#059669;font-weight:700;">+${(bk.bonusSeeds || 0).toLocaleString('en-IN')} PL</td>
+                  <td><strong>${totalWithBonus.toLocaleString('en-IN')} PL</strong></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="summary-grid">
+              <div class="box">
+                <div class="box-title">Salinity Acclimatization & Packing Schedule</div>
+                <p><strong>Source Tank Salinity:</strong> ${bk.batch?.salinity} PPT</p>
+                <p><strong>Destination Pond Salinity:</strong> ${bk.pondSalinity} PPT</p>
+                <p><strong>Variance:</strong> ${Math.abs((bk.batch?.salinity || 15) - (Number(bk.pondSalinity) || 15))} PPT (Adjust 1 PPT / 4 hrs)</p>
+                <p><strong>GPS Tank Tag:</strong> ${bk.batch?.gpsCoords || 'Verified Coastal Zone'}</p>
+              </div>
+              <div class="totals">
+                <div class="totals-row"><span>Total Order Value:</span><span>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</span></div>
+                <div class="totals-row"><span>Advance Paid (6%):</span><span>₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
+                ${isFinalCleared
+        ? `<div class="totals-row totals-highlight"><span>Remaining 94% Paid at Packing:</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} (CLEARED)</span></div>
+                     <div class="totals-row" style="margin-top:4px;font-weight:800;color:#065f46;"><span>Pending Balance Due:</span><span>₹0 (PAID IN FULL)</span></div>`
+        : `<div class="totals-row totals-highlight"><span>Balance Payable at Packing (94%):</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</span></div>`
+      }
+              </div>
             </div>
-          </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Seed Species & Stage</th>
-                <th>Hatchery Salinity</th>
-                <th>Booked Qty</th>
-                <th>Free Bonus (+${bk.batch?.bonusPercent}%)</th>
-                <th>Total Packing Qty</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>${bk.batch?.species} (${bk.batch?.plStage})</strong><br/><span style="font-size:10px;color:#64748b;">PCR Report: ${bk.batch?.pcrFileName || 'Verified Negative'}</span></td>
-                <td>${bk.batch?.salinity} PPT</td>
-                <td>${(bk.quantity || 0).toLocaleString('en-IN')} PL</td>
-                <td style="color:#059669;font-weight:700;">+${(bk.bonusSeeds || 0).toLocaleString('en-IN')} PL</td>
-                <td><strong>${totalWithBonus.toLocaleString('en-IN')} PL</strong></td>
-              </tr>
-            </tbody>
-          </table>
+            <div class="protocol">
+              <strong>Mandatory Hatchery Quality & Bio-Security Terms:</strong><br/>
+              1. Hatchery certifies that the above batch is SPF (Specific Pathogen Free) for WSSV, EHP, IHHNV, and TSV as per attached PCR reports (${pcrLabels}).<br/>
+              2. Oxygen packing density must not exceed 1,000 PL per liter for transit durations exceeding 4 hours.<br/>
+              3. ${isFinalCleared
+        ? `Full settlement confirmed by Hatchery Owner on ${bk.clearedAt || bk.date}. No further payment due.`
+        : 'Remaining 94% balance is payable directly at packing upon verifying live seed count and vigor.'}
+            </div>
 
-          <div class="totals">
-            <div class="totals-row"><span>Total Order Value:</span><span>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</span></div>
-            <div class="totals-row totals-highlight"><span>Advance Paid:</span><span>₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
-            <div class="totals-row" style="margin-top:4px;font-weight:700;"><span>Balance Payable at Packing Gate:</span><span>₹${(bk.balanceAtGate || 0).toLocaleString('en-IN')}</span></div>
-          </div>
-
-          <div class="protocol">
-            <strong>Mandatory Quality & Acclimatization Protocol:</strong><br/>
-            1. Hatchery must acclimatize seed from <strong>${bk.batch?.salinity} PPT</strong> to buyer pond salinity <strong>${bk.pondSalinity} PPT</strong> prior to oxygen packing.<br/>
-            2. Buyer must verify seed activity and count at packing before final confirmation.
+            <div class="checklist">
+              <strong>Hatchery Dispatch Verification Checklist:</strong>
+              [ ✓ ] CAA License Verified    [ ✓ ] PCR Lab Images Attached (${pcrLabels})    [ ✓ ] 6% Advance Paid    [ ${isFinalCleared ? '✓' : ' '} ] Final Balance Cleared at Packing
+            </div>
           </div>
 
           <div class="footer">
-            <div>
-              <strong>Digitally Verified by Aqua Mark Platform</strong><br/>
-              GPS Tank Tag: ${bk.batch?.gpsCoords || 'Verified Coastal Zone'}
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <span>Farmer / Buyer Signature</span>
+            </div>
+            <div style="text-align:center;">
+              <strong>Digitally Verified Receipt by Aqua Mark</strong><br/>
+              Timestamp: ${bk.date} ${issueTime}
             </div>
             <div class="sig-box">
               <div class="sig-line"></div>
@@ -1141,28 +1383,14 @@ function AquaMarkApp() {
     else setSavedBatchIds([...savedBatchIds, id]);
   };
 
-  // Advanced Harvest, Feed & Profit Calculations
-  const totalAcres = (Number(calcPonds) || 1) * (Number(calcAcresPerPond) || 1);
-  const totalSeedsNeeded = Math.round(totalAcres * 4046.86 * (Number(calcDensity) || 40));
-  const survivedPrawns = Math.round(totalSeedsNeeded * ((Number(calcSurvival) || 85) / 100));
-  const harvestKg = Math.round(survivedPrawns / (Number(calcTargetCount) || 30));
-  const harvestTons = (harvestKg / 1000).toFixed(2);
-  const totalFeedKg = Math.round(harvestKg * (Number(calcFcr) || 1.4));
-  const totalFeedBags = Math.ceil(totalFeedKg / 25);
-  const grossRevenue = harvestKg * (Number(calcMarketRatePerKg) || 390);
-  const estSeedExpense = Math.round(totalSeedsNeeded * 0.43);
-  const estFeedExpense = totalFeedKg * (Number(calcFeedCostPerKg) || 88);
-  const estNetProfit = grossRevenue - estSeedExpense - estFeedExpense;
-
   const brokerHeldTotal = bookings
-    .filter(b => b.escrow?.payoutStatus === 'ON_HOLD')
-    .reduce((sum, b) => sum + (b.escrow?.brokerAmount || 0), 0);
+    .filter(b => b.settlement?.status === 'ADVANCE_HOLD')
+    .reduce((sum, b) => sum + (b.settlement?.brokerAmount || 0), 0);
 
   const brokerReleasedTotal = bookings
-    .filter(b => b.escrow?.payoutStatus === 'RELEASED')
-    .reduce((sum, b) => sum + (b.escrow?.brokerAmount || 0), 0);
+    .filter(b => b.settlement?.status === 'BALANCE_CLEARED')
+    .reduce((sum, b) => sum + (b.settlement?.brokerAmount || 0), 0);
 
-  // Filtered & Sorted Batches
   const filteredAndSortedBatches = batches
     .filter(b => {
       const q = searchQuery.toLowerCase().trim();
@@ -1183,14 +1411,13 @@ function AquaMarkApp() {
       return (b.rating || 0) - (a.rating || 0);
     });
 
-  // Dynamic Zones list (includes any custom zones added by sellers)
   const availableZones = Array.from(new Set([
     ...COASTAL_ZONES.filter(z => z !== 'OTHER_CUSTOM'),
     ...batches.map(b => b.zone).filter(Boolean)
   ]));
 
   const renderFilterSortBar = (isBuyerView = false) => (
-    <div className="bg-white rounded-2xl p-3.5 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+    <div className={`rounded-2xl p-3.5 border flex flex-wrap items-center justify-between gap-3 ${cardBg}`}>
       <div className="relative flex-1 min-w-[200px]">
         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
         <input
@@ -1198,21 +1425,21 @@ function AquaMarkApp() {
           placeholder={t.searchPlaceholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 text-xs select-text focus:outline-none focus:border-teal-600"
+          className={`w-full border rounded-xl pl-9 pr-3 py-1.5 text-xs select-text focus:outline-none ${inputCls}`}
         />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <select value={zoneFilter} onChange={(e) => setZoneFilter(e.target.value)} className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold">
+        <select value={zoneFilter} onChange={(e) => setZoneFilter(e.target.value)} className={`border rounded-xl px-3 py-1.5 text-xs font-semibold ${inputCls}`}>
           <option value="ALL">{t.allZones}</option>
           {availableZones.map(z => <option key={z} value={z}>{z}</option>)}
         </select>
-        <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold">
+        <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={`border rounded-xl px-3 py-1.5 text-xs font-semibold ${inputCls}`}>
           <option value="ALL">{t.allStages}</option>
           {SEED_STAGE_OPTIONS.filter(s => s !== 'OTHER_CUSTOM').map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <div className="inline-flex items-center gap-1 border border-slate-300 rounded-xl px-2.5 py-1.5 bg-slate-50">
-          <ArrowUpDown className="w-3.5 h-3.5 text-teal-700" />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none">
+        <div className={`inline-flex items-center gap-1 border rounded-xl px-2.5 py-1.5 ${subCardBg}`}>
+          <ArrowUpDown className="w-3.5 h-3.5 text-teal-600" />
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent text-xs font-bold focus:outline-none">
             <option value="RATING">{t.sortRating}</option>
             <option value="PRICE_LOW">{t.sortPriceLow}</option>
             <option value="SALINITY_LOW">{t.sortSalinity}</option>
@@ -1223,7 +1450,7 @@ function AquaMarkApp() {
           <button
             type="button"
             onClick={() => setOnlySavedFilter(!onlySavedFilter)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${onlySavedFilter ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-white border-slate-300 text-slate-700'
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${onlySavedFilter ? 'bg-rose-500/15 border-rose-400 text-rose-500' : subCardBg
               }`}
           >
             <Heart className={`w-3.5 h-3.5 ${onlySavedFilter ? 'fill-rose-500 text-rose-500' : ''}`} /> {t.onlySaved}
@@ -1233,9 +1460,9 @@ function AquaMarkApp() {
           <button
             type="button"
             onClick={() => setShowCompareModal(true)}
-            className="bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+            className="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
           >
-            <Scale className="w-3.5 h-3.5 text-emerald-400" /> {t.compareBtn} ({compareIds.length})
+            <Scale className="w-3.5 h-3.5" /> {t.compareBtn} ({compareIds.length})
           </button>
         )}
       </div>
@@ -1243,43 +1470,53 @@ function AquaMarkApp() {
   );
 
   // =========================================================================
-  // SCREEN 1: OTP LOGIN PAGE
+  // SCREEN 1: OTP LOGIN PAGE (WITH DARK MODE TOGGLE)
   // =========================================================================
   if (!currentUser) {
     const activeRoleMeta = t.roles[loginRole] || t.roles.buyer;
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col justify-between font-sans text-slate-900 select-none">
+      <div className={`min-h-screen flex flex-col justify-between font-sans select-none transition-colors ${pageBg}`}>
         {toast && (
           <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> {toast}
           </div>
         )}
 
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+        <header className={`border-b px-6 py-4 flex items-center justify-between ${cardBg}`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
               <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-lg font-extrabold tracking-tight text-slate-900 block leading-none">Aqua Mark</span>
-              <span className="text-[11px] text-slate-500 font-medium">{t.brandSub}</span>
+              <span className="text-lg font-extrabold tracking-tight block leading-none">Aqua Mark</span>
+              <span className="text-[11px] opacity-60 font-medium">{t.brandSub}</span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setLang(lang === 'te' ? 'en' : 'te')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 cursor-pointer"
-          >
-            <Globe className="w-3.5 h-3.5 text-teal-600" />
-            {lang === 'te' ? 'English' : 'తెలుగు'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+              title="Toggle Dark Mode"
+            >
+              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang(lang === 'te' ? 'en' : 'te')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer ${subCardBg}`}
+            >
+              <Globe className="w-3.5 h-3.5 text-teal-600" />
+              {lang === 'te' ? 'English' : 'తెలుగు'}
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-lg w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-8 space-y-6">
+          <div className={`max-w-lg w-full rounded-3xl shadow-sm border p-8 space-y-6 ${cardBg}`}>
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t.selectRoleTitle}</h2>
-              <p className="text-xs text-slate-500 mt-1">{t.selectRoleSub}</p>
+              <h2 className="text-2xl font-extrabold tracking-tight">{t.selectRoleTitle}</h2>
+              <p className="text-xs opacity-60 mt-1">{t.selectRoleSub}</p>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -1297,16 +1534,16 @@ function AquaMarkApp() {
                     type="button"
                     onClick={() => { setLoginRole(item.id); setOtpSent(false); }}
                     className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${active
-                      ? 'border-teal-600 bg-teal-50/70 ring-2 ring-teal-600/20'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      ? 'border-teal-600 bg-teal-600/10 ring-2 ring-teal-600/20'
+                      : subCardBg
                       }`}
                   >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${active ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${active ? 'bg-teal-600 text-white' : 'bg-slate-200/70 text-slate-700'}`}>
                       <IconComp className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-extrabold text-slate-900">{meta.title}</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{meta.desc}</div>
+                      <div className="text-xs font-extrabold">{meta.title}</div>
+                      <div className="text-[10px] opacity-70 mt-0.5 leading-tight">{meta.desc}</div>
                     </div>
                   </button>
                 );
@@ -1316,20 +1553,20 @@ function AquaMarkApp() {
             {!otpSent ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">{t.nameLabels[loginRole]}</label>
+                  <label className="text-xs font-bold block mb-1.5">{t.nameLabels[loginRole]}</label>
                   <input
                     required
                     type="text"
                     placeholder={t.namePlaceholders[loginRole]}
                     value={loginName}
                     onChange={(e) => setLoginName(e.target.value)}
-                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm select-text focus:outline-none focus:border-teal-600"
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text focus:outline-none ${inputCls}`}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">{t.mobileLabel}</label>
+                  <label className="text-xs font-bold block mb-1.5">{t.mobileLabel}</label>
                   <div className="relative flex items-center">
-                    <span className="absolute left-3.5 text-sm font-bold text-slate-500">+91</span>
+                    <span className="absolute left-3.5 text-sm font-bold opacity-60">+91</span>
                     <input
                       required
                       type="tel"
@@ -1337,9 +1574,9 @@ function AquaMarkApp() {
                       placeholder="9876543210"
                       value={loginPhone}
                       onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                      className="w-full border border-slate-300 rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none focus:border-teal-600"
+                      className={`w-full border rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none ${inputCls}`}
                     />
-                    <Smartphone className="w-4 h-4 text-slate-400 absolute right-3.5" />
+                    <Smartphone className="w-4 h-4 opacity-50 absolute right-3.5" />
                   </div>
                 </div>
                 <button
@@ -1351,14 +1588,14 @@ function AquaMarkApp() {
               </form>
             ) : (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-center">
-                  <p className="text-xs text-slate-700">{t.otpSentMsg} <b>+91 {loginPhone}</b></p>
-                  <p className="text-xs font-bold text-emerald-900 mt-1">
-                    OTP Code: <span className="bg-white px-2.5 py-0.5 rounded-md border border-emerald-300 font-mono tracking-widest select-text">{generatedOtp}</span>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 text-center">
+                  <p className="text-xs">{t.otpSentMsg} <b>+91 {loginPhone}</b></p>
+                  <p className="text-xs font-bold text-teal-600 mt-1">
+                    OTP Code: <span className={`px-2.5 py-0.5 rounded-md border font-mono tracking-widest select-text ${cardBg}`}>{generatedOtp}</span>
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">{t.enterOtpLabel}</label>
+                  <label className="text-xs font-bold block mb-1.5">{t.enterOtpLabel}</label>
                   <input
                     ref={otpInputRef}
                     autoFocus
@@ -1368,14 +1605,14 @@ function AquaMarkApp() {
                     placeholder="0000"
                     value={enteredOtp}
                     onChange={(e) => setEnteredOtp(e.target.value.replace(/\D/g, ''))}
-                    className="w-full border-2 border-teal-600 rounded-xl py-2.5 text-center text-lg font-extrabold tracking-[0.5em] select-text focus:outline-none"
+                    className={`w-full border-2 border-teal-600 rounded-xl py-2.5 text-center text-lg font-extrabold tracking-[0.5em] select-text focus:outline-none ${inputCls}`}
                   />
                 </div>
                 <div className="flex gap-2.5">
                   <button
                     type="button"
                     onClick={() => setOtpSent(false)}
-                    className="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    className={`px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}
                   >
                     {t.back}
                   </button>
@@ -1391,14 +1628,13 @@ function AquaMarkApp() {
           </div>
         </div>
 
-        <footer className="text-center py-4 text-[11px] text-slate-400">
+        <footer className="text-center py-4 text-[11px] opacity-50">
           Aqua Mark © 2026 • CAA Verified Hatchery Network
         </footer>
       </div>
     );
   }
 
-  // Seller's Fixed Single Hatchery Profile + Strict Isolated Orders + Private Reviews
   const myFixedHatchery = currentUser.role === 'seller' ? hatcheryProfiles[currentUser.phone] : null;
   const myOwnedBatches = currentUser.role === 'seller' && myFixedHatchery
     ? batches.filter(b => b.ownerPhone === currentUser.phone)
@@ -1408,8 +1644,13 @@ function AquaMarkApp() {
     : [];
   const myPrivateReviews = myOwnedBatches.flatMap(b => (b.reviews || []).map(r => ({ ...r, batchId: b.id, plStage: b.plStage })));
 
+  const myFixedBroker = currentUser.role === 'mediator' ? brokerProfiles[currentUser.phone] : null;
+  const myBrokerBookings = currentUser.role === 'mediator'
+    ? bookings.filter(bk => bk.bookedByPhone === currentUser.phone && bk.bookedByRole === 'mediator')
+    : [];
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans select-none">
+    <div className={`min-h-screen font-sans select-none transition-colors ${pageBg}`}>
       {toast && (
         <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 max-w-md">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -1417,8 +1658,8 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* TOP NAVBAR */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+      {/* TOP NAVBAR WITH DARK MODE TOGGLE */}
+      <header className={`border-b sticky top-0 z-40 ${cardBg}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
@@ -1426,20 +1667,28 @@ function AquaMarkApp() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-extrabold tracking-tight text-slate-900">Aqua Mark</h1>
-                <span className="text-[11px] bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-full font-bold">
+                <h1 className="text-base font-extrabold tracking-tight">Aqua Mark</h1>
+                <span className="text-[11px] bg-teal-500/15 text-teal-600 border border-teal-500/30 px-2.5 py-0.5 rounded-full font-bold">
                   {t.portalBadges[currentUser.role] || currentUser.role}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">{currentUser.name} • +91 {currentUser.phone}</p>
+              <p className="text-xs opacity-60">{currentUser.name} • +91 {currentUser.phone}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
             <button
               type="button"
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+              title="Toggle Dark Mode"
+            >
+              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
+            <button
+              type="button"
               onClick={() => setLang(lang === 'te' ? 'en' : 'te')}
-              className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${subCardBg}`}
             >
               <Globe className="w-3.5 h-3.5 text-teal-600" />
               {lang === 'te' ? 'English' : 'తెలుగు'}
@@ -1447,7 +1696,7 @@ function AquaMarkApp() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> {t.logout}
             </button>
@@ -1461,10 +1710,9 @@ function AquaMarkApp() {
            ========================================================= */}
         {currentUser.role === 'buyer' && (
           <>
-            {/* Live Coastal Count Price Ticker */}
             <div className="bg-slate-900 text-white rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="font-bold text-emerald-400 inline-flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4" /> AP Farmgate Count Rates:
+                <TrendingUp className="w-4 h-4" /> {t.tickerTitle}
               </span>
               <div className="flex flex-wrap gap-4 font-mono text-[11px]">
                 <span>30 Count: <b className="text-emerald-300">₹395/kg</b></span>
@@ -1474,41 +1722,40 @@ function AquaMarkApp() {
               </div>
             </div>
 
-            {/* Buyer Sub-Tabs */}
-            <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 w-fit">
+            <div className={`flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border w-fit ${cardBg}`}>
               {[
                 { id: 'marketplace', label: t.tabMarketplace, icon: Building2 },
                 { id: 'bookings', label: `${t.tabBookings} (${bookings.filter(b => b.farmerPhone === currentUser.phone).length})`, icon: FileText },
                 { id: 'analytics', label: t.tabAnalytics, icon: Calculator },
+                { id: 'waterlab', label: t.tabWaterLab, icon: Droplets },
                 { id: 'guide', label: t.tabGuide, icon: Calendar }
               ].map(tab => {
                 const Icon = tab.icon;
-                const hasPackingReady = tab.id === 'bookings' && bookings.some(b => b.farmerPhone === currentUser.phone && b.packingStatus === 'PACKING_DONE_BY_SELLER');
+                const hasClearedReceipt = tab.id === 'bookings' && bookings.some(b => b.farmerPhone === currentUser.phone && b.settlement?.status === 'BALANCE_CLEARED');
                 return (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => setBuyerTab(tab.id)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer relative ${buyerTab === tab.id ? 'bg-teal-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+                    className={`px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer relative ${buyerTab === tab.id ? 'bg-teal-600 text-white' : 'opacity-75 hover:opacity-100'
                       }`}
                   >
                     <Icon className="w-3.5 h-3.5" /> {tab.label}
-                    {hasPackingReady && <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />}
+                    {hasClearedReceipt && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
                   </button>
                 );
               })}
             </div>
 
-            {/* TAB 1: MARKETPLACE */}
             {buyerTab === 'marketplace' && (
               <>
                 {renderFilterSortBar(true)}
 
                 {filteredAndSortedBatches.length === 0 ? (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-2">
-                    <Building2 className="w-10 h-10 text-slate-300 mx-auto" />
-                    <h3 className="text-base font-extrabold text-slate-800">{t.emptyMarketTitle}</h3>
-                    <p className="text-xs text-slate-500 max-w-md mx-auto">{t.emptyMarketSub}</p>
+                  <div className={`rounded-2xl border p-12 text-center space-y-2 ${cardBg}`}>
+                    <Building2 className="w-10 h-10 opacity-30 mx-auto" />
+                    <h3 className="text-base font-extrabold">{t.emptyMarketTitle}</h3>
+                    <p className="text-xs opacity-60 max-w-md mx-auto">{t.emptyMarketSub}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1516,92 +1763,105 @@ function AquaMarkApp() {
                       const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone);
                       const isComparing = compareIds.includes(batch.id);
                       const isSaved = savedBatchIds.includes(batch.id);
+                      const isSoldOut = (batch.availableStock || 0) <= 0;
+
                       return (
-                        <div key={batch.id} className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-400 transition">
-                          <div
-                            onClick={() => setInspectedBatch(batch)}
-                            className="p-5 space-y-4 cursor-pointer"
-                          >
+                        <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg}`}>
+                          <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                  <span className="bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                                     <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
                                   </span>
-                                  <span className="text-xs font-semibold text-slate-500">{batch.zone}</span>
-                                  <span className="text-xs font-bold text-amber-600 inline-flex items-center gap-0.5">
+                                  <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
+                                  <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
                                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating} ({batch.reviewCount || 0})
                                   </span>
+                                  {isSoldOut && (
+                                    <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
+                                  )}
                                 </div>
-                                <h3 className="text-base font-extrabold text-slate-900 mt-2 flex items-center gap-2">
+                                <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
                                   {isUnlocked ? (
-                                    <span className="text-teal-700 inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-600" /> {batch.realName}</span>
+                                    <span className="text-teal-500 inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-500" /> {batch.realName}</span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 text-slate-400" /> {batch.hatcheryCode}</span>
+                                    <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode}</span>
                                   )}
                                 </h3>
-                                <p className="text-xs text-slate-500 font-medium mt-0.5">{batch.species}</p>
+                                <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species}</p>
                                 {isUnlocked ? (
-                                  <p className="text-xs text-slate-600 mt-0.5">{batch.realAddress} • {batch.realPhone}</p>
+                                  <p className="text-xs opacity-80 mt-0.5">{batch.realAddress} • +91 {batch.realPhone}</p>
                                 ) : (
-                                  <p className="text-[11px] text-slate-400 mt-0.5">{t.unlockHint}</p>
+                                  <p className="text-[11px] opacity-50 mt-0.5">{t.unlockHint}</p>
                                 )}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
-                                  className="p-2 rounded-xl border border-slate-200 hover:bg-rose-50 cursor-pointer"
+                                  className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
                                 >
-                                  <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+                                  <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-50'}`} />
                                 </button>
                                 <div className="text-right">
-                                  <div className="text-2xl font-black text-slate-900">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
-                                  <div className="text-[11px] text-slate-500">{t.perSeed}</div>
+                                  <div className="text-2xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
+                                  <div className="text-[11px] opacity-60">{t.perSeed}</div>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-4 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                              <div><span className="text-[11px] text-slate-400 block">{t.stage}</span><span className="text-sm font-bold text-slate-800">{batch.plStage}</span></div>
-                              <div><span className="text-[11px] text-slate-400 block">{t.salinity}</span><span className="text-sm font-bold text-teal-700">{batch.salinity} PPT</span></div>
-                              <div><span className="text-[11px] text-slate-400 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-600">+{batch.bonusPercent}%</span></div>
-                              <div><span className="text-[11px] text-slate-400 block">{t.stock}</span><span className="text-sm font-bold text-slate-800">{((batch.availableStock || 0) / 100000).toFixed(1)}L</span></div>
+                            <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
+                              <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
+                              <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
+                              <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
+                              <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
                             </div>
 
-                            <div className="bg-teal-50/60 border border-teal-200/80 rounded-xl p-2.5 flex items-center justify-between text-xs text-teal-900">
-                              <span className="inline-flex items-center gap-1.5 font-bold">
-                                <Eye className="w-4 h-4 text-teal-600" /> {t.inspectBtn}
+                            <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
+                              <span className="font-semibold">
+                                📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'})
                               </span>
-                              <span className="text-[11px] font-mono text-teal-700">{batch.pcrFileName}</span>
+                              <span className="inline-flex items-center gap-1 font-bold text-teal-500">
+                                <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                              </span>
                             </div>
                           </div>
 
-                          <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center gap-2">
+                          <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
                             <button
                               type="button"
                               onClick={() => handleRequestSample(batch)}
-                              className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 inline-flex items-center gap-1 cursor-pointer"
+                              className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${cardBg}`}
                             >
                               <FlaskConical className="w-3.5 h-3.5 text-teal-600" /> {t.sampleBtn}
                             </button>
                             <button
                               type="button"
                               onClick={() => toggleCompareBatch(batch.id)}
-                              className={`px-3 py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${isComparing ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'
+                              className={`px-3 py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${isComparing ? 'bg-teal-600 text-white border-teal-600' : cardBg
                                 }`}
                             >
                               {isComparing ? t.comparingBtn : t.compareBtn}
                             </button>
                             <button
                               type="button"
+                              disabled={isSoldOut}
                               onClick={() => {
-                                setBookingForm(prev => ({ ...prev, farmerName: currentUser.name, farmerPhone: currentUser.phone, brokerMarginPaise: 0 }));
+                                setBookingForm(prev => ({
+                                  ...prev,
+                                  farmerName: currentUser.name,
+                                  farmerPhone: currentUser.phone,
+                                  quantity: Math.min(200000, batch.availableStock || 0),
+                                  packingDate: batch.availableDate || prev.packingDate,
+                                  packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                  brokerMarginPaise: 0
+                                }));
                                 setSelectedBatch(batch);
                               }}
-                              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                             >
-                              {t.bookSlotBtn} <ChevronRight className="w-4 h-4" />
+                              {isSoldOut ? t.soldOutBadge : t.bookSlotBtn} {!isSoldOut && <ChevronRight className="w-4 h-4" />}
                             </button>
                           </div>
                         </div>
@@ -1612,75 +1872,81 @@ function AquaMarkApp() {
               </>
             )}
 
-            {/* TAB 2: BUYER BOOKINGS & PACKING COMPLETE NOTIFICATION + 1-5 STAR RATING & FEEDBACK */}
+            {/* TAB 2: BUYER BOOKINGS & RECEIPTS (CLICKABLE CARDS FOR FULL TRANSACTION DETAILS) */}
             {buyerTab === 'bookings' && (
-              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                <h3 className="text-base font-bold flex items-center gap-2">
                   <FileText className="w-5 h-5 text-teal-600" /> {t.myBookingsTitle}
                 </h3>
                 {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
-                  <p className="text-xs text-slate-500">{t.noBookingsYet}</p>
+                  <p className="text-xs opacity-60">{t.noBookingsYet}</p>
                 ) : (
                   <div className="space-y-4">
                     {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
                       const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
+                      const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+
                       return (
-                        <div key={bk.bookingId} className="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50/60">
-                          {/* PACKING COMPLETED NOTIFICATION BANNER FROM HATCHERY */}
-                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && (
-                            <div className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between">
-                              <span>{t.packingReadyAlert}</span>
+                        <div
+                          key={bk.bookingId}
+                          onClick={() => setInspectedBuyerBooking(bk)}
+                          className={`border hover:border-teal-500 rounded-2xl p-4 space-y-3 transition cursor-pointer ${subCardBg}`}
+                        >
+                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && (
+                            <div className="bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                              {t.packingReadyAlert}
                             </div>
                           )}
 
                           <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono font-bold text-xs text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">{bk.bookingId}</span>
-                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${bk.escrow?.payoutStatus === 'RELEASED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/30">{bk.bookingId}</span>
+                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
                                   }`}>
-                                  {bk.escrow?.payoutStatus === 'RELEASED' ? t.escrowReleasedBadge : t.escrowHoldBadge}
+                                  {isFinalCleared ? t.clearedSettlementBadge : t.pendingSettlementBadge}
                                 </span>
                               </div>
-                              <p className="text-sm font-bold text-slate-900">{bk.batch?.realName} • +91 {bk.batch?.realPhone}</p>
-                              <p className="text-xs text-slate-600">
-                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: {bk.packingDate} • Paid: ₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}
+                              <p className="text-sm font-bold">{bk.batch?.realName} • +91 {bk.batch?.realPhone}</p>
+                              <p className="text-xs opacity-75">
+                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b> ({bk.packingTimeSlot || 'All Day'})
+                              </p>
+                              <p className="text-xs">
+                                <b>{t.paidLabel}: ₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> •{' '}
+                                {isFinalCleared
+                                  ? <span className="text-emerald-500 font-bold">Remaining 94% (₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}) Cleared ✓</span>
+                                  : <span>{t.balancePackingLabel}: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
                               </p>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
-                              {bk.escrow?.payoutStatus !== 'RELEASED' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleBuyerApprovePackingRelease(bk.bookingId)}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  <CheckSquare className="w-4 h-4" /> {t.approvePackingBtn}
-                                </button>
-                              )}
-
+                            <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <button type="button" onClick={() => openWhatsAppMessage(bk.batch?.realPhone, `AquaMark Booking ID: ${bk.bookingId} (${bk.quantity} PL)`)} className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer">
                                 <Send className="w-3.5 h-3.5" /> WhatsApp
                               </button>
-                              <button type="button" onClick={() => handleDownloadVerifiedPdf(bk)} className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
-                                <Printer className="w-3.5 h-3.5 text-emerald-400" /> {t.invoiceBtn}
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadVerifiedPdf(bk, isFinalCleared)}
+                                className={`text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer ${isFinalCleared ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900'
+                                  }`}
+                              >
+                                <Printer className="w-3.5 h-3.5" /> {isFinalCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
                               </button>
                             </div>
                           </div>
 
-                          {/* 1 TO 5 STAR RATING + WRITTEN FEEDBACK (SENT PRIVATELY TO HATCHERY OWNER) */}
-                          {bk.escrow?.payoutStatus === 'RELEASED' && (
-                            <div className="pt-3 border-t border-slate-200">
+                          {/* 1 TO 5 STAR RATING + WRITTEN FEEDBACK (AFTER FINAL BALANCE CLEARED) */}
+                          {isFinalCleared && (
+                            <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
                               {!bk.rated ? (
-                                <div className="flex flex-wrap items-center gap-2.5 bg-white p-3 rounded-xl border border-slate-200">
-                                  <span className="text-xs font-bold text-slate-700">{t.rateSeedLabel}</span>
+                                <div className={`flex flex-wrap items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
+                                  <span className="text-xs font-bold">{t.rateSeedLabel}</span>
                                   <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map(star => (
                                       <button
                                         key={star}
                                         type="button"
                                         onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
-                                        className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : 'bg-slate-50 border-slate-200 text-slate-500'
+                                        className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg
                                           }`}
                                       >
                                         {star}★
@@ -1689,10 +1955,10 @@ function AquaMarkApp() {
                                   </div>
                                   <input
                                     type="text"
-                                    placeholder="Write private feedback for Hatchery Owner..."
+                                    placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write private feedback for Hatchery...'}
                                     value={draft.comment}
                                     onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
-                                    className="flex-1 min-w-[180px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs select-text"
+                                    className={`flex-1 min-w-[180px] border rounded-xl px-3 py-1.5 text-xs select-text ${inputCls}`}
                                   />
                                   <button
                                     type="button"
@@ -1703,7 +1969,7 @@ function AquaMarkApp() {
                                   </button>
                                 </div>
                               ) : (
-                                <div className="text-xs text-emerald-700 font-bold">
+                                <div className="text-xs text-emerald-500 font-bold">
                                   ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
                                 </div>
                               )}
@@ -1717,115 +1983,166 @@ function AquaMarkApp() {
               </div>
             )}
 
-            {/* TAB 3: ADVANCED HARVEST, FEED & PROFIT ESTIMATOR */}
+            {/* TAB 3: HARVEST, FEED & PROFIT ESTIMATOR WITH CALCULATE BUTTON */}
             {buyerTab === 'analytics' && (
-              <div className="bg-white rounded-2xl p-6 shadow-xs border border-slate-200 space-y-6">
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-teal-600" /> {t.calcTitle}
+              <div className={`rounded-2xl p-6 shadow-xs border space-y-6 ${cardBg}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-base font-extrabold flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-teal-600" /> {t.tabAnalytics}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">{t.calcSub}</p>
+                  <button
+                    type="button"
+                    onClick={handleRunEstimatorCalculate}
+                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Calculator className="w-4 h-4" /> {t.calculateBtn}
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Number of Ponds</label>
-                    <input type="number" min="1" value={calcPonds} onChange={(e) => setCalcPonds(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'చెరువుల సంఖ్య (Ponds)' : 'Number of Ponds'}</label>
+                    <input type="number" min="1" value={calcInputs.ponds} onChange={(e) => setCalcInputs({ ...calcInputs, ponds: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Acres per Pond</label>
-                    <input type="number" step="0.5" min="0.5" value={calcAcresPerPond} onChange={(e) => setCalcAcresPerPond(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'ఒక్క చెరువు విస్తీర్ణం (Acres)' : 'Acres per Pond'}</label>
+                    <input type="number" step="0.5" min="0.5" value={calcInputs.acresPerPond} onChange={(e) => setCalcInputs({ ...calcInputs, acresPerPond: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Stocking Density (/m²)</label>
-                    <select value={calcDensity} onChange={(e) => setCalcDensity(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold">
-                      <option value={30}>30 / m² (Low)</option>
-                      <option value={40}>40 / m² (Standard)</option>
-                      <option value={50}>50 / m² (Semi-Intensive)</option>
-                      <option value={60}>60 / m² (High)</option>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'సాంద్రత (/m²)' : 'Stocking Density (/m²)'}</label>
+                    <select value={calcInputs.density} onChange={(e) => setCalcInputs({ ...calcInputs, density: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
+                      <option value={30}>30 / m²</option>
+                      <option value={40}>40 / m²</option>
+                      <option value={50}>50 / m²</option>
+                      <option value={60}>60 / m²</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Expected Survival (%)</label>
-                    <input type="number" min="40" max="100" value={calcSurvival} onChange={(e) => setCalcSurvival(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'బతికే శాతం (Survival %)' : 'Expected Survival (%)'}</label>
+                    <input type="number" min="40" max="100" value={calcInputs.survival} onChange={(e) => setCalcInputs({ ...calcInputs, survival: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Target Harvest Count (/kg)</label>
-                    <select value={calcTargetCount} onChange={(e) => setCalcTargetCount(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold">
-                      <option value={25}>25 Count (Big)</option>
-                      <option value={30}>30 Count (Standard)</option>
-                      <option value={40}>40 Count (Medium)</option>
-                      <option value={50}>50 Count (Early)</option>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'పట్టుబడి కౌంట్ (/kg)' : 'Target Count (/kg)'}</label>
+                    <select value={calcInputs.targetCount} onChange={(e) => setCalcInputs({ ...calcInputs, targetCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
+                      <option value={25}>25 Count</option>
+                      <option value={30}>30 Count</option>
+                      <option value={40}>40 Count</option>
+                      <option value={50}>50 Count</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Expected FCR</label>
-                    <input type="number" step="0.1" min="1.0" max="2.5" value={calcFcr} onChange={(e) => setCalcFcr(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">FCR (Feed Ratio)</label>
+                    <input type="number" step="0.1" min="1.0" max="2.5" value={calcInputs.fcr} onChange={(e) => setCalcInputs({ ...calcInputs, fcr: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Market Price (₹ / kg)</label>
-                    <input type="number" value={calcMarketRatePerKg} onChange={(e) => setCalcMarketRatePerKg(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'మార్కెట్ ధర (₹ / kg)' : 'Market Price (₹ / kg)'}</label>
+                    <input type="number" value={calcInputs.marketRatePerKg} onChange={(e) => setCalcInputs({ ...calcInputs, marketRatePerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">Feed Cost (₹ / kg)</label>
-                    <input type="number" value={calcFeedCostPerKg} onChange={(e) => setCalcFeedCostPerKg(Number(e.target.value))} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'ఫీడ్ ధర (₹ / kg)' : 'Feed Cost (₹ / kg)'}</label>
+                    <input type="number" value={calcInputs.feedCostPerKg} onChange={(e) => setCalcInputs({ ...calcInputs, feedCostPerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{lang === 'te' ? 'కరెంట్ & మందులు (/Acre)' : 'Power & Probiotics (/Acre)'}</label>
+                    <input type="number" value={calcInputs.powerProbioticCostPerAcre} onChange={(e) => setCalcInputs({ ...calcInputs, powerProbioticCostPerAcre: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                 </div>
 
-                {/* Estimator Output Dashboard */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
-                    <span className="text-[11px] text-slate-500 font-bold block">Total Seed ({totalAcres} Acres)</span>
-                    <span className="text-lg font-black text-slate-900">{totalSeedsNeeded.toLocaleString('en-IN')} PL</span>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
+                    <span className="text-[11px] opacity-60 font-bold block">{lang === 'te' ? `మొత్తం సీడ్ (${calcResult.totalAcres} ఎకరాలు)` : `Total Seed (${calcResult.totalAcres} Acres)`}</span>
+                    <span className="text-lg font-black">{calcResult.totalSeedsNeeded.toLocaleString('en-IN')} PL</span>
                   </div>
-                  <div className="bg-teal-50 border border-teal-200 rounded-xl p-3.5">
-                    <span className="text-[11px] text-teal-700 font-bold block">Projected Harvest</span>
-                    <span className="text-lg font-black text-teal-950">{harvestTons} Tons ({harvestKg.toLocaleString('en-IN')} kg)</span>
+                  <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5">
+                    <span className="text-[11px] text-teal-600 font-bold block">{lang === 'te' ? 'అంచనా దిగుబడి' : 'Projected Harvest'}</span>
+                    <span className="text-lg font-black">{calcResult.harvestTons} Tons ({calcResult.harvestKg.toLocaleString('en-IN')} kg)</span>
                   </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
-                    <span className="text-[11px] text-amber-800 font-bold block">Total Feed Required</span>
-                    <span className="text-lg font-black text-amber-950">{totalFeedBags} Bags ({totalFeedKg.toLocaleString('en-IN')} kg)</span>
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5">
+                    <span className="text-[11px] text-amber-600 font-bold block">{lang === 'te' ? 'అవసరమైన ఫీడ్' : 'Total Feed Required'}</span>
+                    <span className="text-lg font-black">{calcResult.totalFeedBags} Bags ({calcResult.totalFeedKg.toLocaleString('en-IN')} kg)</span>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
-                    <span className="text-[11px] text-slate-500 font-bold block">Gross Crop Revenue</span>
-                    <span className="text-lg font-black text-slate-900">₹{grossRevenue.toLocaleString('en-IN')}</span>
+                  <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
+                    <span className="text-[11px] opacity-60 font-bold block">{lang === 'te' ? 'కనీస గిట్టుబాటు ధర' : 'Break-Even Cost / kg'}</span>
+                    <span className="text-lg font-black">₹{calcResult.breakEvenPerKg} / kg</span>
+                  </div>
+                  <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
+                    <span className="text-[11px] opacity-60 font-bold block">{lang === 'te' ? 'మొత్తం ఆదాయం' : 'Gross Crop Revenue'}</span>
+                    <span className="text-lg font-black">₹{calcResult.grossRevenue.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5">
+                    <span className="text-[11px] text-rose-500 font-bold block">{lang === 'te' ? 'మొత్తం ఖర్చులు' : 'Total Production Cost'}</span>
+                    <span className="text-lg font-black">₹{calcResult.totalExpenses.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5">
+                    <span className="text-[11px] text-emerald-500 font-bold block">{lang === 'te' ? 'ఎకరాకు నికర లాభం' : 'Net Profit / Acre'}</span>
+                    <span className="text-lg font-black">₹{calcResult.profitPerAcre.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="bg-emerald-600 text-white rounded-xl p-3.5">
-                    <span className="text-[11px] text-emerald-100 font-bold block">Est. Net Crop Profit</span>
-                    <span className="text-lg font-black">₹{estNetProfit.toLocaleString('en-IN')}</span>
+                    <span className="text-[11px] text-emerald-100 font-bold block">{lang === 'te' ? 'మొత్తం నికర లాభం' : 'Total Net Crop Profit'}</span>
+                    <span className="text-lg font-black">₹{calcResult.netProfit.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBookingForm({ ...bookingForm, quantity: totalSeedsNeeded });
-                    setBuyerTab('marketplace');
-                    showToast(`${totalSeedsNeeded.toLocaleString('en-IN')} PL applied to booking!`);
-                  }}
-                  className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer"
-                >
-                  {t.applyQty} ({totalSeedsNeeded.toLocaleString('en-IN')} PL)
-                </button>
               </div>
             )}
 
-            {/* TAB 4: CROP & WATER QUALITY PROTOCOL */}
+            {/* TAB 4: POND WATER HEALTH & DOC SCHEDULE */}
+            {buyerTab === 'waterlab' && (
+              <div className={`rounded-2xl p-6 border shadow-xs space-y-5 ${cardBg}`}>
+                <h3 className="text-base font-extrabold flex items-center gap-2">
+                  <Droplets className="w-5 h-5 text-teal-600" />
+                  {lang === 'te' ? 'చెరువు నీటి పరీక్ష & సీడ్ స్టాకింగ్ అర్హత తనిఖీ' : 'Pond Water Quality Readiness Checker'}
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">Water pH (7.5 - 8.3)</label>
+                    <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">Dissolved Oxygen (ppm)</label>
+                    <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">Alkalinity (ppm)</label>
+                    <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">Ammonia (ppm)</label>
+                    <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                  </div>
+                </div>
+                {(() => {
+                  const isSafe = waterTest.ph >= 7.5 && waterTest.ph <= 8.4 && waterTest.doLevel >= 4.5 && waterTest.ammonia <= 0.1;
+                  return (
+                    <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
+                      {isSafe
+                        ? (lang === 'te' ? '✅ మీ చెరువు నీటి ప్రమాణాలు రొయ్య పిల్లలను వదలడానికి 100% అనుకూలంగా ఉన్నాయి!' : '✅ Pond water parameters are OPTIMAL for immediate PL stocking!')
+                        : (lang === 'te' ? '⚠️ హెచ్చరిక: నీటిలో pH, ఆక్సిజన్ లేదా అమ్మోనియా స్థాయిలను సరిచేసిన తర్వాతే సీడ్ వేయండి.' : '⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.')}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* TAB 5: CROP & WATER PROTOCOL */}
             {buyerTab === 'guide' && (
-              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                <h3 className="text-base font-extrabold text-slate-900">Standard Aquaculture Water & Stocking Parameters</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 space-y-1">
-                    <div className="font-bold text-teal-900">1. Acclimatization Rule</div>
-                    <p className="text-teal-800">Never stock directly if salinity variance exceeds 3 PPT. Adjust 1 PPT per 4 hours in hatchery tanks before packing.</p>
+              <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                <h3 className="text-base font-extrabold">{t.protocolTitle}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 space-y-1.5">
+                    <div className="font-bold text-teal-600">{t.proto1Title}</div>
+                    <p className="opacity-85 leading-relaxed">{t.proto1Body}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <div className="font-bold text-slate-900">2. Ideal Pond Water Parameters</div>
-                    <p className="text-slate-600">pH: 7.5 – 8.3 | Dissolved Oxygen: above 4.5 ppm | Alkalinity: 120 – 180 ppm | Ammonia: below 0.1 ppm.</p>
+                  <div className={`p-4 rounded-xl border space-y-1.5 ${subCardBg}`}>
+                    <div className="font-bold">{t.proto2Title}</div>
+                    <p className="opacity-75 leading-relaxed">{t.proto2Body}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
-                    <div className="font-bold text-emerald-900">3. DOC 1–30 Blind Feeding</div>
-                    <p className="text-emerald-800">Start with 2.0 kg starter crumble per 1,00,000 PL on Day 1 and increment 200g daily with check-tray monitoring.</p>
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5">
+                    <div className="font-bold text-emerald-600">{t.proto3Title}</div>
+                    <p className="opacity-85 leading-relaxed">{t.proto3Body}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
+                    <div className="font-bold text-amber-600">{t.proto4Title}</div>
+                    <p className="opacity-85 leading-relaxed">{t.proto4Body}</p>
                   </div>
                 </div>
               </div>
@@ -1834,67 +2151,67 @@ function AquaMarkApp() {
         )}
 
         {/* =========================================================
-            2. SELLER (HATCHERY) PORTAL — UNIFIED REGISTRATION + EDIT NAME/BANK
+            2. SELLER (HATCHERY) PORTAL — "PAYMENT RECEIVED" TRIGGER
            ========================================================= */}
         {currentUser.role === 'seller' && (
           <div className="max-w-4xl mx-auto space-y-6">
             {!myFixedHatchery ? (
-              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
+              <div className={`rounded-2xl p-6 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
                 <div>
-                  <span className="bg-teal-50 text-teal-800 border border-teal-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                  <span className="bg-teal-500/15 text-teal-600 border border-teal-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                     One-Step Seller Onboarding
                   </span>
-                  <h2 className="text-xl font-extrabold text-slate-900 mt-2">{t.unifiedRegTitle}</h2>
-                  <p className="text-xs text-slate-500 mt-1">{t.unifiedRegSub}</p>
+                  <h2 className="text-xl font-extrabold mt-2">{t.unifiedRegTitle}</h2>
+                  <p className="text-xs opacity-60 mt-1">{t.unifiedRegSub}</p>
                 </div>
 
                 <form onSubmit={handleCompleteUnifiedSellerReg} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">{t.hatcheryNameLabel}</label>
-                      <input required type="text" placeholder="e.g., Sri Sai Coastal Hatcheries" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm select-text" />
+                      <label className="text-xs font-bold block mb-1">{t.hatcheryNameLabel}</label>
+                      <input required type="text" placeholder="e.g., Sri Sai Coastal Hatcheries" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">{t.caaLicenseLabel}</label>
-                      <input required type="text" placeholder="CAA/AP/2026/XXXX" value={unifiedSellerForm.caaLicense} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, caaLicense: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-mono select-text" />
+                      <label className="text-xs font-bold block mb-1">{t.caaLicenseLabel}</label>
+                      <input required type="text" placeholder="CAA/AP/2026/XXXX" value={unifiedSellerForm.caaLicense} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, caaLicense: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">{t.zoneLabel}</label>
-                      <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm">
+                      <label className="text-xs font-bold block mb-1">{t.zoneLabel}</label>
+                      <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}>
                         {COASTAL_ZONES.map(z => (
                           <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Add Custom Zone' : z}</option>
                         ))}
                       </select>
                       {unifiedSellerForm.zone === 'OTHER_CUSTOM' && (
-                        <input required type="text" placeholder={t.customZonePlaceholder} value={unifiedSellerForm.customZone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, customZone: e.target.value })} className="w-full border border-teal-400 rounded-xl px-3.5 py-2 text-xs mt-2 select-text" />
+                        <input required type="text" placeholder={t.customZonePlaceholder} value={unifiedSellerForm.customZone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, customZone: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-xs mt-2 select-text ${inputCls}`} />
                       )}
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">{t.addressLabel}</label>
-                      <input required type="text" placeholder="Beach Road, Kakinada" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm select-text" />
+                      <label className="text-xs font-bold block mb-1">{t.addressLabel}</label>
+                      <input required type="text" placeholder="Beach Road, Kakinada" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-200 space-y-3">
-                    <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <div className="pt-4 border-t border-slate-300/30 space-y-3">
+                    <h3 className="text-sm font-extrabold flex items-center gap-2">
                       <Landmark className="w-4 h-4 text-teal-600" /> Settlement Bank & UPI Account
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.accHolderLabel}</label>
-                        <input required type="text" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm select-text" />
+                        <label className="text-xs font-bold block mb-1">{t.accHolderLabel}</label>
+                        <input required type="text" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.accNoLabel}</label>
-                        <input required type="text" placeholder="3892010004512" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-mono select-text" />
+                        <label className="text-xs font-bold block mb-1">{t.accNoLabel}</label>
+                        <input required type="text" placeholder="3892010004512" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.ifscLabel}</label>
-                        <input required type="text" placeholder="SBIN0001234" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-mono select-text" />
+                        <label className="text-xs font-bold block mb-1">{t.ifscLabel}</label>
+                        <input required type="text" placeholder="SBIN0001234" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.upiLabel}</label>
-                        <input required type="text" placeholder="hatchery@okaxis" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-mono select-text" />
+                        <label className="text-xs font-bold block mb-1">{t.upiLabel}</label>
+                        <input required type="text" placeholder="hatchery@okaxis" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                       </div>
                     </div>
                   </div>
@@ -1906,20 +2223,19 @@ function AquaMarkApp() {
               </div>
             ) : (
               <>
-                {/* FIXED HATCHERY + BANK SUMMARY BANNER WITH EDIT OPTION (EDIT HATCHERY NAME, ADDRESS & BANK) */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="space-y-1">
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                         <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
                       </span>
-                      <h2 className="text-xl font-extrabold text-slate-900">{myFixedHatchery.realName}</h2>
-                      <p className="text-xs text-slate-600">
-                        CAA: <span className="font-mono font-bold text-slate-900">{myFixedHatchery.caaLicense}</span> • {myFixedHatchery.zone} • {myFixedHatchery.realAddress}
+                      <h2 className="text-xl font-extrabold">{myFixedHatchery.realName}</h2>
+                      <p className="text-xs opacity-70">
+                        CAA: <span className="font-mono font-bold">{myFixedHatchery.caaLicense}</span> • {myFixedHatchery.zone} • {myFixedHatchery.realAddress}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                      <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" /> {t.savedBadge}
                       </span>
                       {!isEditingSellerProfile && (
@@ -1939,120 +2255,162 @@ function AquaMarkApp() {
                             });
                             setIsEditingSellerProfile(true);
                           }}
-                          className="border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                          className={`border text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
                         >
-                          <Edit3 className="w-3.5 h-3.5 text-teal-700" /> {t.editBtn}
+                          <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editProfileBankBtn}
                         </button>
                       )}
                     </div>
                   </div>
 
                   {isEditingSellerProfile ? (
-                    <form onSubmit={handleUpdateSellerProfileAndBank} className="space-y-3 pt-3 border-t border-slate-200">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <form onSubmit={handleUpdateSellerProfileAndBank} className="space-y-4 pt-3 border-t border-slate-300/30">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-500 block">{t.hatcheryNameLabel}</label>
-                          <input required type="text" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold select-text" />
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.hatcheryNameLabel}</label>
+                          <input required type="text" placeholder="Enter Hatchery Name" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-500 block">{t.zoneLabel}</label>
-                          <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.zoneLabel}</label>
+                          <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
                             {COASTAL_ZONES.map(z => <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Custom Zone' : z}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-500 block">{t.addressLabel}</label>
-                          <input required type="text" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs select-text" />
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.addressLabel}</label>
+                          <input required type="text" placeholder="Enter Facility Address" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                        <input required type="text" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className="border border-slate-300 rounded-xl px-3 py-2 text-xs select-text" />
-                        <input required type="text" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className="border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-text" />
-                        <input required type="text" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className="border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-text" />
-                        <div className="flex gap-1.5">
-                          <input required type="text" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-text" />
-                          <button type="submit" className="bg-slate-900 text-white text-xs font-bold px-3 rounded-xl cursor-pointer">{t.saveBtn}</button>
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
+                          <input required type="text" placeholder="Account Holder Name" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
+                          <input required type="text" placeholder="Account Number" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
+                          <input required type="text" placeholder="IFSC Code" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
+                          <div className="flex gap-1.5">
+                            <input required type="text" placeholder="UPI ID (name@bank)" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                            <button type="submit" className="bg-teal-600 text-white text-xs font-bold px-3.5 rounded-xl cursor-pointer shrink-0">{t.saveBtn}</button>
+                          </div>
                         </div>
                       </div>
                     </form>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
-                      <div><span className="text-[10px] text-slate-400 block">Holder</span><b>{myFixedHatchery.bankDetails?.accountName}</b></div>
-                      <div><span className="text-[10px] text-slate-400 block">Account No</span><b className="font-mono">{myFixedHatchery.bankDetails?.accountNo}</b></div>
-                      <div><span className="text-[10px] text-slate-400 block">IFSC</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
-                      <div><span className="text-[10px] text-slate-400 block">UPI ID</span><b className="font-mono text-teal-700">{myFixedHatchery.bankDetails?.upiId}</b></div>
+                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
+                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedHatchery.bankDetails?.accountName}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.accountNo}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedHatchery.bankDetails?.upiId}</b></div>
                     </div>
                   )}
                 </div>
 
-                {/* ADD NEW SEED BATCH FORM (ALL SPECIES + ALL STAGES + CUSTOM INPUT + AUTO-CLEARING FILE INPUT) */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                {/* ADD NEW SEED BATCH */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="text-base font-bold flex items-center gap-2">
                     <PlusCircle className="w-5 h-5 text-teal-600" /> {t.addBatchTitle}
                   </h3>
                   <form onSubmit={handlePublishBatch} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                       <div className="md:col-span-2">
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.speciesLabel}</label>
-                        <select value={newBatchForm.species} onChange={(e) => setNewBatchForm({ ...newBatchForm, species: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.speciesLabel}</label>
+                        <select value={newBatchForm.species} onChange={(e) => setNewBatchForm({ ...newBatchForm, species: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
                           {SHRIMP_SPECIES_OPTIONS.map(sp => (
                             <option key={sp} value={sp}>{sp === 'OTHER_CUSTOM' ? '+ Other (Type Custom Species)' : sp}</option>
                           ))}
                         </select>
                         {newBatchForm.species === 'OTHER_CUSTOM' && (
-                          <input required type="text" placeholder={t.customSpeciesPlaceholder} value={newBatchForm.customSpecies} onChange={(e) => setNewBatchForm({ ...newBatchForm, customSpecies: e.target.value })} className="w-full border border-teal-400 rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text" />
+                          <input required type="text" placeholder={t.customSpeciesPlaceholder} value={newBatchForm.customSpecies} onChange={(e) => setNewBatchForm({ ...newBatchForm, customSpecies: e.target.value })} className={`w-full border rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text ${inputCls}`} />
                         )}
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.stage}</label>
-                        <select value={newBatchForm.plStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, plStage: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.stage}</label>
+                        <select value={newBatchForm.plStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, plStage: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
                           {SEED_STAGE_OPTIONS.map(st => (
                             <option key={st} value={st}>{st === 'OTHER_CUSTOM' ? '+ Custom Stage' : st}</option>
                           ))}
                         </select>
                         {newBatchForm.plStage === 'OTHER_CUSTOM' && (
-                          <input required type="text" placeholder={t.customStagePlaceholder} value={newBatchForm.customStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, customStage: e.target.value })} className="w-full border border-teal-400 rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text" />
+                          <input required type="text" placeholder={t.customStagePlaceholder} value={newBatchForm.customStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, customStage: e.target.value })} className={`w-full border rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text ${inputCls}`} />
                         )}
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.ratePerSeedLabel}</label>
-                        <input type="number" step="0.01" value={newBatchForm.pricePer1000} onChange={(e) => setNewBatchForm({ ...newBatchForm, pricePer1000: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold select-text" />
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.ratePerSeedLabel}</label>
+                        <input type="number" step="0.01" value={newBatchForm.pricePer1000} onChange={(e) => setNewBatchForm({ ...newBatchForm, pricePer1000: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.salinity} (PPT)</label>
-                        <input type="number" value={newBatchForm.salinity} onChange={(e) => setNewBatchForm({ ...newBatchForm, salinity: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold select-text" />
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.salinity} (PPT)</label>
+                        <input type="number" value={newBatchForm.salinity} onChange={(e) => setNewBatchForm({ ...newBatchForm, salinity: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.bonus} (%)</label>
-                        <input type="number" value={newBatchForm.bonusPercent} onChange={(e) => setNewBatchForm({ ...newBatchForm, bonusPercent: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold select-text" />
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.bonus} (%)</label>
+                        <input type="number" value={newBatchForm.bonusPercent} onChange={(e) => setNewBatchForm({ ...newBatchForm, bonusPercent: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">{t.stockLabel}</label>
-                        <input type="number" step="50000" value={newBatchForm.availableStock} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableStock: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold select-text" />
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.stockLabel}</label>
+                        <input type="number" step="50000" value={newBatchForm.availableStock} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableStock: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <Upload className="w-4 h-4 text-teal-600" /> {t.pcrUploadLabel}
-                        </span>
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.availDateLabel}</label>
+                        <input required type="date" value={newBatchForm.availableDate} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.availTimeLabel}</label>
+                        <select value={newBatchForm.availableTimeSlot} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableTimeSlot: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                          {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                      <div className={`border rounded-xl p-3 flex flex-col justify-between gap-1.5 ${subCardBg}`}>
                         <input
                           ref={pcrInputRef}
                           type="file"
-                          accept="image/*,.pdf"
-                          onChange={(e) => handlePcrFileSelect(e.target.files?.[0] || null)}
-                          className="text-xs text-slate-600 mt-1"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => handleMultiplePcrUpload(e.target.files)}
+                          className="hidden"
                         />
+                        <button
+                          type="button"
+                          onClick={() => pcrInputRef.current?.click()}
+                          className={`w-full border border-teal-500/40 text-teal-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
+                        >
+                          <Upload className="w-4 h-4" /> {t.pcrUploadBtnLabel}
+                        </button>
+                        {pcrImages.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {pcrImages.map((img, i) => (
+                              <span key={i} className="bg-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded">
+                                {img.label}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] opacity-60 text-center">{t.pcrHintLabel}</span>
+                        )}
                       </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-2">
+
+                      <div className={`border rounded-xl p-3 flex items-center justify-between gap-2 ${subCardBg}`}>
                         <div>
-                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
-                          <p className="text-[11px] text-slate-500">{gpsLocation || 'Optional'}</p>
+                          <span className="text-xs font-bold flex items-center gap-1"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
+                          <p className="text-[11px] opacity-60">{gpsLocation || 'Optional'}</p>
                         </div>
-                        <button type="button" onClick={handleCaptureGps} className="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer">
+                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer">
                           <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
                         </button>
                       </div>
@@ -2065,22 +2423,24 @@ function AquaMarkApp() {
                 </div>
 
                 {/* OWNER'S ACTIVE BATCHES */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="font-bold text-base flex items-center gap-2">
                     <Layers className="w-5 h-5 text-teal-600" /> {t.myBatchesTitle}
                   </h3>
                   {myOwnedBatches.length === 0 ? (
-                    <p className="text-xs text-slate-500">{t.noBatchesSeller}</p>
+                    <p className="text-xs opacity-60">{t.noBatchesSeller}</p>
                   ) : (
                     <div className="space-y-3">
                       {myOwnedBatches.map((b) => {
                         const isEditing = editingBatchId === b.id;
                         return (
-                          <div key={b.id} className="border border-slate-200 rounded-xl p-4 bg-slate-50/70 space-y-3">
+                          <div key={b.id} className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
-                                <span className="font-mono text-xs font-bold text-teal-700">{b.id}</span> • <span className="font-bold text-sm text-slate-900">{b.species}</span>
-                                <span className="block text-[11px] text-slate-500">PCR File: {b.pcrFileName}</span>
+                                <span className="font-mono text-xs font-bold text-teal-500">{b.id}</span> • <span className="font-bold text-sm">{b.species}</span>
+                                <span className="block text-[11px] opacity-65">
+                                  Packing: {b.availableDate} ({b.availableTimeSlot}) • PCR: {(b.pcrImages || []).map(img => img.label).join(', ')}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 {isEditing ? (
@@ -2088,46 +2448,60 @@ function AquaMarkApp() {
                                     {t.saveChangesBtn}
                                   </button>
                                 ) : (
-                                  <button type="button" onClick={() => startEditingBatch(b)} className="bg-white border border-slate-300 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer">
-                                    <Edit3 className="w-3.5 h-3.5 text-teal-700" /> {t.editBtn}
+                                  <button type="button" onClick={() => startEditingBatch(b)} className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${cardBg}`}>
+                                    <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBatchBtn}
                                   </button>
                                 )}
-                                <button type="button" onClick={() => removeBatch(b.id)} className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer">
+                                <button type="button" onClick={() => removeBatch(b.id)} className="bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer">
                                   <Trash2 className="w-3.5 h-3.5" /> {t.removeBtn}
                                 </button>
                               </div>
                             </div>
 
                             {isEditing ? (
-                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2 border-t border-slate-200">
-                                <div>
-                                  <label className="text-[10px] font-bold text-slate-500 block">{t.stage}</label>
-                                  <input type="text" value={editBatchValues.plStage} onChange={(e) => setEditBatchValues({ ...editBatchValues, plStage: e.target.value })} className="w-full border border-slate-300 bg-white rounded-lg px-2 py-1.5 text-xs font-bold select-text" />
+                              <div className="space-y-2.5 pt-2 border-t border-slate-300/30">
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.stage}</label>
+                                    <input type="text" value={editBatchValues.plStage} onChange={(e) => setEditBatchValues({ ...editBatchValues, plStage: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.salinity} (PPT)</label>
+                                    <input type="number" value={editBatchValues.salinity} onChange={(e) => setEditBatchValues({ ...editBatchValues, salinity: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.ratePerSeedLabel}</label>
+                                    <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.bonus} (%)</label>
+                                    <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.stockLabel}</label>
+                                    <input type="number" step="50000" value={editBatchValues.availableStock} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableStock: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
                                 </div>
-                                <div>
-                                  <label className="text-[10px] font-bold text-slate-500 block">{t.salinity} (PPT)</label>
-                                  <input type="number" value={editBatchValues.salinity} onChange={(e) => setEditBatchValues({ ...editBatchValues, salinity: e.target.value })} className="w-full border border-slate-300 bg-white rounded-lg px-2 py-1.5 text-xs font-bold select-text" />
-                                </div>
-                                <div>
-                                  <label className="text-[10px] font-bold text-slate-500 block">{t.ratePerSeedLabel}</label>
-                                  <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className="w-full border border-slate-300 bg-white rounded-lg px-2 py-1.5 text-xs font-bold select-text" />
-                                </div>
-                                <div>
-                                  <label className="text-[10px] font-bold text-slate-500 block">{t.bonus} (%)</label>
-                                  <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className="w-full border border-slate-300 bg-white rounded-lg px-2 py-1.5 text-xs font-bold select-text" />
-                                </div>
-                                <div>
-                                  <label className="text-[10px] font-bold text-slate-500 block">{t.stockLabel}</label>
-                                  <input type="number" step="50000" value={editBatchValues.availableStock} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableStock: e.target.value })} className="w-full border border-slate-300 bg-white rounded-lg px-2 py-1.5 text-xs font-bold select-text" />
+                                <div className="grid grid-cols-2 gap-2.5">
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.availDateLabel}</label>
+                                    <input type="date" value={editBatchValues.availableDate} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableDate: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.availTimeLabel}</label>
+                                    <select value={editBatchValues.availableTimeSlot} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableTimeSlot: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${inputCls}`}>
+                                      {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                                    </select>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
-                              <div className="grid grid-cols-5 gap-2 text-center bg-white p-2.5 rounded-lg border border-slate-200/80 text-xs">
-                                <div><span className="text-[10px] text-slate-400 block">{t.stage}</span><b>{b.plStage}</b></div>
-                                <div><span className="text-[10px] text-slate-400 block">{t.salinity}</span><b className="text-teal-700">{b.salinity} PPT</b></div>
-                                <div><span className="text-[10px] text-slate-400 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
-                                <div><span className="text-[10px] text-slate-400 block">{t.bonus}</span><b className="text-emerald-600">+{b.bonusPercent}%</b></div>
-                                <div><span className="text-[10px] text-slate-400 block">{t.stock}</span><b>{(b.availableStock / 100000).toFixed(1)}L</b></div>
+                              <div className={`grid grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
+                                <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
                               </div>
                             )}
                           </div>
@@ -2137,65 +2511,80 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* STRICTLY ISOLATED PACKING ORDERS FOR THIS HATCHERY ONLY */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                {/* CLICKABLE ASSIGNED ORDERS + "PAYMENT RECEIVED" BUTTON (CREDITS HELD FUNDS & CLEARS FARMER BALANCE) */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="font-bold text-base flex items-center gap-2">
                     <Clock className="w-5 h-5 text-teal-600" /> {t.sellerOrdersTitle}
                   </h3>
                   {myHatcheryOrders.length === 0 ? (
-                    <p className="text-xs text-slate-500">{t.noOrdersYet}</p>
+                    <p className="text-xs opacity-60">{t.noOrdersYet}</p>
                   ) : (
                     <div className="space-y-3">
-                      {myHatcheryOrders.map((bk) => (
-                        <div key={bk.bookingId} className="border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 bg-slate-50">
-                          <div className="space-y-1 text-xs">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-mono font-bold text-teal-800">{bk.bookingId}</span>
-                              <span className={`font-bold px-2.5 py-0.5 rounded-full ${bk.escrow?.payoutStatus === 'RELEASED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                                }`}>
-                                {bk.escrow?.payoutStatus === 'RELEASED'
-                                  ? `${t.creditedBadge} (₹${bk.escrow?.hatcheryAmount || 0})`
-                                  : `${t.onHoldBadge}: ₹${bk.escrow?.hatcheryAmount || 0}`}
-                              </span>
+                      {myHatcheryOrders.map((bk) => {
+                        const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                        return (
+                          <div
+                            key={bk.bookingId}
+                            onClick={() => setInspectedSellerOrder(bk)}
+                            className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 transition cursor-pointer ${subCardBg}`}
+                          >
+                            <div className="space-y-1 text-xs">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
+                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
+                                  }`}>
+                                  {isCleared
+                                    ? `${t.creditedBadge} (₹${bk.settlement?.hatcheryAmount || 0})`
+                                    : `${t.onHoldBadge}: ₹${bk.settlement?.hatcheryAmount || 0}`}
+                                </span>
+                              </div>
+                              <p className="font-semibold">{bk.farmerName} ({bk.farmerPhone}) • {(bk.quantity || 0).toLocaleString('en-IN')} PL</p>
+                              <p className="opacity-70">
+                                {t.pondSalinityLabel}: <b>{bk.pondSalinity} PPT</b> • {t.packingDateLabel}: <b>{bk.packingDate} ({bk.packingTimeSlot})</b>
+                              </p>
                             </div>
-                            <p className="text-slate-800 font-semibold">{bk.farmerName} ({bk.farmerPhone}) • {(bk.quantity || 0).toLocaleString('en-IN')} PL</p>
-                            <p className="text-slate-500">{t.pondSalinityLabel}: <b>{bk.pondSalinity} PPT</b> • {t.packingDateLabel}: <b>{bk.packingDate}</b></p>
-                          </div>
 
-                          {bk.packingStatus === 'PACKING_PENDING' && (
-                            <button type="button" onClick={() => handleSellerMarkPacked(bk.bookingId)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                              {t.markPackedBtn}
-                            </button>
-                          )}
-                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && (
-                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-                              {t.packedSentBadge}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                            <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              {bk.packingStatus === 'PACKING_PENDING' && (
+                                <button type="button" onClick={() => handleSellerMarkPacked(bk.bookingId)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer">
+                                  {t.markPackedBtn}
+                                </button>
+                              )}
+                              {!isCleared && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleHatcheryPaymentReceived(bk.bookingId)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <CheckSquare className="w-4 h-4" /> {t.paymentReceivedBtn}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
 
-                {/* PRIVATE FARMER FEEDBACK & 1-5 STAR REVIEWS (VISIBLE ONLY TO THIS HATCHERY OWNER) */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                {/* PRIVATE FARMER FEEDBACK */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="font-bold text-base flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-teal-600" /> {t.sellerFeedbackTitle}
                   </h3>
                   {myPrivateReviews.length === 0 ? (
-                    <p className="text-xs text-slate-500">{t.noFeedbackYet}</p>
+                    <p className="text-xs opacity-60">{t.noFeedbackYet}</p>
                   ) : (
                     <div className="space-y-2.5">
                       {myPrivateReviews.map((rev, idx) => (
-                        <div key={idx} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50 text-xs flex flex-wrap items-center justify-between gap-2">
+                        <div key={idx} className={`border rounded-xl p-3.5 text-xs flex flex-wrap items-center justify-between gap-2 ${subCardBg}`}>
                           <div>
-                            <span className="font-bold text-slate-900">{rev.farmerName}</span> • <span className="text-slate-500">Batch {rev.batchId} ({rev.plStage})</span>
-                            <p className="text-slate-700 mt-1">"{rev.comment}"</p>
+                            <span className="font-bold">{rev.farmerName}</span> • <span className="opacity-65">Batch {rev.batchId} ({rev.plStage})</span>
+                            <p className="mt-1">"{rev.comment}"</p>
                           </div>
                           <div className="text-right">
-                            <span className="bg-amber-100 text-amber-900 font-extrabold px-2.5 py-1 rounded-lg">{rev.stars}★</span>
-                            <span className="block text-[10px] text-slate-400 mt-1">{rev.date}</span>
+                            <span className="bg-amber-500/20 text-amber-500 font-extrabold px-2.5 py-1 rounded-lg">{rev.stars}★</span>
+                            <span className="block text-[10px] opacity-50 mt-1">{rev.date}</span>
                           </div>
                         </div>
                       ))}
@@ -2208,258 +2597,483 @@ function AquaMarkApp() {
         )}
 
         {/* =========================================================
-            3. MEDIATOR (BROKER) PORTAL
+            3. MEDIATOR (BROKER) PORTAL — ONLY BROKER'S 2% + MARGIN SHOWN (NO PLATFORM FEES)
            ========================================================= */}
         {currentUser.role === 'mediator' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-xs">
-                <span className="text-xs text-amber-700 font-bold flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" /> {t.brokerHoldCard}
-                </span>
-                <div className="text-3xl font-black text-slate-900 mt-2">₹{brokerHeldTotal.toLocaleString('en-IN')}</div>
-                <p className="text-xs text-slate-500 mt-1.5">{t.brokerHoldSub}</p>
-              </div>
-
-              <div className="bg-white border border-emerald-200 rounded-2xl p-5 shadow-xs">
-                <span className="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
-                  <Wallet className="w-4 h-4" /> {t.brokerReleasedCard}
-                </span>
-                <div className="text-3xl font-black text-emerald-700 mt-2">₹{brokerReleasedTotal.toLocaleString('en-IN')}</div>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  {isBrokerBankSaved ? `${brokerBank.upiId} • ${brokerBank.ifsc}` : 'Save bank details below'}
-                </p>
-              </div>
-            </div>
-
-            {/* Broker Bank Card with Saved + Edit */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Landmark className="w-4 h-4 text-teal-700" />
-                  <h3 className="font-bold text-sm text-slate-900">Settlement Bank & UPI Account</h3>
-                  {isBrokerBankSaved && (
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                      <Check className="w-3.5 h-3.5" /> {t.savedBadge}
-                    </span>
-                  )}
+            {!myFixedBroker ? (
+              <div className={`max-w-2xl mx-auto rounded-2xl p-6 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
+                <div>
+                  <span className="bg-teal-500/15 text-teal-600 border border-teal-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                    Mandatory Broker KYC & Settlement Setup
+                  </span>
+                  <h2 className="text-xl font-extrabold mt-2">{t.brokerRegTitle}</h2>
+                  <p className="text-xs opacity-60 mt-1">{t.brokerRegSub}</p>
                 </div>
-                {isBrokerBankSaved && (
-                  <button type="button" onClick={() => setIsBrokerBankSaved(false)} className="border border-slate-300 text-xs font-bold px-3 py-1 rounded-xl inline-flex items-center gap-1 cursor-pointer">
-                    <Edit3 className="w-3.5 h-3.5 text-teal-700" /> {t.editBtn}
-                  </button>
-                )}
-              </div>
 
-              {isBrokerBankSaved ? (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
-                  <div><span className="text-[10px] text-slate-400 block">Holder</span><b>{brokerBank.accountName}</b></div>
-                  <div><span className="text-[10px] text-slate-400 block">Account No</span><b className="font-mono">{brokerBank.accountNo}</b></div>
-                  <div><span className="text-[10px] text-slate-400 block">IFSC</span><b className="font-mono">{brokerBank.ifsc}</b></div>
-                  <div><span className="text-[10px] text-slate-400 block">UPI ID</span><b className="font-mono text-teal-700">{brokerBank.upiId}</b></div>
-                </div>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setIsBrokerBankSaved(true);
-                    showToast(t.toasts.bankUpdated);
-                  }}
-                  className="grid grid-cols-1 sm:grid-cols-4 gap-2.5"
-                >
-                  <input required type="text" placeholder={t.accHolderLabel} value={brokerBank.accountName} onChange={(e) => setBrokerBank({ ...brokerBank, accountName: e.target.value })} className="border border-slate-300 rounded-xl px-3 py-2 text-xs select-text" />
-                  <input required type="text" placeholder={t.accNoLabel} value={brokerBank.accountNo} onChange={(e) => setBrokerBank({ ...brokerBank, accountNo: e.target.value })} className="border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-text" />
-                  <input required type="text" placeholder={t.ifscLabel} value={brokerBank.ifsc} onChange={(e) => setBrokerBank({ ...brokerBank, ifsc: e.target.value.toUpperCase() })} className="border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-text" />
-                  <div className="flex gap-1.5">
-                    <input required type="text" placeholder={t.upiLabel} value={brokerBank.upiId} onChange={(e) => setBrokerBank({ ...brokerBank, upiId: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-text" />
-                    <button type="submit" className="bg-slate-900 text-white text-xs font-bold px-3 rounded-xl cursor-pointer">{t.saveBtn}</button>
+                <form onSubmit={handleCompleteBrokerReg} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold block mb-1">{t.accHolderLabel}</label>
+                      <input required type="text" value={brokerBankForm.accountName} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold block mb-1">{t.accNoLabel}</label>
+                      <input required type="text" placeholder="9180100452190" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold block mb-1">{t.ifscLabel}</label>
+                      <input required type="text" placeholder="SBIN0001234" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold block mb-1">{t.upiLabel}</label>
+                      <input required type="text" placeholder="broker@okaxis" value={brokerBankForm.upiId} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                    </div>
                   </div>
+                  <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
+                    {t.brokerActivateBtn}
+                  </button>
                 </form>
-              )}
-            </div>
-
-            {/* ALL REGISTERED HATCHERIES SORTABLE FOR BROKER */}
-            <div className="space-y-4">
-              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-teal-600" /> {t.brokerMarketplaceTitle}
-              </h2>
-
-              {renderFilterSortBar(false)}
-
-              {filteredAndSortedBatches.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-2">
-                  <Building2 className="w-9 h-9 text-slate-300 mx-auto" />
-                  <h3 className="text-sm font-extrabold text-slate-800">{t.emptyMarketTitle}</h3>
-                  <p className="text-xs text-slate-500">{t.emptyMarketSub}</p>
-                </div>
-              ) : (
+              </div>
+            ) : (
+              <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {filteredAndSortedBatches.map((batch) => (
-                    <div key={batch.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-teal-400 transition">
-                      <div onClick={() => setInspectedBatch(batch)} className="space-y-3 cursor-pointer">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                                {t.caaVerified}
-                              </span>
-                              <span className="text-xs font-semibold text-slate-500">{batch.zone}</span>
-                              <span className="text-xs font-bold text-amber-600 inline-flex items-center gap-0.5">
-                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating}
-                              </span>
-                            </div>
-                            <h3 className="text-base font-extrabold text-slate-900 mt-1.5">{batch.hatcheryCode}</h3>
-                            <p className="text-xs text-slate-500">{batch.species}</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xl font-black text-slate-900">₹{batch.pricePer1000.toFixed(2)}</div>
-                            <span className="text-[11px] text-slate-400">{t.perSeed}</span>
-                          </div>
-                        </div>
+                  <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
+                    <span className="text-xs text-amber-500 font-bold flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" /> {t.brokerHoldCard}
+                    </span>
+                    <div className="text-3xl font-black mt-2">₹{brokerHeldTotal.toLocaleString('en-IN')}</div>
+                    <p className="text-xs opacity-60 mt-1.5">{t.brokerHoldSub}</p>
+                  </div>
 
-                        <div className="grid grid-cols-4 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center text-xs">
-                          <div><span className="text-[10px] text-slate-400 block">{t.stage}</span><b>{batch.plStage}</b></div>
-                          <div><span className="text-[10px] text-slate-400 block">{t.salinity}</span><b className="text-teal-700">{batch.salinity} PPT</b></div>
-                          <div><span className="text-[10px] text-slate-400 block">{t.bonus}</span><b className="text-emerald-600">+{batch.bonusPercent}%</b></div>
-                          <div><span className="text-[10px] text-slate-400 block">{t.stock}</span><b>{(batch.availableStock / 100000).toFixed(1)}L</b></div>
-                        </div>
+                  <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
+                    <span className="text-xs text-emerald-500 font-bold flex items-center gap-1.5">
+                      <Wallet className="w-4 h-4" /> {t.brokerReleasedCard}
+                    </span>
+                    <div className="text-3xl font-black text-emerald-500 mt-2">₹{brokerReleasedTotal.toLocaleString('en-IN')}</div>
+                    <p className="text-xs opacity-60 mt-1.5">
+                      {myFixedBroker.bankDetails?.upiId} • {myFixedBroker.bankDetails?.ifsc}
+                    </p>
+                  </div>
+                </div>
 
-                        <div className="text-xs text-teal-700 font-bold flex items-center gap-1.5">
-                          <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
-                        </div>
-                      </div>
-
+                {/* Broker Bank Card */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Landmark className="w-4 h-4 text-teal-600" />
+                      <h3 className="font-bold text-sm">Settlement Bank & UPI Account</h3>
+                      <span className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                        <Check className="w-3.5 h-3.5" /> {t.savedBadge}
+                      </span>
+                    </div>
+                    {!isEditingBrokerBank && (
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedBatch(batch);
-                          setBookingForm(prev => ({
-                            ...prev,
-                            farmerName: brokerFarmers[0]?.name || '',
-                            farmerPhone: brokerFarmers[0]?.phone || '',
-                            brokerMarginPaise: 2
-                          }));
+                          setBrokerBankForm({
+                            accountName: myFixedBroker.bankDetails?.accountName || '',
+                            accountNo: myFixedBroker.bankDetails?.accountNo || '',
+                            ifsc: myFixedBroker.bankDetails?.ifsc || '',
+                            upiId: myFixedBroker.bankDetails?.upiId || ''
+                          });
+                          setIsEditingBrokerBank(true);
                         }}
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
+                        className={`border text-xs font-bold px-3 py-1 rounded-xl inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
                       >
-                        {t.selectAndBookBtn}
+                        <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editProfileBankBtn}
                       </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Broker Locked Farmers CRM */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <form onSubmit={handleAddBrokerFarmer} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3.5">
-                <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-teal-600" /> {t.lockFarmerTitle}
-                </h3>
-                <input required type="text" placeholder={t.farmerNamePlaceholder} value={newFarmer.name} onChange={(e) => setNewFarmer({ ...newFarmer, name: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm select-text" />
-                <input required type="tel" maxLength={10} placeholder={t.mobileLabel} value={newFarmer.phone} onChange={(e) => setNewFarmer({ ...newFarmer, phone: e.target.value.replace(/\D/g, '') })} className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm select-text" />
-                <div className="grid grid-cols-2 gap-2">
-                  <input required type="text" placeholder={t.villagePlaceholder} value={newFarmer.village} onChange={(e) => setNewFarmer({ ...newFarmer, village: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm select-text" />
-                  <input required type="number" step="0.5" placeholder={t.acresPlaceholder} value={newFarmer.acres} onChange={(e) => setNewFarmer({ ...newFarmer, acres: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm select-text" />
-                </div>
-                <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer">
-                  {t.lockFarmerBtn}
-                </button>
-              </form>
-
-              <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
-                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-teal-600" /> {t.myFarmersTitle}
-                </h3>
-                {brokerFarmers.length === 0 ? (
-                  <p className="text-xs text-slate-500">No farmers locked yet. Add your farmers on the left.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-[11px] uppercase text-slate-400">
-                          <th className="py-2">Farmer</th>
-                          <th className="py-2">Village / Acres</th>
-                          <th className="py-2">Protection</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {brokerFarmers.map((f) => (
-                          <tr key={f.id}>
-                            <td className="py-2.5 font-bold text-slate-900">{f.name} <span className="block text-xs font-normal text-slate-500">{f.phone}</span></td>
-                            <td className="py-2.5 text-xs text-slate-600">{f.village} ({f.acres} Acres)</td>
-                            <td className="py-2.5"><span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full">Locked till {f.lockedUntil}</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {isEditingBrokerBank ? (
+                    <form onSubmit={handleCompleteBrokerReg} className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-300/30">
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
+                        <input required type="text" placeholder="Account Holder Name" value={brokerBankForm.accountName} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
+                        <input required type="text" placeholder="Account Number" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
+                        <input required type="text" placeholder="IFSC Code" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
+                        <div className="flex gap-1.5">
+                          <input required type="text" placeholder="UPI ID" value={brokerBankForm.upiId} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                          <button type="submit" className="bg-teal-600 text-white text-xs font-bold px-3 rounded-xl cursor-pointer">{t.saveBtn}</button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
+                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedBroker.bankDetails?.accountName}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.accountNo}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.ifsc}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedBroker.bankDetails?.upiId}</b></div>
+                    </div>
+                  )}
+                </div>
+
+                {/* CLICKABLE BROKER TRANSACTION & EARNINGS TRACKER */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="font-bold text-base flex items-center gap-2">
+                    <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
+                  </h3>
+                  {myBrokerBookings.length === 0 ? (
+                    <p className="text-xs opacity-60">{t.noBrokerBookings}</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {myBrokerBookings.map((bk) => {
+                        const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                        return (
+                          <div
+                            key={bk.bookingId}
+                            onClick={() => setSelectedBrokerTx(bk)}
+                            className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 transition cursor-pointer ${subCardBg}`}
+                          >
+                            <div className="space-y-1 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
+                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
+                                  }`}>
+                                  {isCleared
+                                    ? `${t.creditedBadge}: ₹${bk.settlement?.brokerAmount || 0}`
+                                    : `${t.onHoldBadge}: ₹${bk.settlement?.brokerAmount || 0}`}
+                                </span>
+                              </div>
+                              <p className="font-bold">
+                                Farmer: {bk.farmerName} ({bk.farmerPhone}) → Hatchery: {bk.batch?.realName || bk.batch?.hatcheryCode}
+                              </p>
+                              <p className="opacity-70">
+                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • Packing: {bk.packingDate} • Click to inspect commission & margin breakdown
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadVerifiedPdf(bk, isCleared)}
+                                className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Printer className="w-3.5 h-3.5 text-emerald-400" /> {isCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* ALL REGISTERED HATCHERIES SORTABLE FOR BROKER */}
+                <div className="space-y-4">
+                  <h2 className="text-base font-extrabold flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-teal-600" /> {t.brokerMarketplaceTitle}
+                  </h2>
+
+                  {renderFilterSortBar(false)}
+
+                  {filteredAndSortedBatches.length === 0 ? (
+                    <div className={`rounded-2xl border p-10 text-center space-y-2 ${cardBg}`}>
+                      <Building2 className="w-9 h-9 opacity-30 mx-auto" />
+                      <h3 className="text-sm font-extrabold">{t.emptyMarketTitle}</h3>
+                      <p className="text-xs opacity-60">{t.emptyMarketSub}</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {filteredAndSortedBatches.map((batch) => {
+                        const isSoldOut = (batch.availableStock || 0) <= 0;
+                        return (
+                          <div key={batch.id} className={`rounded-2xl border p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-teal-500 transition ${cardBg}`}>
+                            <div onClick={() => setInspectedBatch(batch)} className="space-y-3 cursor-pointer">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                      {t.caaVerified}
+                                    </span>
+                                    <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
+                                    <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating}
+                                    </span>
+                                  </div>
+                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode}</h3>
+                                  <p className="text-xs opacity-65">{batch.species}</p>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-xl font-black">₹{batch.pricePer1000.toFixed(2)}</div>
+                                  <span className="text-[11px] opacity-55">{t.perSeed}</span>
+                                </div>
+                              </div>
+
+                              <div className={`grid grid-cols-4 gap-2 p-2.5 rounded-xl border text-center text-xs ${subCardBg}`}>
+                                <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{batch.plStage}</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{batch.salinity} PPT</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{batch.bonusPercent}%</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(batch.availableStock || 0).toLocaleString('en-IN')}</b></div>
+                              </div>
+
+                              <div className="text-xs text-teal-500 font-bold flex items-center gap-1.5">
+                                <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={isSoldOut}
+                              onClick={() => {
+                                setSelectedBatch(batch);
+                                setBookingForm(prev => ({
+                                  ...prev,
+                                  farmerName: brokerFarmers[0]?.name || '',
+                                  farmerPhone: brokerFarmers[0]?.phone || '',
+                                  quantity: Math.min(200000, batch.availableStock || 0),
+                                  packingDate: batch.availableDate || prev.packingDate,
+                                  packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                  brokerMarginPaise: 2
+                                }));
+                              }}
+                              className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
+                            >
+                              {isSoldOut ? t.soldOutBadge : t.selectAndBookBtn}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Broker Locked Farmers CRM */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <form onSubmit={handleAddBrokerFarmer} className={`rounded-2xl p-5 border shadow-xs space-y-3.5 ${cardBg}`}>
+                    <h3 className="font-bold text-sm flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-teal-600" /> {t.lockFarmerTitle}
+                    </h3>
+                    <input required type="text" placeholder={t.farmerNamePlaceholder} value={newFarmer.name} onChange={(e) => setNewFarmer({ ...newFarmer, name: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
+                    <input required type="tel" maxLength={10} placeholder={t.mobileLabel} value={newFarmer.phone} onChange={(e) => setNewFarmer({ ...newFarmer, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} className={`w-full border rounded-xl px-3.5 py-2 text-sm font-mono select-text ${inputCls}`} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input required type="text" placeholder={t.villagePlaceholder} value={newFarmer.village} onChange={(e) => setNewFarmer({ ...newFarmer, village: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
+                      <input required type="number" step="0.5" placeholder={t.acresPlaceholder} value={newFarmer.acres} onChange={(e) => setNewFarmer({ ...newFarmer, acres: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
+                    </div>
+                    <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer">
+                      {t.lockFarmerBtn}
+                    </button>
+                  </form>
+
+                  <div className={`lg:col-span-2 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                    <h3 className="font-bold text-base flex items-center gap-2">
+                      <Users className="w-5 h-5 text-teal-600" /> {t.myFarmersTitle}
+                    </h3>
+                    {brokerFarmers.length === 0 ? (
+                      <p className="text-xs opacity-60">No farmers locked yet. Add your farmers on the left.</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                          <thead>
+                            <tr className="border-b border-slate-300/30 text-[11px] uppercase opacity-60">
+                              <th className="py-2">Farmer</th>
+                              <th className="py-2">Village / Acres</th>
+                              <th className="py-2">Protection</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-300/20">
+                            {brokerFarmers.map((f) => (
+                              <tr key={f.id}>
+                                <td className="py-2.5 font-bold">{f.name} <span className="block text-xs font-normal opacity-60">{f.phone}</span></td>
+                                <td className="py-2.5 text-xs opacity-75">{f.village} ({f.acres} Acres)</td>
+                                <td className="py-2.5"><span className="text-[11px] font-semibold bg-emerald-500/15 text-emerald-500 px-2.5 py-0.5 rounded-full">Locked till {f.lockedUntil}</span></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </main>
 
       {/* =========================================================
-          HATCHERY INSPECTION MODAL (PCR PHOTO/PDF + HISTORY + RATING)
+          BUYER OLD TRANSACTION INSPECTION MODAL (ON CLICKING BOOKING)
+         ========================================================= */}
+      {inspectedBuyerBooking && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <span className="text-[11px] font-mono font-bold text-teal-500">{inspectedBuyerBooking.bookingId}</span>
+                <h3 className="font-extrabold text-base">Seed Purchase & Hatchery History</h3>
+              </div>
+              <button type="button" onClick={() => setInspectedBuyerBooking(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
+            </div>
+            <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${subCardBg}`}>
+              <span className="text-[10px] font-bold uppercase text-teal-500">Purchased From Hatchery</span>
+              <p className="text-sm font-extrabold">{inspectedBuyerBooking.batch?.realName}</p>
+              <p className="opacity-75">CAA License: {inspectedBuyerBooking.batch?.caaLicense} • {inspectedBuyerBooking.batch?.zone}</p>
+              <p className="opacity-75">Address: {inspectedBuyerBooking.batch?.realAddress} • +91 {inspectedBuyerBooking.batch?.realPhone}</p>
+            </div>
+            <div className="text-xs space-y-2">
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Booked On:</span><b>{inspectedBuyerBooking.date} at {inspectedBuyerBooking.time}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Species & Stage:</span><b>{inspectedBuyerBooking.batch?.species} ({inspectedBuyerBooking.batch?.plStage})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Quantity + Free Bonus:</span><b>{(inspectedBuyerBooking.quantity || 0).toLocaleString('en-IN')} + {(inspectedBuyerBooking.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Schedule:</span><b>{inspectedBuyerBooking.packingDate} ({inspectedBuyerBooking.packingTimeSlot})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (6%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Cleared (${inspectedBuyerBooking.clearedAt})` : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => handleDownloadVerifiedPdf(inspectedBuyerBooking, inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED')} className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                <Printer className="w-3.5 h-3.5" /> {t.printBtn}
+              </button>
+              <button type="button" onClick={() => setInspectedBuyerBooking(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>{t.closeBtn}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          SELLER ASSIGNED ORDER FULL DETAILS MODAL (ON CLICKING ORDER)
+         ========================================================= */}
+      {inspectedSellerOrder && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <span className="text-[11px] font-mono font-bold text-teal-500">{inspectedSellerOrder.bookingId}</span>
+                <h3 className="font-extrabold text-base">Assigned Packing Order Full Details</h3>
+              </div>
+              <button type="button" onClick={() => setInspectedSellerOrder(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
+            </div>
+            <div className="text-xs space-y-2">
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Farmer Name:</span><b>{inspectedSellerOrder.farmerName} (+91 {inspectedSellerOrder.farmerPhone})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Seed Quantity + Bonus:</span><b>{(inspectedSellerOrder.quantity || 0).toLocaleString('en-IN')} + {(inspectedSellerOrder.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Target Pond Salinity:</span><b className="text-teal-500">{inspectedSellerOrder.pondSalinity} PPT (Source: {inspectedSellerOrder.batch?.salinity} PPT)</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Date & Slot:</span><b>{inspectedSellerOrder.packingDate} ({inspectedSellerOrder.packingTimeSlot})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Logistics Mode:</span><b>{inspectedSellerOrder.includeTransport ? 'Oxygen Van Delivery (+₹1,500)' : 'Self Pickup'}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Total Order Value:</span><b>₹{(inspectedSellerOrder.totalSeedCost || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Balance Due from Farmer at Packing:</span><b className="text-emerald-500">₹{(inspectedSellerOrder.balanceAtPacking || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between py-1"><span>Your Online Advance Share:</span><b>₹{(inspectedSellerOrder.settlement?.hatcheryAmount || 0).toLocaleString('en-IN')} ({inspectedSellerOrder.settlement?.status === 'BALANCE_CLEARED' ? 'Credited' : 'On Hold'})</b></div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setInspectedSellerOrder(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>{t.closeBtn}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          BROKER TRANSACTION AUDIT MODAL (ONLY 2% BASE + MARGIN PROFIT, ZERO PLATFORM FEE SHOWN)
+         ========================================================= */}
+      {selectedBrokerTx && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <span className="text-[11px] font-mono font-bold text-teal-500">{selectedBrokerTx.bookingId}</span>
+                <h3 className="font-extrabold text-base">Broker Deal & Earnings Breakdown</h3>
+              </div>
+              <button type="button" onClick={() => setSelectedBrokerTx(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                <span className="text-[10px] opacity-60 uppercase font-bold block">Farmer (Buyer)</span>
+                <b className="text-sm block mt-0.5">{selectedBrokerTx.farmerName}</b>
+                <span className="opacity-75">+91 {selectedBrokerTx.farmerPhone}</span>
+              </div>
+              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                <span className="text-[10px] opacity-60 uppercase font-bold block">Hatchery (Seller)</span>
+                <b className="text-sm block mt-0.5">{selectedBrokerTx.batch?.realName}</b>
+                <span className="opacity-75">{selectedBrokerTx.batch?.zone}</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-xl p-4 space-y-2 text-xs ${subCardBg}`}>
+              <div className="flex justify-between"><span>Booked Quantity:</span><b>{(selectedBrokerTx.quantity || 0).toLocaleString('en-IN')} PL ({selectedBrokerTx.batch?.plStage})</b></div>
+              <div className="flex justify-between"><span>Packing Schedule:</span><b>{selectedBrokerTx.packingDate} ({selectedBrokerTx.packingTimeSlot})</b></div>
+              <div className="flex justify-between"><span>Hatchery Base Rate:</span><b>₹{(selectedBrokerTx.batch?.pricePer1000 || 0).toFixed(2)} / seed</b></div>
+              <div className="flex justify-between border-t border-slate-300/30 pt-2"><span>Your Standard 2% Commission:</span><b>₹{(selectedBrokerTx.settlement?.brokerBaseCommission || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between"><span>Your Extra Margin Profit:</span><b>₹{(selectedBrokerTx.settlement?.brokerMarginEarn || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between border-t border-slate-300/30 pt-2 text-sm font-extrabold text-emerald-500">
+                <span>Total Broker Earnings ({selectedBrokerTx.settlement?.status === 'BALANCE_CLEARED' ? 'Credited' : 'On Hold'}):</span>
+                <span>₹{(selectedBrokerTx.settlement?.brokerAmount || 0).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setSelectedBrokerTx(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
+                {t.closeBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          HATCHERY INSPECTION MODAL (HISTORY + REVIEWS + MULTIPLE PCR IMAGES)
          ========================================================= */}
       {inspectedBatch && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-4 max-h-[90vh] overflow-y-auto ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                  <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                     {t.caaVerified}
                   </span>
-                  <span className="text-xs font-bold text-amber-600">{inspectedBatch.rating}★ ({inspectedBatch.reviewCount || 0} Reviews)</span>
+                  <span className="text-xs font-bold text-amber-500">{inspectedBatch.rating}★ ({inspectedBatch.reviewCount || 0} Reviews)</span>
                 </div>
-                <h3 className="font-extrabold text-lg text-slate-900 mt-1">{inspectedBatch.hatcheryCode} • {inspectedBatch.zone}</h3>
+                <h3 className="font-extrabold text-lg mt-1">{inspectedBatch.hatcheryCode} • {inspectedBatch.zone}</h3>
               </div>
-              <button type="button" onClick={() => setInspectedBatch(null)} className="text-slate-400 hover:text-slate-800 font-bold text-lg cursor-pointer">✕</button>
+              <button type="button" onClick={() => setInspectedBatch(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
-              <div><span className="text-[10px] text-slate-400 block">Species</span><b>{inspectedBatch.species}</b></div>
-              <div><span className="text-[10px] text-slate-400 block">Stage</span><b>{inspectedBatch.plStage}</b></div>
-              <div><span className="text-[10px] text-slate-400 block">Salinity</span><b className="text-teal-700">{inspectedBatch.salinity} PPT</b></div>
-              <div><span className="text-[10px] text-slate-400 block">Tank GPS</span><b className="font-mono text-[11px]">{inspectedBatch.gpsCoords}</b></div>
+            <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
+              <div><span className="text-[10px] opacity-60 block">Registered Since</span><b>{inspectedBatch.registeredAt || '2026'}</b></div>
+              <div><span className="text-[10px] opacity-60 block">Orders Fulfilled</span><b>{bookings.filter(b => b.hatcheryOwnerPhone === inspectedBatch.ownerPhone).length} Orders</b></div>
+              <div><span className="text-[10px] opacity-60 block">Salinity / Stage</span><b className="text-teal-500">{inspectedBatch.salinity} PPT • {inspectedBatch.plStage}</b></div>
+              <div><span className="text-[10px] opacity-60 block">Packing Slot</span><b>{inspectedBatch.availableTimeSlot || 'All Day'}</b></div>
             </div>
 
-            {/* PCR LAB PHOTO / DOCUMENT PREVIEW */}
-            <div className="border border-slate-200 rounded-xl p-4 space-y-2 bg-slate-50">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                  <FileCheck2 className="w-4 h-4 text-teal-600" /> Attached PCR Lab Report: <span className="font-mono text-teal-700">{inspectedBatch.pcrFileName}</span>
-                </span>
-                <span className="text-[11px] text-slate-400">Listed: {inspectedBatch.createdAt || 'Today'}</span>
-              </div>
-              {inspectedBatch.pcrPreviewUrl ? (
-                inspectedBatch.pcrFileType?.includes('pdf') ? (
-                  <iframe src={inspectedBatch.pcrPreviewUrl} title="PCR Report" className="w-full h-64 rounded-lg border border-slate-300 bg-white" />
-                ) : (
-                  <img src={inspectedBatch.pcrPreviewUrl} alt="PCR Lab Report" className="w-full max-h-72 object-contain rounded-lg border border-slate-300 bg-white" />
-                )
+            <div className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
+              <span className="text-xs font-extrabold flex items-center gap-1.5">
+                <FileCheck2 className="w-4 h-4 text-teal-600" /> Verified PCR Lab Images ({(inspectedBatch.pcrImages || []).length})
+              </span>
+              {(inspectedBatch.pcrImages || []).length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {inspectedBatch.pcrImages.map((img, idx) => (
+                    <div key={idx} className={`border rounded-xl p-2 space-y-1.5 ${cardBg}`}>
+                      <span className="text-[11px] font-extrabold text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded inline-block">
+                        {img.label}
+                      </span>
+                      <img src={img.url} alt={img.label} className="w-full h-48 object-contain rounded-lg bg-slate-100" />
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="p-6 text-center text-xs text-slate-500 bg-white rounded-lg border border-dashed border-slate-300">
-                  PCR Document Verified ({inspectedBatch.pcrFileName})
-                </div>
+                <div className="p-4 text-center text-xs opacity-60">No PCR images uploaded.</div>
               )}
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2">
-              <button type="button" onClick={() => setInspectedBatch(null)} className="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer">
+              <button type="button" onClick={() => setInspectedBatch(null)} className={`px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
                 {t.closeBtn}
               </button>
               <button
                 type="button"
+                disabled={(inspectedBatch.availableStock || 0) <= 0}
                 onClick={() => {
                   const b = inspectedBatch;
                   setInspectedBatch(null);
                   setSelectedBatch(b);
                 }}
-                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer"
+                className="bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer"
               >
                 {t.bookSlotBtn} →
               </button>
@@ -2469,55 +3083,53 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          BOOKING MODAL (MULTI-PAYMENT: RAZORPAY + DIRECT UPI + BANK-TO-BANK)
+          BOOKING MODAL (6% ADVANCE + QR + DIRECT UPI + BANK-TO-BANK)
          ========================================================= */}
       {selectedBatch && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[92vh] overflow-y-auto ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div>
-                <h3 className="font-extrabold text-base text-slate-900">{t.modalTitle}</h3>
-                <p className="text-xs text-slate-500">{selectedBatch.hatcheryCode} • {selectedBatch.zone}</p>
+                <h3 className="font-extrabold text-base">{t.modalTitle}</h3>
+                <p className="text-xs opacity-60">{selectedBatch.hatcheryCode} • {selectedBatch.zone}</p>
               </div>
-              <button type="button" onClick={() => setSelectedBatch(null)} className="text-slate-400 hover:text-slate-800 font-bold text-lg cursor-pointer">✕</button>
+              <button type="button" onClick={() => setSelectedBatch(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleConfirmBookingSubmit} className="space-y-4">
-              {/* STEP 1: SELECTED HATCHERY SUMMARY */}
-              <div className="bg-teal-50 border border-teal-200 rounded-xl p-3.5 space-y-1.5">
+              <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold text-teal-900 uppercase">{t.step1Label}</span>
+                  <span className="text-[11px] font-extrabold text-teal-600 uppercase">{t.step1Label}</span>
                   {currentUser.role === 'mediator' && (
-                    <button type="button" onClick={() => setSelectedBatch(null)} className="text-[11px] font-bold text-teal-700 underline cursor-pointer">
+                    <button type="button" onClick={() => setSelectedBatch(null)} className="text-[11px] font-bold text-teal-600 underline cursor-pointer">
                       {t.changeHatcheryBtn}
                     </button>
                   )}
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <div>
-                    <span className="font-extrabold text-slate-900 block">{selectedBatch.hatcheryCode} ({selectedBatch.plStage})</span>
-                    <span className="text-slate-600">{selectedBatch.species} • Salinity: {selectedBatch.salinity} PPT</span>
+                    <span className="font-extrabold block">{selectedBatch.hatcheryCode} ({selectedBatch.plStage})</span>
+                    <span className="opacity-75">{selectedBatch.species} • Remaining: {(selectedBatch.availableStock || 0).toLocaleString('en-IN')} PL</span>
                   </div>
-                  <div className="text-right font-black text-teal-900 text-base">
+                  <div className="text-right font-black text-teal-600 text-base">
                     ₹{selectedBatch.pricePer1000.toFixed(2)}<span className="text-[10px] font-normal block">/seed</span>
                   </div>
                 </div>
               </div>
 
-              {/* STEP 2: ENTER FARMER & PAYMENT DETAILS */}
               <div className="space-y-3">
-                <span className="text-[11px] font-extrabold text-slate-700 uppercase block">{t.step2Label}</span>
+                <span className="text-[11px] font-extrabold opacity-75 uppercase block">{t.step2Label}</span>
 
                 {currentUser.role === 'mediator' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 rounded-xl border ${subCardBg}`}>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">{t.selectSavedFarmer}</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{t.selectSavedFarmer}</label>
                       <select
                         onChange={(e) => {
                           const found = brokerFarmers.find(f => f.id === e.target.value);
                           if (found) setBookingForm({ ...bookingForm, farmerName: found.name, farmerPhone: found.phone });
                         }}
-                        className="w-full border border-slate-300 bg-white rounded-xl px-2.5 py-1.5 text-xs font-semibold"
+                        className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-semibold ${inputCls}`}
                       >
                         <option value="">{t.manualFarmerOption}</option>
                         {brokerFarmers.map(f => (
@@ -2526,14 +3138,14 @@ function AquaMarkApp() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">{t.brokerMarginLabel}</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{t.brokerMarginLabel}</label>
                       <input
                         type="number"
                         min="0"
-                        max="10"
+                        max="20"
                         value={bookingForm.brokerMarginPaise}
                         onChange={(e) => setBookingForm({ ...bookingForm, brokerMarginPaise: Number(e.target.value) })}
-                        className="w-full border border-slate-300 bg-white rounded-xl px-2.5 py-1.5 text-xs font-bold select-text"
+                        className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`}
                       />
                     </div>
                   </div>
@@ -2541,11 +3153,11 @@ function AquaMarkApp() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">{t.farmerNameLabel}</label>
-                    <input required type="text" value={bookingForm.farmerName} onChange={(e) => setBookingForm({ ...bookingForm, farmerName: e.target.value })} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.farmerNameLabel}</label>
+                    <input required type="text" value={bookingForm.farmerName} onChange={(e) => setBookingForm({ ...bookingForm, farmerName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-sm select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">{t.whatsappLabel}</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.whatsappLabel}</label>
                     <input
                       required
                       type="tel"
@@ -2553,27 +3165,45 @@ function AquaMarkApp() {
                       placeholder="9876543210"
                       value={bookingForm.farmerPhone}
                       onChange={(e) => setBookingForm({ ...bookingForm, farmerPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                      className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold select-text"
+                      className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">{t.quantityLabel}</label>
-                    <input required type="number" step="10000" min="50000" value={bookingForm.quantity} onChange={(e) => setBookingForm({ ...bookingForm, quantity: Number(e.target.value) })} className="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-sm font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.quantityLabel}</label>
+                    <input
+                      required
+                      type="number"
+                      step="10000"
+                      min="10000"
+                      max={selectedBatch.availableStock || 1000000}
+                      value={bookingForm.quantity}
+                      onChange={(e) => setBookingForm({ ...bookingForm, quantity: Number(e.target.value) })}
+                      className={`w-full border rounded-xl px-2.5 py-2 text-sm font-bold select-text ${inputCls}`}
+                    />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">{t.pondSalinityLabel}</label>
-                    <input required type="number" value={bookingForm.pondSalinity} onChange={(e) => setBookingForm({ ...bookingForm, pondSalinity: Number(e.target.value) })} className="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-sm font-bold select-text" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">{t.packingDateLabel}</label>
-                    <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold select-text" />
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.pondSalinityLabel}</label>
+                    <input required type="number" value={bookingForm.pondSalinity} onChange={(e) => setBookingForm({ ...bookingForm, pondSalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                 </div>
 
-                <label className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl p-2.5 cursor-pointer text-xs font-bold text-slate-800">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.packingDateLabel}</label>
+                    <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className={`w-full border rounded-xl px-2.5 py-2 text-xs font-bold select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.packingTimeLabel}</label>
+                    <select value={bookingForm.packingTimeSlot} onChange={(e) => setBookingForm({ ...bookingForm, packingTimeSlot: e.target.value })} className={`w-full border rounded-xl px-2.5 py-2 text-xs font-bold ${inputCls}`}>
+                      {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <label className={`flex items-center gap-2.5 border rounded-xl p-2.5 cursor-pointer text-xs font-bold ${subCardBg}`}>
                   <input
                     type="checkbox"
                     checked={bookingForm.includeTransport}
@@ -2583,13 +3213,12 @@ function AquaMarkApp() {
                   {t.transportAddonLabel}
                 </label>
 
-                {/* PAYMENT METHOD SELECTOR: RAZORPAY / DIRECT UPI / BANK-TO-BANK */}
                 <div className="space-y-2 pt-1">
-                  <label className="text-xs font-bold text-slate-700 block">{t.paymentMethodLabel}</label>
+                  <label className="text-xs font-bold opacity-75 block">{t.paymentMethodLabel}</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: 'RAZORPAY', label: 'Razorpay', icon: CreditCard },
-                      { id: 'DIRECT_UPI', label: 'Direct UPI', icon: QrCode },
+                      { id: 'DIRECT_UPI', label: 'Direct UPI / QR', icon: QrCode },
                       { id: 'BANK_TO_BANK', label: 'Bank-to-Bank', icon: Landmark }
                     ].map(pm => {
                       const Icon = pm.icon;
@@ -2599,43 +3228,75 @@ function AquaMarkApp() {
                           key={pm.id}
                           type="button"
                           onClick={() => setBookingForm({ ...bookingForm, paymentMethod: pm.id })}
-                          className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${active ? 'border-teal-600 bg-teal-50 text-teal-900 font-extrabold' : 'border-slate-200 text-slate-600 font-semibold'
+                          className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${active ? 'border-teal-600 bg-teal-500/15 text-teal-600 font-extrabold' : subCardBg
                             }`}
                         >
-                          <Icon className="w-4 h-4 text-teal-700" />
+                          <Icon className="w-4 h-4 text-teal-600" />
                           <span className="text-[11px]">{pm.label}</span>
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Direct UPI or Bank-to-Bank Details Box */}
                   {(() => {
                     const qty = Number(bookingForm.quantity) || 100000;
                     const effRate = (selectedBatch.pricePer1000 || 0.42) + ((Number(bookingForm.brokerMarginPaise) || 0) / 100);
                     const total = Math.round(qty * effRate) + (bookingForm.includeTransport ? 1500 : 0);
-                    const token = Math.max(2500, Math.round(total * 0.10));
+                    const token = Math.max(1200, Math.round(total * 0.06));
 
                     if (bookingForm.paymentMethod === 'DIRECT_UPI') {
-                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${token}&cu=INR&tn=SeedBooking`;
+                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${token}&cu=INR&tn=SeedAdvance6Pct`;
+                      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
+
                       return (
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-2 text-xs">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="font-bold text-emerald-900 block">AquaMark Settlement UPI ID:</span>
-                              <span className="font-mono font-extrabold text-teal-800 select-text">aquamark@sbi</span>
+                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 space-y-3 text-xs">
+                          <div className="flex flex-col sm:flex-row items-center gap-3.5">
+                            <div className="bg-white p-2 rounded-xl border border-emerald-300 shrink-0 text-center text-slate-900">
+                              <img src={qrApiUrl} alt="Scan UPI QR" className="w-28 h-28 object-contain" />
+                              <span className="text-[10px] font-bold block mt-1">Scan & Pay ₹{token.toLocaleString('en-IN')}</span>
                             </div>
-                            <a href={upiUri} className="bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs">
-                              Open UPI App (₹{token.toLocaleString('en-IN')})
-                            </a>
+
+                            <div className="flex-1 space-y-2 w-full">
+                              <span className="font-extrabold block">Option A: Scan QR with PhonePe / GPay</span>
+                              <span className="font-extrabold block pt-1 border-t border-emerald-500/20">Option B: Enter UPI ID for Collect Request</span>
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  placeholder="yourname@ybl / @okaxis"
+                                  value={bookingForm.payerUpiId}
+                                  onChange={(e) => setBookingForm({ ...bookingForm, payerUpiId: e.target.value })}
+                                  className={`w-full border rounded-lg px-2.5 py-1.5 text-xs font-mono select-text ${inputCls}`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!bookingForm.payerUpiId.includes('@')) {
+                                      showToast('Enter valid UPI ID (e.g., name@ybl)');
+                                      return;
+                                    }
+                                    setBookingForm({ ...bookingForm, upiRequestSent: true });
+                                    showToast(t.toasts.upiCollectSent);
+                                  }}
+                                  className="bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 cursor-pointer"
+                                >
+                                  Request ₹{token.toLocaleString('en-IN')}
+                                </button>
+                              </div>
+                              {bookingForm.upiRequestSent && (
+                                <p className="text-[11px] font-bold text-teal-500">
+                                  ✓ Collect Request of ₹{token.toLocaleString('en-IN')} sent to {bookingForm.payerUpiId}. Approve on mobile & enter UTR below:
+                                </p>
+                              )}
+                            </div>
                           </div>
+
                           <input
                             required
                             type="text"
                             placeholder={t.utrPlaceholder}
                             value={bookingForm.utrReference}
                             onChange={(e) => setBookingForm({ ...bookingForm, utrReference: e.target.value })}
-                            className="w-full border border-emerald-300 bg-white rounded-lg px-3 py-1.5 text-xs font-mono select-text"
+                            className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
                           />
                         </div>
                       );
@@ -2643,11 +3304,11 @@ function AquaMarkApp() {
 
                     if (bookingForm.paymentMethod === 'BANK_TO_BANK') {
                       return (
-                        <div className="bg-slate-50 border border-slate-300 rounded-xl p-3 space-y-2 text-xs">
-                          <div className="font-mono text-[11px] text-slate-700 space-y-0.5 select-text">
-                            <div><b>Account Name:</b> Aqua Mark Escrow Account</div>
+                        <div className={`border rounded-xl p-3 space-y-2 text-xs ${subCardBg}`}>
+                          <div className="font-mono text-[11px] space-y-0.5 select-text">
+                            <div><b>Account Name:</b> Aqua Mark Settlement Account</div>
                             <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
-                            <div><b>Amount to Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
+                            <div><b>6% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
                           </div>
                           <input
                             required
@@ -2655,7 +3316,7 @@ function AquaMarkApp() {
                             placeholder={t.utrPlaceholder}
                             value={bookingForm.utrReference}
                             onChange={(e) => setBookingForm({ ...bookingForm, utrReference: e.target.value })}
-                            className="w-full border border-slate-300 bg-white rounded-lg px-3 py-1.5 text-xs font-mono select-text"
+                            className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
                           />
                         </div>
                       );
@@ -2666,8 +3327,8 @@ function AquaMarkApp() {
               </div>
 
               {Math.abs((selectedBatch.salinity || 15) - (Number(bookingForm.pondSalinity) || 15)) > 4 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{t.salinityWarn}</span>
                 </div>
               )}
@@ -2676,7 +3337,7 @@ function AquaMarkApp() {
                 const qty = Number(bookingForm.quantity) || 100000;
                 const effRate = (selectedBatch.pricePer1000 || 0.42) + ((Number(bookingForm.brokerMarginPaise) || 0) / 100);
                 const total = Math.round(qty * effRate) + (bookingForm.includeTransport ? 1500 : 0);
-                const token = Math.max(2500, Math.round(total * 0.10));
+                const token = Math.max(1200, Math.round(total * 0.06));
                 return (
                   <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 text-xs">
                     <div className="flex justify-between text-slate-300">
@@ -2684,11 +3345,11 @@ function AquaMarkApp() {
                       <span className="font-bold text-white">₹{total.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between text-emerald-400 font-extrabold text-sm border-t border-white/10 pt-2">
-                      <span>{t.advancePayable}:</span>
+                      <span>{t.advancePaidLabel}:</span>
                       <span>₹{token.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between text-slate-300 pt-1">
-                      <span>{t.balanceAtGate}:</span>
+                      <span>{t.balanceAtPacking}:</span>
                       <span className="font-bold text-white">₹{(total - token).toLocaleString('en-IN')}</span>
                     </div>
                   </div>
@@ -2705,22 +3366,22 @@ function AquaMarkApp() {
 
       {/* SIDE-BY-SIDE COMPARISON MODAL */}
       {showCompareModal && (
-        <div className="fixed inset-0 bg-slate-950/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="font-extrabold text-base text-slate-900">{t.compareModalTitle}</h3>
-              <button type="button" onClick={() => setShowCompareModal(false)} className="text-slate-400 hover:text-slate-800 font-bold cursor-pointer">✕</button>
+        <div className="fixed inset-0 bg-slate-950/75 z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <h3 className="font-extrabold text-base">{t.compareModalTitle}</h3>
+              <button type="button" onClick={() => setShowCompareModal(false)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               {batches.filter(b => compareIds.includes(b.id)).map(b => (
-                <div key={b.id} className="border border-slate-200 rounded-xl p-3.5 space-y-2 bg-slate-50">
-                  <div className="font-extrabold text-slate-900">{b.hatcheryCode}</div>
-                  <div className="text-teal-700 font-bold">{b.zone}</div>
-                  <div className="border-t pt-2 space-y-1">
+                <div key={b.id} className={`border rounded-xl p-3.5 space-y-2 ${subCardBg}`}>
+                  <div className="font-extrabold">{b.hatcheryCode}</div>
+                  <div className="text-teal-500 font-bold">{b.zone}</div>
+                  <div className="border-t border-slate-300/20 pt-2 space-y-1">
                     <div className="flex justify-between"><span>{t.stage}:</span><b>{b.plStage}</b></div>
                     <div className="flex justify-between"><span>{t.perSeed}:</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
                     <div className="flex justify-between"><span>{t.salinity}:</span><b>{b.salinity} PPT</b></div>
-                    <div className="flex justify-between"><span>{t.bonus}:</span><b className="text-emerald-600">+{b.bonusPercent}%</b></div>
+                    <div className="flex justify-between"><span>{t.bonus}:</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
                     <div className="flex justify-between"><span>Rating:</span><b>{b.rating}★</b></div>
                   </div>
                 </div>
@@ -2730,57 +3391,63 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* VERIFIED CERTIFICATE MODAL (ONLY "PRINT" BUTTON & FAVICON.SVG LOGO) */}
+      {/* OFFICIAL RECEIPT MODAL */}
       {activeInvoice && (
         <div className="fixed inset-0 bg-slate-950/75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-2 border-teal-600 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border-2 border-teal-600 space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div className="flex items-center gap-2.5">
                 <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-8 h-8 object-contain" />
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">{t.receiptTitle}</h3>
-                  <p className="text-[11px] font-mono text-emerald-700 font-bold">
-                    {activeInvoice.bookingId} • {activeInvoice.paymentId}
+                  <h3 className="font-extrabold text-sm">
+                    {activeInvoice.receiptType === 'FINAL' ? t.finalReceiptTitle : t.receiptTitle}
+                  </h3>
+                  <p className="text-[11px] font-mono text-emerald-500 font-bold">
+                    {activeInvoice.booking.bookingId} • {activeInvoice.booking.date} {activeInvoice.booking.time}
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setActiveInvoice(null)} className="text-slate-400 hover:text-slate-800 font-bold cursor-pointer">✕</button>
+              <button type="button" onClick={() => setActiveInvoice(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
 
-            <div className="text-xs space-y-2.5 text-slate-700">
-              <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl">
-                <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">Unlocked & CAA Verified Hatchery</span>
-                <p className="font-extrabold text-sm text-slate-900 mt-0.5">{activeInvoice.batch?.realName}</p>
-                <p className="text-slate-600">{activeInvoice.batch?.realAddress}</p>
-                <p className="font-bold text-teal-800 mt-1">Phone: +91 {activeInvoice.batch?.realPhone} | CAA: {activeInvoice.batch?.caaLicense}</p>
+            <div className="text-xs space-y-2.5">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 p-3.5 rounded-xl">
+                <span className="text-[10px] font-extrabold text-emerald-500 uppercase tracking-wider">{t.sellerDetailsHeading}</span>
+                <p className="font-extrabold text-sm mt-0.5">{activeInvoice.booking.batch?.realName}</p>
+                <p className="opacity-75">{activeInvoice.booking.batch?.realAddress}</p>
+                <p className="font-bold text-teal-500 mt-1">Phone: +91 {activeInvoice.booking.batch?.realPhone} | CAA: {activeInvoice.booking.batch?.caaLicense}</p>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-300/20">
                 <span>{t.farmerNameLabel}:</span>
-                <span className="font-bold text-slate-900">{activeInvoice.farmerName} ({activeInvoice.farmerPhone})</span>
+                <span className="font-bold">{activeInvoice.booking.farmerName} ({activeInvoice.booking.farmerPhone})</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-300/20">
+                <span>Packing Schedule:</span>
+                <span className="font-bold">{activeInvoice.booking.packingDate} ({activeInvoice.booking.packingTimeSlot})</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20">
                 <span>Seed + Free Bonus:</span>
-                <span className="font-bold text-emerald-700">{(activeInvoice.quantity || 0).toLocaleString('en-IN')} + {(activeInvoice.bonusSeeds || 0).toLocaleString('en-IN')} Free PL</span>
+                <span className="font-bold text-emerald-500">{(activeInvoice.booking.quantity || 0).toLocaleString('en-IN')} + {(activeInvoice.booking.bonusSeeds || 0).toLocaleString('en-IN')} Free PL</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-100 text-teal-800 font-bold">
+              <div className="flex justify-between py-1 border-b border-slate-300/20 text-teal-500 font-bold">
                 <span>{t.advancePaidLabel}:</span>
-                <span>₹{(activeInvoice.tokenAdvance || 0).toLocaleString('en-IN')}</span>
+                <span>₹{(activeInvoice.booking.tokenAdvance || 0).toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between py-1 font-bold text-slate-900">
-                <span>{t.balanceAtGate}:</span>
-                <span>₹{(activeInvoice.balanceAtGate || 0).toLocaleString('en-IN')}</span>
+              <div className="flex justify-between py-1 font-bold">
+                <span>{t.balanceAtPacking}:</span>
+                <span>₹{(activeInvoice.booking.balanceAtPacking || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
 
             <div className="flex gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={() => handleDownloadVerifiedPdf(activeInvoice)}
+                onClick={() => handleDownloadVerifiedPdf(activeInvoice.booking, activeInvoice.receiptType === 'FINAL')}
                 className="flex-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> {t.printBtn}
               </button>
-              <button type="button" onClick={() => setActiveInvoice(null)} className="px-4 py-3 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer">
+              <button type="button" onClick={() => setActiveInvoice(null)} className={`px-4 py-3 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
                 {t.closeBtn}
               </button>
             </div>
