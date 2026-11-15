@@ -8,7 +8,7 @@ import {
   Trash2, ArrowUpDown, Scale, FileCheck2, Upload, PlusCircle,
   Heart, Truck, TrendingUp, FlaskConical, Eye, CreditCard, QrCode,
   MessageSquare, BarChart3, Calendar, Droplets, History,
-  Receipt, Moon, Sun, Info, Compass
+  Receipt, Moon, Sun, XCircle, RefreshCw, ClipboardList, Gauge
 } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {
@@ -49,6 +49,14 @@ const SHRIMP_SPECIES_OPTIONS = [
   'Macrobrachium rosenbergii (Scampi)',
   'Penaeus indicus (Indian White Prawn)',
   'OTHER_CUSTOM'
+];
+
+const BROODSTOCK_ORIGINS = [
+  'Kona Bay (Hawaii SPF)',
+  'SIS (Shrimp Improvement Systems)',
+  'CPSPF Thailand Line',
+  'RGCA Rajiv Gandhi Centre',
+  'Domestic F1 Certified'
 ];
 
 const SEED_STAGE_OPTIONS = [
@@ -92,6 +100,15 @@ const PACKING_TIME_SLOTS = [
   'Evening / Night (04:00 PM – 09:00 PM)'
 ];
 
+const DOC_SCHEDULE_TABLE = [
+  { doc: 'DOC 1–10', abw: '0.02g – 0.4g', feedPerLakh: '2.0 – 4.0 kg/day', trayCheck: 'Blind Feeding (No Tray)', size: 'Starter #1' },
+  { doc: 'DOC 11–20', abw: '0.5g – 1.5g', feedPerLakh: '4.2 – 7.5 kg/day', trayCheck: 'Blind Feeding (No Tray)', size: 'Starter #2' },
+  { doc: 'DOC 21–35', abw: '1.8g – 4.5g', feedPerLakh: '8.0 – 14.0 kg/day', trayCheck: 'Check after 2.5 hrs (1.0%)', size: 'Grower #3S' },
+  { doc: 'DOC 36–55', abw: '5.0g – 11.0g', feedPerLakh: '15.0 – 24.0 kg/day', trayCheck: 'Check after 2.0 hrs (1.2%)', size: 'Grower #3P' },
+  { doc: 'DOC 56–80', abw: '12.0g – 21.0g', feedPerLakh: '25.0 – 34.0 kg/day', trayCheck: 'Check after 1.5 hrs (1.5%)', size: 'Finisher #4S' },
+  { doc: 'DOC 81–110', abw: '22.0g – 33.0g', feedPerLakh: '35.0 – 42.0 kg/day', trayCheck: 'Check after 1.5 hrs (1.5%)', size: 'Finisher #4' }
+];
+
 const DICT = {
   en: {
     brandSub: 'B2B Aquaculture Seed & Direct Settlement Exchange',
@@ -115,10 +132,11 @@ const DICT = {
     tickerTitle: 'AP Farmgate Count Rates:',
     tabMarketplace: 'Hatchery Marketplace',
     tabBookings: 'My Bookings & Receipts',
-    tabAnalytics: 'Harvest, Feed & Profit Estimator',
-    tabWaterLab: 'Pond Water Health & DOC Table',
-    tabGuide: 'Crop & Water Protocol',
-    searchPlaceholder: 'Search Batch ID, Species, Stage, or Zone...',
+    tabPondLog: 'My Ponds & Daily Feed Log',
+    tabAnalytics: 'Harvest & Profit Estimator',
+    tabWaterLab: 'Water, Salinity & Oxygen Calc',
+    tabGuide: 'DOC 1–110 Feeding & Protocol',
+    searchPlaceholder: 'Search Batch ID, Species, Broodstock, or Zone...',
     allZones: 'All Coastal Zones',
     allStages: 'All Seed / PL Stages',
     onlySaved: 'Saved',
@@ -133,7 +151,7 @@ const DICT = {
     emptyMarketSub: 'Once a CAA-certified Hatchery registers and publishes a batch, it appears here immediately.',
     caaVerified: 'CAA Certified',
     soldOutBadge: 'SOLD OUT',
-    unlockHint: 'Hatchery identity & contact unlock after 6% advance booking',
+    unlockHint: 'Hatchery identity & contact unlock after 4% advance booking',
     inspectBtn: 'View Hatchery History, Reviews & PCR Images',
     perSeed: 'per seed',
     stage: 'Seed / PL Stage',
@@ -143,13 +161,15 @@ const DICT = {
     availPackingLabel: 'Available Packing',
     sampleBtn: '₹500 Sample',
     bookSlotBtn: 'Book Packing Slot',
-    myBookingsTitle: 'Your Bookings & Official Receipts (Click Any Booking for Full Details)',
+    myBookingsTitle: 'Your Bookings & Official Receipts (Click Any Booking for Details)',
     noBookingsYet: 'No bookings placed yet.',
-    paidLabel: 'Advance Paid (6%)',
-    balancePackingLabel: 'Balance at Packing (94%)',
-    packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete final balance at packing.',
-    pendingSettlementBadge: '6% Advance Paid • Balance Pending at Packing',
-    clearedSettlementBadge: '✅ Remaining Balance Cleared',
+    paidLabel: 'Advance Paid (4%)',
+    balancePackingLabel: 'Balance at Packing (96%)',
+    packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete remaining payment at packing.',
+    pendingSettlementBadge: '4% Advance Paid • 2% Refundable Hold Active',
+    clearedSettlementBadge: '✅ Packing Complete • 2% Hold Refunded to You',
+    cancelledRefundBadge: '❌ Cancelled • 2% Hold Refunded (2% Platform Non-Refundable)',
+    cancelBookingBtn: 'Cancel Booking (Get 2% Refund)',
     rateSeedLabel: 'Rate Hatchery (1-5★) & Feedback:',
     submitReviewBtn: 'Submit Feedback',
     ratedLabel: 'Feedback Sent',
@@ -174,10 +194,11 @@ const DICT = {
     saveBtn: 'Save Changes',
     addBatchTitle: 'Publish New Seed Batch & Packing Schedule',
     speciesLabel: 'Shrimp Species',
+    broodstockLabel: 'Broodstock Origin',
     customSpeciesPlaceholder: 'Enter custom shrimp species...',
     customStagePlaceholder: 'Enter custom stage (e.g. PL22)...',
     customZonePlaceholder: 'Enter custom zone / district...',
-    ratePerSeedLabel: 'Rate (₹ / seed)',
+    ratePerSeedLabel: 'Fixed Hatchery Rate (₹ / seed)',
     stockLabel: 'Available Stock (PL)',
     availDateLabel: 'Available Packing Date',
     availTimeLabel: 'Available Time Slot',
@@ -190,22 +211,22 @@ const DICT = {
     noBatchesSeller: 'No active batches published yet.',
     saveChangesBtn: 'Save Batch',
     removeBtn: 'Remove',
-    sellerOrdersTitle: 'Orders Assigned to Your Hatchery (Click Any Order for Details)',
+    sellerOrdersTitle: 'Orders Assigned to Your Hatchery (100% Fixed Rate Protected)',
     noOrdersYet: 'No packing orders received for your hatchery yet.',
-    creditedBadge: 'Payment Credited',
-    onHoldBadge: 'Advance Hold (Pending Payment Received)',
+    creditedBadge: 'Full Fixed Rate Received',
+    onHoldBadge: 'Pending Packing & Balance Payment',
     markPackedBtn: 'Mark Packing Complete',
     paymentReceivedBtn: 'Payment Received',
     sellerFeedbackTitle: 'Private Farmer Ratings & Feedback (Visible Only to You)',
     noFeedbackYet: 'No farmer feedback submitted yet.',
     // Broker
     brokerRegTitle: 'Mandatory Broker Bank & UPI Registration',
-    brokerRegSub: 'Enter your settlement bank account & UPI ID to activate your Broker account and receive earnings.',
+    brokerRegSub: 'Enter your settlement bank account & UPI ID to activate your Broker account and receive 2% commissions.',
     brokerActivateBtn: 'Save Bank Details & Activate Broker Account',
-    brokerHoldCard: 'Earnings on Hold (Pending Payment Received)',
+    brokerHoldCard: '2% Commission on Hold (Pending Packing)',
     brokerHoldSub: 'Credits automatically once hatchery confirms Payment Received',
-    brokerReleasedCard: 'Credited to Bank Account',
-    brokerBookingsTitle: 'My Broker Bookings & Earnings Tracker (Click Any Row for Breakdown)',
+    brokerReleasedCard: 'Credited 2% Commission + Margin Tracker',
+    brokerBookingsTitle: 'My Broker Bookings & Earnings Tracker (Click Any Row for Detailed Breakdown)',
     noBrokerBookings: 'No bookings placed under your Broker account yet.',
     brokerMarketplaceTitle: 'All Registered Hatcheries (Select Hatchery First to Book)',
     selectAndBookBtn: 'Select Hatchery & Book →',
@@ -220,7 +241,6 @@ const DICT = {
     step2Label: 'Step 2: Enter Farmer, Schedule & Payment Details',
     selectSavedFarmer: 'Quick-Fill from Locked Farmers',
     manualFarmerOption: '-- Enter Farmer Manually --',
-    // Modal & Payment
     modalTitle: 'Confirm Seed Packing Slot',
     farmerNameLabel: 'Farmer Name',
     whatsappLabel: 'WhatsApp Number (10 Digits)',
@@ -228,29 +248,20 @@ const DICT = {
     pondSalinityLabel: 'Pond Salinity (PPT)',
     packingDateLabel: 'Packing Date',
     packingTimeLabel: 'Packing Time Slot',
-    brokerMarginLabel: 'Your Extra Margin Profit (Paise / seed)',
+    brokerMarginLabel: 'Your Extra Margin (Paise / seed — Collected at Packing)',
     transportAddonLabel: 'Include Oxygen Van Delivery (+₹1,500)',
-    paymentMethodLabel: 'Select Payment Method',
+    paymentMethodLabel: 'Select 4% Advance Payment Method',
     salinityWarn: 'Salinity variance exceeds 4 PPT. Hatchery will perform 48-hour gradual acclimatization.',
-    totalSeedValue: 'Total Order Value',
-    advancePaidLabel: 'Advance Paid (6%)',
-    balanceAtPacking: 'Balance Payable at Packing (94%)',
-    payNowBtn: 'Confirm & Complete Booking',
+    totalSeedValue: 'Total Hatchery Fixed Value',
+    advancePaidLabel: 'Advance Paid Now (4%)',
+    balanceAtPacking: 'Balance Payable at Packing (96%)',
+    payNowBtn: 'Confirm & Pay 4% Advance',
     receiptTitle: 'OFFICIAL SEED BOOKING RECEIPT',
     finalReceiptTitle: 'FINAL BALANCE CLEARED RECEIPT',
     sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'Close',
     calculateBtn: 'Calculate Harvest & Profit',
-    protocolTitle: 'Standard Aquaculture Water, Stocking & DOC Feeding Protocol',
-    proto1Title: '1. Salinity Acclimatization Rule',
-    proto1Body: 'Never stock directly if salinity variance exceeds 3 PPT. Hatchery must adjust 1 PPT per 4 hours in conditioning tanks prior to oxygen packing.',
-    proto2Title: '2. Ideal Pond Water Parameters',
-    proto2Body: 'pH: 7.5 – 8.3 | Dissolved Oxygen: above 4.5 ppm | Total Alkalinity: 120 – 180 ppm | Unionized Ammonia: below 0.1 ppm | Nitrite: below 0.25 ppm.',
-    proto3Title: '3. DOC 1–30 Blind Feeding Schedule',
-    proto3Body: 'Start with 2.0 kg starter crumble per 1,00,000 PL on Day 1 and increment 200g daily. Begin check-tray monitoring from DOC 25 onwards.',
-    proto4Title: '4. Bio-Security & Probiotic Protocol',
-    proto4Body: 'Apply water probiotics every 7 days and gut probiotics mixed in feed twice daily to prevent EHP and White Gut outbreaks.',
     toasts: {
       invalidPhone: 'Please enter a valid 10-digit mobile number.',
       otpSent: 'Verification OTP sent:',
@@ -265,9 +276,10 @@ const DICT = {
       batchRemoved: 'Seed batch removed.',
       sampleOrdered: '₹500 100-Seed Sample courier requested!',
       packingMarked: 'Packing marked complete! Buyer notified on their dashboard.',
-      paymentReceivedDone: 'Payment Received confirmed! Balances credited & Final Cleared Receipt generated for Farmer.',
+      paymentReceivedDone: 'Payment Received confirmed! 2% Hold released & Final Cleared Receipt generated.',
+      bookingCancelled: 'Booking cancelled! 2% refundable hold returned to Farmer & stock restored.',
       farmerLocked: 'Farmer locked to your Broker ID for 365 days!',
-      paymentSuccess: '6% Advance booking confirmed! Stock deducted & Receipt ready.',
+      paymentSuccess: '4% Advance paid! Stock deducted & Official Receipt ready.',
       enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.',
       upiCollectSent: 'Collect payment request sent to your UPI App! Approve it and enter UTR.',
       calcUpdated: 'Harvest, Feed & Net Profit estimates recalculated!'
@@ -295,10 +307,11 @@ const DICT = {
     tickerTitle: 'నేటి ఆంధ్రప్రదేశ్ రొయ్యల కౌంట్ ధరలు:',
     tabMarketplace: 'హేచరీల మార్కెట్',
     tabBookings: 'నా బుకింగ్స్ & రసీదులు',
-    tabAnalytics: 'దిగుబడి, ఫీడ్ & లాభాల కాలిక్యులేటర్',
-    tabWaterLab: 'నీటి పరీక్ష & DOC పట్టిక',
-    tabGuide: 'సాగు, నీటి & ఫీడ్ ప్రోటోకాల్',
-    searchPlaceholder: 'బ్యాచ్ ID, రకం, దశ లేదా ప్రాంతం వెతకండి...',
+    tabPondLog: 'నా చెరువులు & రోజువారీ ఫీడ్ లాగ్',
+    tabAnalytics: 'దిగుబడి & లాభాల కాలిక్యులేటర్',
+    tabWaterLab: 'నీటి పరీక్ష, సెలైనిటీ & ఆక్సిజన్ లెక్క',
+    tabGuide: 'DOC 1–110 ఫీడింగ్ & ప్రోటోకాల్',
+    searchPlaceholder: 'బ్యాచ్ ID, రకం, బ్రూడ్‌స్టాక్ లేదా ప్రాంతం వెతకండి...',
     allZones: 'అన్ని ప్రాంతాలు',
     allStages: 'అన్ని సీడ్ / PL దశలు',
     onlySaved: 'సేవ్ చేసినవి',
@@ -313,7 +326,7 @@ const DICT = {
     emptyMarketSub: 'హేచరీ యజమానులు రిజిస్టర్ అయ్యి సీడ్ బ్యాచ్ యాడ్ చేసిన వెంటనే ఇక్కడ కనిపిస్తాయి.',
     caaVerified: 'CAA సర్టిఫైడ్',
     soldOutBadge: 'స్టాక్ పూర్తయింది (SOLD OUT)',
-    unlockHint: '6% అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు & ఫోన్ నంబర్ అన్‌లాక్ అవుతాయి',
+    unlockHint: '4% అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు & ఫోన్ నంబర్ అన్‌లాక్ అవుతాయి',
     inspectBtn: 'హేచరీ చరిత్ర, రివ్యూలు & PCR ఫోటోలు చూడండి',
     perSeed: 'ఒక్క సీడ్ ధర',
     stage: 'సీడ్ / PL దశ',
@@ -325,11 +338,13 @@ const DICT = {
     bookSlotBtn: 'ప్యాకింగ్ స్లాట్ బుక్ చేయండి',
     myBookingsTitle: 'మీ బుకింగ్స్ & రసీదులు (పూర్తి వివరాల కోసం క్లిక్ చేయండి)',
     noBookingsYet: 'మీరు ఇంకా ఎటువంటి సీడ్ బుకింగ్ చేయలేదు.',
-    paidLabel: 'చెల్లించిన అడ్వాన్స్ (6%)',
-    balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (94%)',
+    paidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
+    balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (96%)',
     packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! ప్యాకింగ్ వద్ద బ్యాలెన్స్ చెల్లించండి.',
-    pendingSettlementBadge: '6% అడ్వాన్స్ చెల్లించబడింది • ప్యాకింగ్ వద్ద బ్యాలెన్స్ బాకీ',
-    clearedSettlementBadge: '✅ మిగిలిన బ్యాలెన్స్ పూర్తయింది (Cleared)',
+    pendingSettlementBadge: '4% అడ్వాన్స్ చెల్లించబడింది • 2% హోల్డ్ సురక్షితం',
+    clearedSettlementBadge: '✅ ప్యాకింగ్ పూర్తయింది • 2% హోల్డ్ మీకు వాపస్ వచ్చింది',
+    cancelledRefundBadge: '❌ క్యాన్సిల్ చేయబడింది • 2% వాపస్ వచ్చింది (2% నాన్-రిఫండబుల్)',
+    cancelBookingBtn: 'బుకింగ్ క్యాన్సిల్ (2% వాపస్ పొందండి)',
     rateSeedLabel: 'రేటింగ్ (1-5★) & అభిప్రాయం రాయండి:',
     submitReviewBtn: 'ఫీడ్‌బ్యాక్ పంపండి',
     ratedLabel: 'ఫీడ్‌బ్యాక్ పంపబడింది',
@@ -353,10 +368,11 @@ const DICT = {
     saveBtn: 'మార్పులు సేవ్ చేయండి',
     addBatchTitle: 'కొత్త సీడ్ బ్యాచ్ & ప్యాకింగ్ సమయం పబ్లిష్ చేయండి',
     speciesLabel: 'రొయ్య రకం (Species)',
+    broodstockLabel: 'బ్రూడ్‌స్టాక్ మూలం (Broodstock)',
     customSpeciesPlaceholder: 'కొత్త రొయ్య రకం పేరు టైప్ చేయండి...',
     customStagePlaceholder: 'కొత్త దశ టైప్ చేయండి (ఉదా: PL22)...',
     customZonePlaceholder: 'కొత్త ప్రాంతం / జిల్లా పేరు టైప్ చేయండి...',
-    ratePerSeedLabel: 'ధర (₹ / ఒక్క సీడ్)',
+    ratePerSeedLabel: 'హేచరీ ఫిక్స్‌డ్ ధర (₹ / ఒక్క సీడ్)',
     stockLabel: 'అందుబాటులో ఉన్న స్టాక్ (PL)',
     availDateLabel: 'ప్యాకింగ్ అందుబాటు తేదీ',
     availTimeLabel: 'ప్యాకింగ్ అందుబాటు సమయం',
@@ -369,21 +385,21 @@ const DICT = {
     noBatchesSeller: 'మీరు ఇంకా ఎటువంటి బ్యాచ్‌లు యాడ్ చేయలేదు.',
     saveChangesBtn: 'మార్పులు సేవ్ చేయండి',
     removeBtn: 'తొలగించు',
-    sellerOrdersTitle: 'మీ హేచరీకి వచ్చిన ఆర్డర్లు (వివరాల కోసం క్లిక్ చేయండి)',
+    sellerOrdersTitle: 'మీ హేచరీకి వచ్చిన ఆర్డర్లు (మీ ఫిక్స్‌డ్ రేటు 100% సురక్షితం)',
     noOrdersYet: 'మీ హేచరీకి ఇంకా ఎటువంటి ఆర్డర్లు రాలేదు.',
-    creditedBadge: 'పేమెంట్ జమ అయింది',
-    onHoldBadge: 'అడ్వాన్స్ హోల్డ్ (బ్యాలెన్స్ కోసం వేచి ఉంది)',
+    creditedBadge: 'పూర్తి ఫిక్స్‌డ్ రేటు అందింది',
+    onHoldBadge: 'ప్యాకింగ్ & బ్యాలెన్స్ కోసం వేచి ఉంది',
     markPackedBtn: 'ప్యాకింగ్ పూర్తయింది (Notify Buyer)',
     paymentReceivedBtn: 'Payment Received (బ్యాలెన్స్ అందింది)',
     sellerFeedbackTitle: 'రైతుల రేటింగ్స్ & అభిప్రాయాలు (మీకు మాత్రమే కనిపిస్తాయి)',
     noFeedbackYet: 'ఇంకా ఎటువంటి రైతు అభిప్రాయాలు రాలేదు.',
     brokerRegTitle: 'బ్రోకర్ బ్యాంక్ & UPI రిజిస్ట్రేషన్ (తప్పనిసరి)',
-    brokerRegSub: 'మీ బ్రోకర్ అకౌంట్ యాక్టివేట్ అవ్వడానికి మరియు ఆదాయం పొందడానికి మీ బ్యాంక్ & UPI వివరాలు నమోదు చేయండి.',
+    brokerRegSub: 'మీ బ్రోకర్ అకౌంట్ యాక్టివేట్ అవ్వడానికి మరియు 2% కమిషన్ పొందడానికి మీ బ్యాంక్ & UPI వివరాలు నమోదు చేయండి.',
     brokerActivateBtn: 'బ్యాంక్ వివరాలు సేవ్ చేసి బ్రోకర్ అకౌంట్ ప్రారంభించండి',
-    brokerHoldCard: 'హోల్డ్‌లో ఉన్న ఆదాయం (Pending Payment Received)',
+    brokerHoldCard: 'హోల్డ్‌లో ఉన్న 2% కమిషన్ (ప్యాకింగ్ పూర్తయ్యాక వస్తుంది)',
     brokerHoldSub: 'హేచరీ ఓనర్ Payment Received నొక్కగానే మీ బ్యాంక్ అకౌంట్‌లోకి జమ అవుతుంది',
-    brokerReleasedCard: 'బ్యాంక్ అకౌంట్‌కు జమ అయిన ఆదాయం',
-    brokerBookingsTitle: 'నా బ్రోకర్ బుకింగ్స్ & కమిషన్ ట్రాకర్ (వివరాల కోసం క్లిక్ చేయండి)',
+    brokerReleasedCard: 'బ్యాంక్ అకౌంట్‌కు జమ అయిన 2% కమిషన్',
+    brokerBookingsTitle: 'నా బ్రోకర్ బుకింగ్స్ & మార్జిన్ ట్రాకర్ (పూర్తి వివరాల కోసం క్లిక్ చేయండి)',
     noBrokerBookings: 'మీ బ్రోకర్ అకౌంట్ ద్వారా ఇంకా ఎటువంటి బుకింగ్స్ జరగలేదు.',
     brokerMarketplaceTitle: 'రిజిస్టర్ అయిన హేచరీల లిస్ట్ (ముందుగా హేచరీ ఎంచుకుని బుక్ చేయండి)',
     selectAndBookBtn: 'ఈ హేచరీని ఎంచుకుని బుక్ చేయండి →',
@@ -405,29 +421,20 @@ const DICT = {
     pondSalinityLabel: 'చెరువు ఉప్పదనం (PPT)',
     packingDateLabel: 'ప్యాకింగ్ తేదీ',
     packingTimeLabel: 'ప్యాకింగ్ సమయం (Time Slot)',
-    brokerMarginLabel: 'మీ అదనపు మార్జిన్ లాభం (పైసలు / ఒక్క సీడ్)',
+    brokerMarginLabel: 'మీ అదనపు మార్జిన్ (పైసలు / ఒక్క సీడ్ — ప్యాకింగ్ వద్ద తీసుకుంటారు)',
     transportAddonLabel: 'ఆక్సిజన్ వ్యాన్ రవాణా జతచేయండి (+₹1,500)',
-    paymentMethodLabel: 'పేమెంట్ విధానం ఎంచుకోండి',
+    paymentMethodLabel: '4% అడ్వాన్స్ పేమెంట్ విధానం ఎంచుకోండి',
     salinityWarn: 'హేచరీ నీటికి మరియు చెరువు నీటికి మధ్య 4 PPT కంటే ఎక్కువ తేడా ఉంది. 48 గంటల ముందుగా Acclimatization చేయాలని హేచరీకి అలర్ట్ వెళ్తుంది.',
-    totalSeedValue: 'మొత్తం ఆర్డర్ విలువ',
-    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (Advance Paid - 6%)',
-    balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (94%)',
-    payNowBtn: 'పేమెంట్ నిర్ధారించి బుకింగ్ పూర్తి చేయండి',
+    totalSeedValue: 'హేచరీ ఫిక్స్‌డ్ ఆర్డర్ విలువ',
+    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (Advance Paid - 4%)',
+    balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (96%)',
+    payNowBtn: '4% అడ్వాన్స్ చెల్లించి బుక్ చేయండి',
     receiptTitle: 'అధికారిక సీడ్ బుకింగ్ రసీదు (RECEIPT)',
     finalReceiptTitle: 'ఫైనల్ బ్యాలెన్స్ క్లియర్డ్ రసీదు (FINAL RECEIPT)',
     sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'మూసివేయండి',
     calculateBtn: 'దిగుబడి & లాభం లెక్కించండి (Calculate)',
-    protocolTitle: 'ప్రామాణిక ఆక్వాకల్చర్ నీటి నాణ్యత, స్టాకింగ్ & DOC ఫీడింగ్ ప్రోటోకాల్',
-    proto1Title: '1. ఉప్పదనం సర్దుబాటు (Salinity Acclimatization) నియమం',
-    proto1Body: 'హేచరీ నీటికి మరియు మీ చెరువు నీటికి మధ్య 3 PPT కంటే ఎక్కువ తేడా ఉంటే నేరుగా చెరువులో వదలకూడదు. ప్యాకింగ్ కంటే ముందే హేచరీ ట్యాంకుల్లో ప్రతి 4 గంటలకు 1 PPT చొప్పున అలవాటు చేయించాలి.',
-    proto2Title: '2. చెరువు నీటి ఆదర్శ ప్రమాణాలు (Water Quality Parameters)',
-    proto2Body: 'pH: 7.5 – 8.3 | కరిగిన ఆక్సిజన్ (DO): 4.5 ppm కంటే ఎక్కువ | ఆల్కలీనిటీ: 120 – 180 ppm | అమ్మోనియా: 0.1 ppm కంటే తక్కువ | నైట్రైట్: 0.25 ppm కంటే తక్కువ ఉండాలి.',
-    proto3Title: '3. DOC 1–30 రోజుల ఫీడింగ్ పట్టిక (Blind Feeding)',
-    proto3Body: 'మొదటి రోజు ప్రతి 1,00,000 రొయ్య పిల్లలకు 2.0 కిలోల స్టార్టర్ క్రంబుల్ ఫీడ్ వేయాలి. రోజుకు 200 గ్రాముల చొప్పున పెంచుతూ, 25వ రోజు నుండి చెక్-ట్రే పరిశీలన ప్రారంభించాలి.',
-    proto4Title: '4. బయో-సెక్యూరిటీ & ప్రోబయోటిక్ నివారణ చర్యలు',
-    proto4Body: 'EHP మరియు వైట్ గట్ (White Gut) వ్యాధులు రాకుండా ప్రతి 7 రోజులకు ఒకసారి వాటర్ ప్రోబయోటిక్స్ మరియు రోజుకు రెండుసార్లు ఫీడ్‌లో గట్ ప్రోబయోటిక్స్ కలిపి వేయాలి.',
     toasts: {
       invalidPhone: 'దయచేసి సరైన 10-అంకెల మొబైల్ నంబర్ ఎంటర్ చేయండి.',
       otpSent: 'OTP పంపబడింది:',
@@ -443,8 +450,9 @@ const DICT = {
       sampleOrdered: '₹500 శాంపిల్ రిక్వెస్ట్ పంపబడింది!',
       packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతు డాష్‌బోర్డ్‌కు పంపబడింది!',
       paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! రైతుకు Final Cleared Receipt జనరేట్ అయింది.',
+      bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! 2% హోల్డ్ రైతుకు వాపస్ వచ్చింది & స్టాక్ తిరిగి జతచేయబడింది.',
       farmerLocked: 'రైతు 365 రోజుల పాటు మీ ID కి లాక్ చేయబడ్డారు!',
-      paymentSuccess: '6% అడ్వాన్స్ బుకింగ్ పూర్తయింది! రసీదు సిద్ధంగా ఉంది.',
+      paymentSuccess: '4% అడ్వాన్స్ పేమెంట్ పూర్తయింది! రసీదు సిద్ధంగా ఉంది.',
       enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి.',
       upiCollectSent: 'మీ UPI యాప్‌కు పేమెంట్ రిక్వెస్ట్ పంపబడింది! అప్రూవ్ చేసి UTR ఎంటర్ చేయండి.',
       calcUpdated: 'దిగుబడి, ఫీడ్ & నికర లాభాల లెక్కలు అప్‌డేట్ అయ్యాయి!'
@@ -465,22 +473,26 @@ function safeLoadStorage(key, fallback) {
 
 function AquaMarkApp() {
   const [lang, setLang] = useState('en');
-  const [darkMode, setDarkMode] = useState(() => safeLoadStorage('aqm_v7_dark', false));
+  const [darkMode, setDarkMode] = useState(() => safeLoadStorage('aqm_v8_dark', false));
   const t = DICT[lang] || DICT.en;
   const otpInputRef = useRef(null);
   const pcrInputRef = useRef(null);
 
-  const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v7_user', null));
+  const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v8_user', null));
 
   // ZERO SAMPLE DATA
-  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeLoadStorage('aqm_v7_hatcheries', {}));
-  const [brokerProfiles, setBrokerProfiles] = useState(() => safeLoadStorage('aqm_v7_brokers', {}));
-  const [batches, setBatches] = useState(() => safeLoadStorage('aqm_v7_batches', []));
-  const [bookings, setBookings] = useState(() => safeLoadStorage('aqm_v7_bookings', []));
-  const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v7_farmers', []));
-  const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v7_wishlist', []));
+  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeLoadStorage('aqm_v8_hatcheries', {}));
+  const [brokerProfiles, setBrokerProfiles] = useState(() => safeLoadStorage('aqm_v8_brokers', {}));
+  const [batches, setBatches] = useState(() => safeLoadStorage('aqm_v8_batches', []));
+  const [bookings, setBookings] = useState(() => safeLoadStorage('aqm_v8_bookings', []));
+  const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v8_farmers', []));
+  const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v8_wishlist', []));
 
-  // Inspection Modals for Clickable Rows across Buyer, Seller & Broker
+  // Buyer Multi-Pond Logbook & Daily Feed Logs (New Features)
+  const [farmerPonds, setFarmerPonds] = useState(() => safeLoadStorage('aqm_v8_ponds', []));
+  const [newPondForm, setNewPondForm] = useState({ pondName: 'Pond-1', acres: 2.5, stockedQty: 200000, stockingDate: new Date().toISOString().split('T')[0], dailyFeedKg: 6, trayLeftover: '0% (Clean)' });
+
+  // Inspection Modals
   const [inspectedBatch, setInspectedBatch] = useState(null);
   const [inspectedBuyerBooking, setInspectedBuyerBooking] = useState(null);
   const [inspectedSellerOrder, setInspectedSellerOrder] = useState(null);
@@ -530,8 +542,10 @@ function AquaMarkApp() {
   // Buyer Rating & Feedback State
   const [ratingDrafts, setRatingDrafts] = useState({});
 
-  // Buyer Pond Water Health Checker State
+  // Buyer Water, Salinity Acclimatization & Oxygen Van Calculator States
   const [waterTest, setWaterTest] = useState({ ph: 7.9, doLevel: 5.2, alkalinity: 145, ammonia: 0.04 });
+  const [acclimCalc, setAcclimCalc] = useState({ hatcheryPpt: 18, pondPpt: 10 });
+  const [oxygenCalc, setOxygenCalc] = useState({ seedCount: 200000, travelHours: 5 });
 
   // Seller Batch Inline Editing
   const [editingBatchId, setEditingBatchId] = useState(null);
@@ -545,23 +559,20 @@ function AquaMarkApp() {
     availableTimeSlot: 'All Day (24 Hours Flexible)'
   });
 
-  useEffect(() => {
-    try { localStorage.setItem('aqm_v7_dark', JSON.stringify(darkMode)); } catch { }
-  }, [darkMode]);
-
+  useEffect(() => { try { localStorage.setItem('aqm_v8_dark', JSON.stringify(darkMode)); } catch { } }, [darkMode]);
   useEffect(() => {
     try {
-      if (currentUser) localStorage.setItem('aqm_v7_user', JSON.stringify(currentUser));
-      else localStorage.removeItem('aqm_v7_user');
+      if (currentUser) localStorage.setItem('aqm_v8_user', JSON.stringify(currentUser));
+      else localStorage.removeItem('aqm_v8_user');
     } catch { }
   }, [currentUser]);
-
-  useEffect(() => { try { localStorage.setItem('aqm_v7_hatcheries', JSON.stringify(hatcheryProfiles)); } catch { } }, [hatcheryProfiles]);
-  useEffect(() => { try { localStorage.setItem('aqm_v7_brokers', JSON.stringify(brokerProfiles)); } catch { } }, [brokerProfiles]);
-  useEffect(() => { try { localStorage.setItem('aqm_v7_batches', JSON.stringify(batches)); } catch { } }, [batches]);
-  useEffect(() => { try { localStorage.setItem('aqm_v7_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
-  useEffect(() => { try { localStorage.setItem('aqm_v7_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
-  useEffect(() => { try { localStorage.setItem('aqm_v7_wishlist', JSON.stringify(savedBatchIds)); } catch { } }, [savedBatchIds]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_hatcheries', JSON.stringify(hatcheryProfiles)); } catch { } }, [hatcheryProfiles]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_brokers', JSON.stringify(brokerProfiles)); } catch { } }, [brokerProfiles]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_batches', JSON.stringify(batches)); } catch { } }, [batches]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_wishlist', JSON.stringify(savedBatchIds)); } catch { } }, [savedBatchIds]);
+  useEffect(() => { try { localStorage.setItem('aqm_v8_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
 
   useEffect(() => {
     if (otpSent && otpInputRef.current) {
@@ -652,6 +663,7 @@ function AquaMarkApp() {
   const [newBatchForm, setNewBatchForm] = useState({
     species: 'Litopenaeus vannamei (SPF)',
     customSpecies: '',
+    broodstock: 'Kona Bay (Hawaii SPF)',
     plStage: 'PL12',
     customStage: '',
     pricePer1000: 0.43,
@@ -669,7 +681,7 @@ function AquaMarkApp() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Theme Helper Classes for Dark Mode
+  // Theme Helper Classes
   const pageBg = darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900';
   const cardBg = darkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900';
   const subCardBg = darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800';
@@ -880,6 +892,7 @@ function AquaMarkApp() {
       reviewCount: 0,
       reviews: [],
       species: finalSpecies,
+      broodstock: newBatchForm.broodstock,
       plStage: finalStage,
       pricePer1000: Number(newBatchForm.pricePer1000) || 0.43,
       availableStock: Number(newBatchForm.availableStock) || 1000000,
@@ -935,30 +948,35 @@ function AquaMarkApp() {
   };
 
   // =========================================================================
-  // 6% ADVANCE SPLIT LOGIC:
-  // - 2% Silent Platform Cut (Invisible to Hatchery, Broker & Farmer)
-  // - 2% Broker Base Commission + Custom Broker Margin (Held until Hatchery clicks Payment Received)
-  // - 2% Hatchery Share (Held until Hatchery clicks Payment Received; 4% if no broker)
+  // ZERO-LOSS HATCHERY FIXED RATE + 4% ADVANCE SPLIT (2% PLATFORM + 2% HOLD)
+  // - Hatchery fixed rate = 100% protected (Zero commission deducted from Hatchery)
+  // - 4% Advance on Hatchery Fixed Order Value:
+  //    * 2% -> AquaLens/AquaMark (Non-Refundable, hidden from all users)
+  //    * 2% -> Hold:
+  //       - If Direct Farmer: Returns to Farmer (2% Refund) upon packing OR cancellation
+  //       - If Via Broker: Credits 2% to Broker upon packing complete (Hatchery Payment Received)
+  // - Broker Extra Margin (paise/seed) is separate from advance & collected at packing
   // =========================================================================
-  const finalizeBookingRecord = (paymentRef, qty, baseSeedOrderCost, transportCost, tokenAdvance) => {
+  const finalizeBookingRecord = (paymentRef, qty, hatcheryFixedCost, brokerMarginPaise, transportCost, advance4Pct) => {
     const bonusSeeds = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
     const matchedBrokerFarmer = brokerFarmers.find(
       (f) => (f.phone || '').slice(-10) === (bookingForm.farmerPhone || '').slice(-10)
     );
     const isBrokerLinked = Boolean(matchedBrokerFarmer) || currentUser?.role === 'mediator';
 
-    // 2% Silent Platform Cut (Never displayed in UI)
-    const silentPlatformCut = Math.round(baseSeedOrderCost * 0.02);
+    // 4% Advance splits into 2% Non-Refundable Platform + 2% Escrow Hold
+    const silentPlatform2Pct = Math.round(hatcheryFixedCost * 0.02);
+    const hold2Pct = Math.max(0, advance4Pct - silentPlatform2Pct);
 
-    // 2% Broker Base Commission + Custom Margin Profit
-    const brokerBaseCommission = isBrokerLinked ? Math.round(baseSeedOrderCost * 0.02) : 0;
-    const brokerMarginEarn = isBrokerLinked ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
-    const brokerTotalHold = brokerBaseCommission + brokerMarginEarn;
+    // Broker Extra Margin (Separate from advance, collected at packing)
+    const brokerExtraMarginTotal = isBrokerLinked ? Math.round(qty * ((Number(brokerMarginPaise) || 0) / 100)) : 0;
 
-    // Remaining 2% (or 4% if direct farmer without broker) goes to Hatchery on hold
-    const hatcheryHoldAmount = Math.max(0, tokenAdvance - silentPlatformCut - brokerTotalHold);
+    // Total payable by Farmer = Hatchery Fixed Cost + Broker Extra Margin + Transport
+    const totalFarmerPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
 
-    const totalOrderCost = baseSeedOrderCost + brokerMarginEarn + transportCost;
+    // Balance due at packing (96% of Hatchery Fixed Cost + Broker Margin + Transport)
+    const balanceAtPacking = totalFarmerPayable - advance4Pct;
+
     const now = new Date();
     const issueDateStr = now.toLocaleDateString('en-IN');
     const issueTimeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -975,28 +993,32 @@ function AquaMarkApp() {
       farmerPhone: bookingForm.farmerPhone,
       bookedByRole: currentUser?.role,
       bookedByPhone: currentUser?.phone,
+      isBrokerLinked,
       quantity: qty,
       bonusSeeds,
       includeTransport: bookingForm.includeTransport,
       pondSalinity: bookingForm.pondSalinity,
       packingDate: bookingForm.packingDate,
       packingTimeSlot: bookingForm.packingTimeSlot,
-      totalSeedCost: totalOrderCost,
-      tokenAdvance,
-      balanceAtPacking: totalOrderCost - tokenAdvance,
+      hatcheryFixedRate: selectedBatch.pricePer1000,
+      hatcheryFixedTotal: hatcheryFixedCost,
+      brokerMarginPaise: Number(brokerMarginPaise) || 0,
+      brokerExtraMarginTotal,
+      totalSeedCost: totalFarmerPayable,
+      tokenAdvance: advance4Pct,
+      balanceAtPacking,
       settlement: {
-        // Note: silentPlatformCut is intentionally never rendered in UI
-        brokerBaseCommission,
-        brokerMarginEarn,
-        brokerAmount: brokerTotalHold,
-        hatcheryAmount: hatcheryHoldAmount,
-        status: 'ADVANCE_HOLD' // Changes to 'BALANCE_CLEARED' when Hatchery Owner clicks "Payment Received"
+        // silentPlatform2Pct is never displayed in UI
+        hold2PctAmount: hold2Pct,
+        brokerBase2Pct: isBrokerLinked ? hold2Pct : 0,
+        farmerRefundable2Pct: !isBrokerLinked ? hold2Pct : 0,
+        status: 'ADVANCE_HOLD' // 'ADVANCE_HOLD' | 'BALANCE_CLEARED' | 'CANCELLED_REFUNDED'
       },
       packingStatus: 'PACKING_PENDING',
       rated: false
     };
 
-    // Immediately deduct booked seeds from hatchery stock
+    // Deduct booked seeds from hatchery stock immediately
     setBatches(prev => prev.map(b =>
       b.id === selectedBatch.id
         ? { ...b, availableStock: Math.max(0, (b.availableStock || 0) - qty) }
@@ -1025,14 +1047,10 @@ function AquaMarkApp() {
       return;
     }
 
-    const baseRate = selectedBatch.pricePer1000 || 0.42;
-    const baseSeedOrderCost = Math.round(qty * baseRate);
-    const brokerMarginEarn = Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100));
+    const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
     const transportCost = bookingForm.includeTransport ? 1500 : 0;
-    const totalOrderCost = baseSeedOrderCost + brokerMarginEarn + transportCost;
-
-    // 6% ADVANCE PAYMENT
-    const tokenAdvance = Math.max(1200, Math.round(totalOrderCost * 0.06));
+    // 4% Advance on Hatchery Fixed Cost (2% Platform + 2% Hold)
+    const advance4Pct = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
 
     if (bookingForm.paymentMethod === 'DIRECT_UPI' || bookingForm.paymentMethod === 'BANK_TO_BANK') {
       if (!bookingForm.utrReference.trim()) {
@@ -1040,7 +1058,14 @@ function AquaMarkApp() {
         return;
       }
       const prefix = bookingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT';
-      finalizeBookingRecord(`${prefix}_${bookingForm.utrReference.trim().toUpperCase()}`, qty, baseSeedOrderCost, transportCost, tokenAdvance);
+      finalizeBookingRecord(
+        `${prefix}_${bookingForm.utrReference.trim().toUpperCase()}`,
+        qty,
+        hatcheryFixedCost,
+        bookingForm.brokerMarginPaise,
+        transportCost,
+        advance4Pct
+      );
       return;
     }
 
@@ -1048,10 +1073,10 @@ function AquaMarkApp() {
     if (rzpKey && window.Razorpay) {
       const options = {
         key: rzpKey,
-        amount: tokenAdvance * 100,
+        amount: advance4Pct * 100,
         currency: 'INR',
         name: 'Aqua Mark',
-        description: `${selectedBatch.plStage} Seed 6% Advance (${qty.toLocaleString('en-IN')} PL)`,
+        description: `${selectedBatch.plStage} Seed 4% Advance (${qty.toLocaleString('en-IN')} PL)`,
         prefill: {
           name: bookingForm.farmerName || 'Farmer',
           contact: bookingForm.farmerPhone,
@@ -1059,7 +1084,14 @@ function AquaMarkApp() {
         },
         theme: { color: '#0d9488' },
         handler: function (response) {
-          finalizeBookingRecord(response.razorpay_payment_id, qty, baseSeedOrderCost, transportCost, tokenAdvance);
+          finalizeBookingRecord(
+            response.razorpay_payment_id,
+            qty,
+            hatcheryFixedCost,
+            bookingForm.brokerMarginPaise,
+            transportCost,
+            advance4Pct
+          );
         }
       };
 
@@ -1070,8 +1102,35 @@ function AquaMarkApp() {
       rzp.open();
     } else {
       const simulatedRef = `RZP_${Math.floor(100000 + Math.random() * 900000)}`;
-      finalizeBookingRecord(simulatedRef, qty, baseSeedOrderCost, transportCost, tokenAdvance);
+      finalizeBookingRecord(
+        simulatedRef,
+        qty,
+        hatcheryFixedCost,
+        bookingForm.brokerMarginPaise,
+        transportCost,
+        advance4Pct
+      );
     }
+  };
+
+  // Buyer Cancels Booking -> 2% Hold returns to Farmer, 2% Non-Refundable, Stock Restored
+  const handleBuyerCancelBooking = (bk) => {
+    setBookings(prev => prev.map(item =>
+      item.bookingId === bk.bookingId
+        ? {
+          ...item,
+          packingStatus: 'CANCELLED',
+          settlement: { ...item.settlement, status: 'CANCELLED_REFUNDED' }
+        }
+        : item
+    ));
+    // Restore stock back to hatchery
+    setBatches(prev => prev.map(b =>
+      b.id === bk.batch?.id
+        ? { ...b, availableStock: (b.availableStock || 0) + (bk.quantity || 0) }
+        : b
+    ));
+    showToast(t.toasts.bookingCancelled);
   };
 
   const handleRequestSample = (batch) => {
@@ -1087,15 +1146,20 @@ function AquaMarkApp() {
       farmerPhone: currentUser.phone,
       bookedByRole: 'buyer',
       bookedByPhone: currentUser.phone,
+      isBrokerLinked: false,
       quantity: 100,
       bonusSeeds: 0,
       pondSalinity: batch.salinity,
       packingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
       packingTimeSlot: 'Morning (08:00 AM – 12:00 PM)',
+      hatcheryFixedRate: batch.pricePer1000,
+      hatcheryFixedTotal: 500,
+      brokerMarginPaise: 0,
+      brokerExtraMarginTotal: 0,
       totalSeedCost: 500,
       tokenAdvance: 500,
       balanceAtPacking: 0,
-      settlement: { brokerBaseCommission: 0, brokerMarginEarn: 0, brokerAmount: 0, hatcheryAmount: 300, status: 'ADVANCE_HOLD' },
+      settlement: { hold2PctAmount: 0, brokerBase2Pct: 0, farmerRefundable2Pct: 0, status: 'ADVANCE_HOLD' },
       packingStatus: 'PACKING_PENDING',
       rated: false
     };
@@ -1110,12 +1174,7 @@ function AquaMarkApp() {
     showToast(t.toasts.packingMarked);
   };
 
-  // =========================================================================
-  // HATCHERY OWNER CLICKS "PAYMENT RECEIVED":
-  // - Confirms remaining 94% balance received from farmer
-  // - Credits held amounts to Hatchery & Broker
-  // - Generates Final Balance Cleared Receipt for Farmer
-  // =========================================================================
+  // Hatchery Owner clicks "Payment Received" -> Releases 2% Hold (to Broker if broker-linked, else refunds 2% to Farmer) & issues Final Cleared Receipt
   const handleHatcheryPaymentReceived = (bookingId) => {
     const now = new Date();
     const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
@@ -1171,7 +1230,7 @@ function AquaMarkApp() {
   };
 
   // ==========================================
-  // FULL-PAGE A4 RECEIPT PDF ("RECEIPT" TERMINOLOGY + FINAL CLEARED RECEIPT SUPPORT)
+  // FULL-PAGE A4 RECEIPT PDF GENERATOR
   // ==========================================
   const handleDownloadVerifiedPdf = (bk, isFinalCleared = false) => {
     const printWin = window.open('', '_blank', 'width=860,height=1050');
@@ -1298,11 +1357,11 @@ function AquaMarkApp() {
               </div>
               <div class="totals">
                 <div class="totals-row"><span>Total Order Value:</span><span>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</span></div>
-                <div class="totals-row"><span>Advance Paid (6%):</span><span>₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
+                <div class="totals-row"><span>Advance Paid (4%):</span><span>₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
                 ${isFinalCleared
-        ? `<div class="totals-row totals-highlight"><span>Remaining 94% Paid at Packing:</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} (CLEARED)</span></div>
+        ? `<div class="totals-row totals-highlight"><span>Remaining 96% Paid at Packing:</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} (CLEARED)</span></div>
                      <div class="totals-row" style="margin-top:4px;font-weight:800;color:#065f46;"><span>Pending Balance Due:</span><span>₹0 (PAID IN FULL)</span></div>`
-        : `<div class="totals-row totals-highlight"><span>Balance Payable at Packing (94%):</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</span></div>`
+        : `<div class="totals-row totals-highlight"><span>Balance Payable at Packing (96%):</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</span></div>`
       }
               </div>
             </div>
@@ -1313,12 +1372,12 @@ function AquaMarkApp() {
               2. Oxygen packing density must not exceed 1,000 PL per liter for transit durations exceeding 4 hours.<br/>
               3. ${isFinalCleared
         ? `Full settlement confirmed by Hatchery Owner on ${bk.clearedAt || bk.date}. No further payment due.`
-        : 'Remaining 94% balance is payable directly at packing upon verifying live seed count and vigor.'}
+        : 'Remaining 96% balance is payable directly at packing upon verifying live seed count and vigor.'}
             </div>
 
             <div class="checklist">
               <strong>Hatchery Dispatch Verification Checklist:</strong>
-              [ ✓ ] CAA License Verified    [ ✓ ] PCR Lab Images Attached (${pcrLabels})    [ ✓ ] 6% Advance Paid    [ ${isFinalCleared ? '✓' : ' '} ] Final Balance Cleared at Packing
+              [ ✓ ] CAA License Verified    [ ✓ ] PCR Lab Images Attached (${pcrLabels})    [ ✓ ] 4% Advance Paid    [ ${isFinalCleared ? '✓' : ' '} ] Final Balance Cleared at Packing
             </div>
           </div>
 
@@ -1373,6 +1432,17 @@ function AquaMarkApp() {
     showToast(t.toasts.farmerLocked);
   };
 
+  const handleAddPondLog = (e) => {
+    e.preventDefault();
+    const entry = {
+      id: `PND-${farmerPonds.length + 1}`,
+      ...newPondForm,
+      loggedAt: new Date().toLocaleDateString('en-IN')
+    };
+    setFarmerPonds([entry, ...farmerPonds]);
+    showToast(lang === 'te' ? 'చెరువు ఫీడ్ & స్టాకింగ్ వివరాలు నమోదయ్యాయి!' : 'Pond Stocking & Daily Feed Log added!');
+  };
+
   const toggleCompareBatch = (id) => {
     if (compareIds.includes(id)) setCompareIds(compareIds.filter(x => x !== id));
     else if (compareIds.length < 3) setCompareIds([...compareIds, id]);
@@ -1383,13 +1453,14 @@ function AquaMarkApp() {
     else setSavedBatchIds([...savedBatchIds, id]);
   };
 
-  const brokerHeldTotal = bookings
-    .filter(b => b.settlement?.status === 'ADVANCE_HOLD')
-    .reduce((sum, b) => sum + (b.settlement?.brokerAmount || 0), 0);
+  // Broker 2% Commission Metrics
+  const brokerHeld2PctTotal = bookings
+    .filter(b => b.isBrokerLinked && b.settlement?.status === 'ADVANCE_HOLD')
+    .reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
 
-  const brokerReleasedTotal = bookings
-    .filter(b => b.settlement?.status === 'BALANCE_CLEARED')
-    .reduce((sum, b) => sum + (b.settlement?.brokerAmount || 0), 0);
+  const brokerCredited2PctTotal = bookings
+    .filter(b => b.isBrokerLinked && b.settlement?.status === 'BALANCE_CLEARED')
+    .reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
 
   const filteredAndSortedBatches = batches
     .filter(b => {
@@ -1398,6 +1469,7 @@ function AquaMarkApp() {
         (b.hatcheryCode || '').toLowerCase().includes(q) ||
         (b.zone || '').toLowerCase().includes(q) ||
         (b.species || '').toLowerCase().includes(q) ||
+        (b.broodstock || '').toLowerCase().includes(q) ||
         (b.plStage || '').toLowerCase().includes(q);
       const zoneMatch = zoneFilter === 'ALL' || b.zone === zoneFilter;
       const stageMatch = stageFilter === 'ALL' || b.plStage === stageFilter;
@@ -1470,7 +1542,7 @@ function AquaMarkApp() {
   );
 
   // =========================================================================
-  // SCREEN 1: OTP LOGIN PAGE (WITH DARK MODE TOGGLE)
+  // SCREEN 1: OTP LOGIN PAGE
   // =========================================================================
   if (!currentUser) {
     const activeRoleMeta = t.roles[loginRole] || t.roles.buyer;
@@ -1534,8 +1606,8 @@ function AquaMarkApp() {
                     type="button"
                     onClick={() => { setLoginRole(item.id); setOtpSent(false); }}
                     className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${active
-                      ? 'border-teal-600 bg-teal-600/10 ring-2 ring-teal-600/20'
-                      : subCardBg
+                        ? 'border-teal-600 bg-teal-600/10 ring-2 ring-teal-600/20'
+                        : subCardBg
                       }`}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${active ? 'bg-teal-600 text-white' : 'bg-slate-200/70 text-slate-700'}`}>
@@ -1649,6 +1721,13 @@ function AquaMarkApp() {
     ? bookings.filter(bk => bk.bookedByPhone === currentUser.phone && bk.bookedByRole === 'mediator')
     : [];
 
+  // Buyer 2% Refunded Wallet Total
+  const buyerRefundedTotal = currentUser.role === 'buyer'
+    ? bookings
+      .filter(b => b.farmerPhone === currentUser.phone && !b.isBrokerLinked && (b.settlement?.status === 'BALANCE_CLEARED' || b.settlement?.status === 'CANCELLED_REFUNDED'))
+      .reduce((sum, b) => sum + (b.settlement?.farmerRefundable2Pct || 0), 0)
+    : 0;
+
   return (
     <div className={`min-h-screen font-sans select-none transition-colors ${pageBg}`}>
       {toast && (
@@ -1658,7 +1737,7 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* TOP NAVBAR WITH DARK MODE TOGGLE */}
+      {/* TOP NAVBAR */}
       <header className={`border-b sticky top-0 z-40 ${cardBg}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -1677,6 +1756,11 @@ function AquaMarkApp() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            {currentUser.role === 'buyer' && buyerRefundedTotal > 0 && (
+              <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-xs font-extrabold px-3 py-1.5 rounded-xl">
+                2% Cashback Refunded: ₹{buyerRefundedTotal.toLocaleString('en-IN')}
+              </span>
+            )}
             <button
               type="button"
               onClick={() => setDarkMode(!darkMode)}
@@ -1726,6 +1810,7 @@ function AquaMarkApp() {
               {[
                 { id: 'marketplace', label: t.tabMarketplace, icon: Building2 },
                 { id: 'bookings', label: `${t.tabBookings} (${bookings.filter(b => b.farmerPhone === currentUser.phone).length})`, icon: FileText },
+                { id: 'pondlog', label: t.tabPondLog, icon: ClipboardList },
                 { id: 'analytics', label: t.tabAnalytics, icon: Calculator },
                 { id: 'waterlab', label: t.tabWaterLab, icon: Droplets },
                 { id: 'guide', label: t.tabGuide, icon: Calendar }
@@ -1737,7 +1822,7 @@ function AquaMarkApp() {
                     key={tab.id}
                     type="button"
                     onClick={() => setBuyerTab(tab.id)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer relative ${buyerTab === tab.id ? 'bg-teal-600 text-white' : 'opacity-75 hover:opacity-100'
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer relative ${buyerTab === tab.id ? 'bg-teal-600 text-white' : 'opacity-75 hover:opacity-100'
                       }`}
                   >
                     <Icon className="w-3.5 h-3.5" /> {tab.label}
@@ -1760,7 +1845,7 @@ function AquaMarkApp() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {filteredAndSortedBatches.map((batch) => {
-                      const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone);
+                      const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
                       const isComparing = compareIds.includes(batch.id);
                       const isSaved = savedBatchIds.includes(batch.id);
                       const isSoldOut = (batch.availableStock || 0) <= 0;
@@ -1789,7 +1874,7 @@ function AquaMarkApp() {
                                     <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode}</span>
                                   )}
                                 </h3>
-                                <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species}</p>
+                                <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
                                 {isUnlocked ? (
                                   <p className="text-xs opacity-80 mt-0.5">{batch.realAddress} • +91 {batch.realPhone}</p>
                                 ) : (
@@ -1872,7 +1957,7 @@ function AquaMarkApp() {
               </>
             )}
 
-            {/* TAB 2: BUYER BOOKINGS & RECEIPTS (CLICKABLE CARDS FOR FULL TRANSACTION DETAILS) */}
+            {/* TAB 2: BUYER BOOKINGS & RECEIPTS + CANCEL WITH 2% REFUND */}
             {buyerTab === 'bookings' && (
               <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                 <h3 className="text-base font-bold flex items-center gap-2">
@@ -1885,6 +1970,7 @@ function AquaMarkApp() {
                     {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
                       const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
                       const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                      const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
 
                       return (
                         <div
@@ -1892,7 +1978,7 @@ function AquaMarkApp() {
                           onClick={() => setInspectedBuyerBooking(bk)}
                           className={`border hover:border-teal-500 rounded-2xl p-4 space-y-3 transition cursor-pointer ${subCardBg}`}
                         >
-                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && (
+                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
                             <div className="bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-bold">
                               {t.packingReadyAlert}
                             </div>
@@ -1902,9 +1988,17 @@ function AquaMarkApp() {
                             <div className="space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/30">{bk.bookingId}</span>
-                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
+                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
+                                    ? 'bg-emerald-500/15 text-emerald-500'
+                                    : isCancelled
+                                      ? 'bg-rose-500/15 text-rose-500'
+                                      : 'bg-amber-500/15 text-amber-500'
                                   }`}>
-                                  {isFinalCleared ? t.clearedSettlementBadge : t.pendingSettlementBadge}
+                                  {isFinalCleared
+                                    ? t.clearedSettlementBadge
+                                    : isCancelled
+                                      ? t.cancelledRefundBadge
+                                      : t.pendingSettlementBadge}
                                 </span>
                               </div>
                               <p className="text-sm font-bold">{bk.batch?.realName} • +91 {bk.batch?.realPhone}</p>
@@ -1914,27 +2008,40 @@ function AquaMarkApp() {
                               <p className="text-xs">
                                 <b>{t.paidLabel}: ₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> •{' '}
                                 {isFinalCleared
-                                  ? <span className="text-emerald-500 font-bold">Remaining 94% (₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}) Cleared ✓</span>
-                                  : <span>{t.balancePackingLabel}: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
+                                  ? <span className="text-emerald-500 font-bold">Remaining 96% (₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}) Cleared ✓</span>
+                                  : isCancelled
+                                    ? <span className="text-rose-500 font-bold">2% Hold (₹{(bk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')}) Refunded ✓</span>
+                                    : <span>{t.balancePackingLabel}: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
                               </p>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              {!isFinalCleared && !isCancelled && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleBuyerCancelBooking(bk)}
+                                  className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> {t.cancelBookingBtn}
+                                </button>
+                              )}
+
                               <button type="button" onClick={() => openWhatsAppMessage(bk.batch?.realPhone, `AquaMark Booking ID: ${bk.bookingId} (${bk.quantity} PL)`)} className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer">
                                 <Send className="w-3.5 h-3.5" /> WhatsApp
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadVerifiedPdf(bk, isFinalCleared)}
-                                className={`text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer ${isFinalCleared ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900'
-                                  }`}
-                              >
-                                <Printer className="w-3.5 h-3.5" /> {isFinalCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
-                              </button>
+                              {!isCancelled && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadVerifiedPdf(bk, isFinalCleared)}
+                                  className={`text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer ${isFinalCleared ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900'
+                                    }`}
+                                >
+                                  <Printer className="w-3.5 h-3.5" /> {isFinalCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
+                                </button>
+                              )}
                             </div>
                           </div>
 
-                          {/* 1 TO 5 STAR RATING + WRITTEN FEEDBACK (AFTER FINAL BALANCE CLEARED) */}
                           {isFinalCleared && (
                             <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
                               {!bk.rated ? (
@@ -1983,7 +2090,84 @@ function AquaMarkApp() {
               </div>
             )}
 
-            {/* TAB 3: HARVEST, FEED & PROFIT ESTIMATOR WITH CALCULATE BUTTON */}
+            {/* NEW TAB: MULTI-POND STOCKING & DAILY CHECK-TRAY FEED LOGBOOK */}
+            {buyerTab === 'pondlog' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <form onSubmit={handleAddPondLog} className={`rounded-2xl p-5 border shadow-xs space-y-3.5 ${cardBg}`}>
+                  <h3 className="font-bold text-sm flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-teal-600" />
+                    {lang === 'te' ? 'చెరువు స్టాకింగ్ & రోజువారీ ఫీడ్ నమోదు' : 'Log Pond Stocking & Check-Tray Feed'}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">Pond Name</label>
+                      <input required type="text" value={newPondForm.pondName} onChange={(e) => setNewPondForm({ ...newPondForm, pondName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">Acres</label>
+                      <input required type="number" step="0.5" value={newPondForm.acres} onChange={(e) => setNewPondForm({ ...newPondForm, acres: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">Stocked Seed (PL)</label>
+                      <input required type="number" step="10000" value={newPondForm.stockedQty} onChange={(e) => setNewPondForm({ ...newPondForm, stockedQty: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">Stocking Date</label>
+                      <input required type="date" value={newPondForm.stockingDate} onChange={(e) => setNewPondForm({ ...newPondForm, stockingDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">Today Feed (kg)</label>
+                      <input required type="number" step="0.5" value={newPondForm.dailyFeedKg} onChange={(e) => setNewPondForm({ ...newPondForm, dailyFeedKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">Check-Tray Leftover</label>
+                      <select value={newPondForm.trayLeftover} onChange={(e) => setNewPondForm({ ...newPondForm, trayLeftover: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                        <option>0% (Clean — Increase 5%)</option>
+                        <option>10% (Normal — Keep Same)</option>
+                        <option>25% (Reduce Next Meal 20%)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer">
+                    + Save Pond Feed Entry
+                  </button>
+                </form>
+
+                <div className={`lg:col-span-2 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                  <h3 className="font-bold text-base flex items-center gap-2">
+                    <Gauge className="w-5 h-5 text-teal-600" />
+                    {lang === 'te' ? 'మీ చెరువుల DOC & చెక్-ట్రే రికార్డులు' : 'Active Pond DOC & Check-Tray Records'}
+                  </h3>
+                  {farmerPonds.length === 0 ? (
+                    <p className="text-xs opacity-60">No pond records added yet. Log your pond stocking and daily feed on the left.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {farmerPonds.map((p) => {
+                        const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(p.stockingDate).getTime()) / 86400000));
+                        return (
+                          <div key={p.id} className={`border rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs ${subCardBg}`}>
+                            <div>
+                              <span className="font-extrabold text-sm text-teal-500">{p.pondName}</span> ({p.acres} Acres) • <span className="font-bold">DOC {daysElapsed}</span>
+                              <p className="opacity-75 mt-0.5">Stocked: {Number(p.stockedQty).toLocaleString('en-IN')} PL on {p.stockingDate}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-bold block">Daily Feed: {p.dailyFeedKg} kg</span>
+                              <span className="text-[11px] text-emerald-500 font-semibold">Tray: {p.trayLeftover}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: HARVEST, FEED & PROFIT ESTIMATOR WITH CALCULATE BUTTON */}
             {buyerTab === 'analytics' && (
               <div className={`rounded-2xl p-6 shadow-xs border space-y-6 ${cardBg}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2085,64 +2269,142 @@ function AquaMarkApp() {
               </div>
             )}
 
-            {/* TAB 4: POND WATER HEALTH & DOC SCHEDULE */}
+            {/* TAB 5: POND WATER, SALINITY ACCLIMATIZATION & OXYGEN VAN CALCULATOR */}
             {buyerTab === 'waterlab' && (
-              <div className={`rounded-2xl p-6 border shadow-xs space-y-5 ${cardBg}`}>
-                <h3 className="text-base font-extrabold flex items-center gap-2">
-                  <Droplets className="w-5 h-5 text-teal-600" />
-                  {lang === 'te' ? 'చెరువు నీటి పరీక్ష & సీడ్ స్టాకింగ్ అర్హత తనిఖీ' : 'Pond Water Quality Readiness Checker'}
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Water pH (7.5 - 8.3)</label>
-                    <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+              <div className="space-y-6">
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="text-base font-extrabold flex items-center gap-2">
+                    <Droplets className="w-5 h-5 text-teal-600" />
+                    {lang === 'te' ? 'చెరువు నీటి పరీక్ష & సీడ్ స్టాకింగ్ అర్హత తనిఖీ' : 'Pond Water Quality Readiness Checker'}
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                      <label className="text-xs font-bold opacity-75 block mb-1">Water pH (7.5 - 8.3)</label>
+                      <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-75 block mb-1">Dissolved Oxygen (ppm)</label>
+                      <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-75 block mb-1">Alkalinity (ppm)</label>
+                      <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-75 block mb-1">Ammonia (ppm)</label>
+                      <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Dissolved Oxygen (ppm)</label>
-                    <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                  {(() => {
+                    const isSafe = waterTest.ph >= 7.5 && waterTest.ph <= 8.4 && waterTest.doLevel >= 4.5 && waterTest.ammonia <= 0.1;
+                    return (
+                      <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
+                        {isSafe
+                          ? (lang === 'te' ? '✅ మీ చెరువు నీటి ప్రమాణాలు రొయ్య పిల్లలను వదలడానికి 100% అనుకూలంగా ఉన్నాయి!' : '✅ Pond water parameters are OPTIMAL for immediate PL stocking!')
+                          : (lang === 'te' ? '⚠️ హెచ్చరిక: నీటిలో pH, ఆక్సిజన్ లేదా అమ్మోనియా స్థాయిలను సరిచేసిన తర్వాతే సీడ్ వేయండి.' : '⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.')}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Salinity Acclimatization Timer */}
+                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                    <h4 className="font-bold text-sm text-teal-500">Salinity Acclimatization Time Calculator</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">Hatchery PPT</label>
+                        <input type="number" value={acclimCalc.hatcheryPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, hatcheryPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">Pond PPT</label>
+                        <input type="number" value={acclimCalc.pondPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, pondPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                    </div>
+                    <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
+                      Salinity Variance: <b>{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt)} PPT</b> • Required Acclimatization Time: <b className="text-teal-500">{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4} Hours</b> (1 PPT every 4 hrs).
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Alkalinity (ppm)</label>
-                    <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Ammonia (ppm)</label>
-                    <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+
+                  {/* Oxygen Van & Packing Bags Calculator */}
+                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                    <h4 className="font-bold text-sm text-teal-500">Oxygen Packing Bags & Van Size Estimator</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">Total Seed (PL)</label>
+                        <input type="number" step="50000" value={oxygenCalc.seedCount} onChange={(e) => setOxygenCalc({ ...oxygenCalc, seedCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">Transit Hours</label>
+                        <input type="number" value={oxygenCalc.travelHours} onChange={(e) => setOxygenCalc({ ...oxygenCalc, travelHours: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                    </div>
+                    {(() => {
+                      const plPerBag = oxygenCalc.travelHours > 5 ? 2000 : 3000;
+                      const bags = Math.ceil((oxygenCalc.seedCount || 100000) / plPerBag);
+                      const boxes = Math.ceil(bags / 2);
+                      return (
+                        <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
+                          Required Oxygen Bags: <b>{bags} Bags</b> ({plPerBag} PL/bag) • Cartons: <b>{boxes} Boxes</b> • Vehicle: <b className="text-emerald-500">{boxes > 60 ? 'Bolero Pickup / Mini Truck' : 'Tata Ace AC Van'}</b>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
-                {(() => {
-                  const isSafe = waterTest.ph >= 7.5 && waterTest.ph <= 8.4 && waterTest.doLevel >= 4.5 && waterTest.ammonia <= 0.1;
-                  return (
-                    <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
-                      {isSafe
-                        ? (lang === 'te' ? '✅ మీ చెరువు నీటి ప్రమాణాలు రొయ్య పిల్లలను వదలడానికి 100% అనుకూలంగా ఉన్నాయి!' : '✅ Pond water parameters are OPTIMAL for immediate PL stocking!')
-                        : (lang === 'te' ? '⚠️ హెచ్చరిక: నీటిలో pH, ఆక్సిజన్ లేదా అమ్మోనియా స్థాయిలను సరిచేసిన తర్వాతే సీడ్ వేయండి.' : '⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.')}
-                    </div>
-                  );
-                })()}
               </div>
             )}
 
-            {/* TAB 5: CROP & WATER PROTOCOL */}
+            {/* TAB 6: DOC 1-110 FEEDING SCHEDULE & PROTOCOL */}
             {buyerTab === 'guide' && (
-              <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                <h3 className="text-base font-extrabold">{t.protocolTitle}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 space-y-1.5">
-                    <div className="font-bold text-teal-600">{t.proto1Title}</div>
-                    <p className="opacity-85 leading-relaxed">{t.proto1Body}</p>
+              <div className="space-y-6">
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <h3 className="text-base font-extrabold">{t.protocolTitle}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 space-y-1.5">
+                      <div className="font-bold text-teal-600">{t.proto1Title}</div>
+                      <p className="opacity-85 leading-relaxed">{t.proto1Body}</p>
+                    </div>
+                    <div className={`p-4 rounded-xl border space-y-1.5 ${subCardBg}`}>
+                      <div className="font-bold">{t.proto2Title}</div>
+                      <p className="opacity-75 leading-relaxed">{t.proto2Body}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5">
+                      <div className="font-bold text-emerald-600">{t.proto3Title}</div>
+                      <p className="opacity-85 leading-relaxed">{t.proto3Body}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
+                      <div className="font-bold text-amber-600">{t.proto4Title}</div>
+                      <p className="opacity-85 leading-relaxed">{t.proto4Body}</p>
+                    </div>
                   </div>
-                  <div className={`p-4 rounded-xl border space-y-1.5 ${subCardBg}`}>
-                    <div className="font-bold">{t.proto2Title}</div>
-                    <p className="opacity-75 leading-relaxed">{t.proto2Body}</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5">
-                    <div className="font-bold text-emerald-600">{t.proto3Title}</div>
-                    <p className="opacity-85 leading-relaxed">{t.proto3Body}</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
-                    <div className="font-bold text-amber-600">{t.proto4Title}</div>
-                    <p className="opacity-85 leading-relaxed">{t.proto4Body}</p>
+                </div>
+
+                {/* DOC 1-110 Reference Table */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-3 ${cardBg}`}>
+                  <h4 className="font-bold text-sm">DOC 1–110 Standard Vannamei Feeding & Check-Tray Chart (Per 1,00,000 PL)</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-300/30 opacity-65 uppercase text-[10px]">
+                          <th className="py-2">Crop Stage</th>
+                          <th className="py-2">Avg Body Weight</th>
+                          <th className="py-2">Daily Feed / Lakh</th>
+                          <th className="py-2">Feed Grade</th>
+                          <th className="py-2">Check-Tray Protocol</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-300/20">
+                        {DOC_SCHEDULE_TABLE.map((row, idx) => (
+                          <tr key={idx}>
+                            <td className="py-2.5 font-bold text-teal-500">{row.doc}</td>
+                            <td className="py-2.5">{row.abw}</td>
+                            <td className="py-2.5 font-bold">{row.feedPerLakh}</td>
+                            <td className="py-2.5">{row.size}</td>
+                            <td className="py-2.5 opacity-80">{row.trayCheck}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -2151,7 +2413,7 @@ function AquaMarkApp() {
         )}
 
         {/* =========================================================
-            2. SELLER (HATCHERY) PORTAL — "PAYMENT RECEIVED" TRIGGER
+            2. SELLER (HATCHERY) PORTAL — ZERO LOSS FIXED RATE + "PAYMENT RECEIVED"
            ========================================================= */}
         {currentUser.role === 'seller' && (
           <div className="max-w-4xl mx-auto space-y-6">
@@ -2358,7 +2620,13 @@ function AquaMarkApp() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.broodstockLabel}</label>
+                        <select value={newBatchForm.broodstock} onChange={(e) => setNewBatchForm({ ...newBatchForm, broodstock: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                          {BROODSTOCK_ORIGINS.map(br => <option key={br} value={br}>{br}</option>)}
+                        </select>
+                      </div>
                       <div>
                         <label className="text-xs font-bold opacity-75 block mb-1">{t.stockLabel}</label>
                         <input type="number" step="50000" value={newBatchForm.availableStock} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableStock: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
@@ -2511,7 +2779,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* CLICKABLE ASSIGNED ORDERS + "PAYMENT RECEIVED" BUTTON (CREDITS HELD FUNDS & CLEARS FARMER BALANCE) */}
+                {/* CLICKABLE ASSIGNED ORDERS + "PAYMENT RECEIVED" BUTTON */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Clock className="w-5 h-5 text-teal-600" /> {t.sellerOrdersTitle}
@@ -2522,6 +2790,7 @@ function AquaMarkApp() {
                     <div className="space-y-3">
                       {myHatcheryOrders.map((bk) => {
                         const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                        const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
                         return (
                           <div
                             key={bk.bookingId}
@@ -2531,11 +2800,17 @@ function AquaMarkApp() {
                             <div className="space-y-1 text-xs">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
-                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
+                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared
+                                    ? 'bg-emerald-500/15 text-emerald-500'
+                                    : isCancelled
+                                      ? 'bg-rose-500/15 text-rose-500'
+                                      : 'bg-amber-500/15 text-amber-500'
                                   }`}>
                                   {isCleared
-                                    ? `${t.creditedBadge} (₹${bk.settlement?.hatcheryAmount || 0})`
-                                    : `${t.onHoldBadge}: ₹${bk.settlement?.hatcheryAmount || 0}`}
+                                    ? `${t.creditedBadge}: ₹${(bk.hatcheryFixedTotal || 0).toLocaleString('en-IN')}`
+                                    : isCancelled
+                                      ? 'Cancelled by Farmer'
+                                      : `${t.onHoldBadge} (Fixed Total: ₹${(bk.hatcheryFixedTotal || 0).toLocaleString('en-IN')})`}
                                 </span>
                               </div>
                               <p className="font-semibold">{bk.farmerName} ({bk.farmerPhone}) • {(bk.quantity || 0).toLocaleString('en-IN')} PL</p>
@@ -2544,22 +2819,24 @@ function AquaMarkApp() {
                               </p>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                              {bk.packingStatus === 'PACKING_PENDING' && (
-                                <button type="button" onClick={() => handleSellerMarkPacked(bk.bookingId)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer">
-                                  {t.markPackedBtn}
-                                </button>
-                              )}
-                              {!isCleared && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleHatcheryPaymentReceived(bk.bookingId)}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  <CheckSquare className="w-4 h-4" /> {t.paymentReceivedBtn}
-                                </button>
-                              )}
-                            </div>
+                            {!isCancelled && (
+                              <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                {bk.packingStatus === 'PACKING_PENDING' && (
+                                  <button type="button" onClick={() => handleSellerMarkPacked(bk.bookingId)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer">
+                                    {t.markPackedBtn}
+                                  </button>
+                                )}
+                                {!isCleared && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleHatcheryPaymentReceived(bk.bookingId)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <CheckSquare className="w-4 h-4" /> {t.paymentReceivedBtn}
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -2597,7 +2874,7 @@ function AquaMarkApp() {
         )}
 
         {/* =========================================================
-            3. MEDIATOR (BROKER) PORTAL — ONLY BROKER'S 2% + MARGIN SHOWN (NO PLATFORM FEES)
+            3. MEDIATOR (BROKER) PORTAL — 2% COMMISSION + SEPARATE EXTRA MARGIN
            ========================================================= */}
         {currentUser.role === 'mediator' && (
           <div className="space-y-6">
@@ -2642,7 +2919,7 @@ function AquaMarkApp() {
                     <span className="text-xs text-amber-500 font-bold flex items-center gap-1.5">
                       <Clock className="w-4 h-4" /> {t.brokerHoldCard}
                     </span>
-                    <div className="text-3xl font-black mt-2">₹{brokerHeldTotal.toLocaleString('en-IN')}</div>
+                    <div className="text-3xl font-black mt-2">₹{brokerHeld2PctTotal.toLocaleString('en-IN')}</div>
                     <p className="text-xs opacity-60 mt-1.5">{t.brokerHoldSub}</p>
                   </div>
 
@@ -2650,7 +2927,7 @@ function AquaMarkApp() {
                     <span className="text-xs text-emerald-500 font-bold flex items-center gap-1.5">
                       <Wallet className="w-4 h-4" /> {t.brokerReleasedCard}
                     </span>
-                    <div className="text-3xl font-black text-emerald-500 mt-2">₹{brokerReleasedTotal.toLocaleString('en-IN')}</div>
+                    <div className="text-3xl font-black text-emerald-500 mt-2">₹{brokerCredited2PctTotal.toLocaleString('en-IN')}</div>
                     <p className="text-xs opacity-60 mt-1.5">
                       {myFixedBroker.bankDetails?.upiId} • {myFixedBroker.bankDetails?.ifsc}
                     </p>
@@ -2718,7 +2995,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* CLICKABLE BROKER TRANSACTION & EARNINGS TRACKER */}
+                {/* CLICKABLE BROKER TRANSACTION & MARGIN BREAKDOWN TRACKER */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
@@ -2736,20 +3013,25 @@ function AquaMarkApp() {
                             className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 transition cursor-pointer ${subCardBg}`}
                           >
                             <div className="space-y-1 text-xs">
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
                                 <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
                                   }`}>
                                   {isCleared
-                                    ? `${t.creditedBadge}: ₹${bk.settlement?.brokerAmount || 0}`
-                                    : `${t.onHoldBadge}: ₹${bk.settlement?.brokerAmount || 0}`}
+                                    ? `2% Commission Credited: ₹${bk.settlement?.brokerBase2Pct || 0}`
+                                    : `2% Commission Hold: ₹${bk.settlement?.brokerBase2Pct || 0}`}
                                 </span>
+                                {bk.brokerExtraMarginTotal > 0 && (
+                                  <span className="bg-teal-500/15 text-teal-500 font-bold px-2.5 py-0.5 rounded-full">
+                                    + Extra Margin: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')} ({bk.brokerMarginPaise}p/seed)
+                                  </span>
+                                )}
                               </div>
                               <p className="font-bold">
                                 Farmer: {bk.farmerName} ({bk.farmerPhone}) → Hatchery: {bk.batch?.realName || bk.batch?.hatcheryCode}
                               </p>
                               <p className="opacity-70">
-                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • Packing: {bk.packingDate} • Click to inspect commission & margin breakdown
+                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • Packing: {bk.packingDate} • Click to inspect full margin & commission breakdown
                               </p>
                             </div>
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -2901,7 +3183,7 @@ function AquaMarkApp() {
       </main>
 
       {/* =========================================================
-          BUYER OLD TRANSACTION INSPECTION MODAL (ON CLICKING BOOKING)
+          BUYER OLD TRANSACTION INSPECTION MODAL
          ========================================================= */}
       {inspectedBuyerBooking && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -2924,8 +3206,8 @@ function AquaMarkApp() {
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Species & Stage:</span><b>{inspectedBuyerBooking.batch?.species} ({inspectedBuyerBooking.batch?.plStage})</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Quantity + Free Bonus:</span><b>{(inspectedBuyerBooking.quantity || 0).toLocaleString('en-IN')} + {(inspectedBuyerBooking.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Schedule:</span><b>{inspectedBuyerBooking.packingDate} ({inspectedBuyerBooking.packingTimeSlot})</b></div>
-              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (6%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
-              <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Cleared (${inspectedBuyerBooking.clearedAt})` : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (4%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Balance Cleared (${inspectedBuyerBooking.clearedAt})` : inspectedBuyerBooking.settlement?.status === 'CANCELLED_REFUNDED' ? 'Cancelled (2% Refunded)' : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => handleDownloadVerifiedPdf(inspectedBuyerBooking, inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED')} className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
@@ -2938,7 +3220,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          SELLER ASSIGNED ORDER FULL DETAILS MODAL (ON CLICKING ORDER)
+          SELLER ASSIGNED ORDER FULL DETAILS MODAL (ZERO LOSS FIXED RATE)
          ========================================================= */}
       {inspectedSellerOrder && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -2956,9 +3238,9 @@ function AquaMarkApp() {
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Target Pond Salinity:</span><b className="text-teal-500">{inspectedSellerOrder.pondSalinity} PPT (Source: {inspectedSellerOrder.batch?.salinity} PPT)</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Date & Slot:</span><b>{inspectedSellerOrder.packingDate} ({inspectedSellerOrder.packingTimeSlot})</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Logistics Mode:</span><b>{inspectedSellerOrder.includeTransport ? 'Oxygen Van Delivery (+₹1,500)' : 'Self Pickup'}</b></div>
-              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Total Order Value:</span><b>₹{(inspectedSellerOrder.totalSeedCost || 0).toLocaleString('en-IN')}</b></div>
-              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Balance Due from Farmer at Packing:</span><b className="text-emerald-500">₹{(inspectedSellerOrder.balanceAtPacking || 0).toLocaleString('en-IN')}</b></div>
-              <div className="flex justify-between py-1"><span>Your Online Advance Share:</span><b>₹{(inspectedSellerOrder.settlement?.hatcheryAmount || 0).toLocaleString('en-IN')} ({inspectedSellerOrder.settlement?.status === 'BALANCE_CLEARED' ? 'Credited' : 'On Hold'})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Your Fixed Hatchery Rate:</span><b>₹{(inspectedSellerOrder.hatcheryFixedRate || 0).toFixed(2)} / seed</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Your Total Fixed Hatchery Value:</span><b className="text-emerald-500">₹{(inspectedSellerOrder.hatcheryFixedTotal || 0).toLocaleString('en-IN')} (100% Yours)</b></div>
+              <div className="flex justify-between py-1"><span>Status:</span><b>{inspectedSellerOrder.settlement?.status === 'BALANCE_CLEARED' ? `Payment Received (${inspectedSellerOrder.clearedAt})` : 'Awaiting Packing & Payment Received'}</b></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setInspectedSellerOrder(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>{t.closeBtn}</button>
@@ -2968,7 +3250,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          BROKER TRANSACTION AUDIT MODAL (ONLY 2% BASE + MARGIN PROFIT, ZERO PLATFORM FEE SHOWN)
+          BROKER TRANSACTION AUDIT MODAL (SHOWS EXTRA MARGIN PAISE + 2% COMMISSION BREAKDOWN)
          ========================================================= */}
       {selectedBrokerTx && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -2976,7 +3258,7 @@ function AquaMarkApp() {
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div>
                 <span className="text-[11px] font-mono font-bold text-teal-500">{selectedBrokerTx.bookingId}</span>
-                <h3 className="font-extrabold text-base">Broker Deal & Earnings Breakdown</h3>
+                <h3 className="font-extrabold text-base">Broker Deal, Margin & Commission Breakdown</h3>
               </div>
               <button type="button" onClick={() => setSelectedBrokerTx(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
@@ -2997,12 +3279,20 @@ function AquaMarkApp() {
             <div className={`border rounded-xl p-4 space-y-2 text-xs ${subCardBg}`}>
               <div className="flex justify-between"><span>Booked Quantity:</span><b>{(selectedBrokerTx.quantity || 0).toLocaleString('en-IN')} PL ({selectedBrokerTx.batch?.plStage})</b></div>
               <div className="flex justify-between"><span>Packing Schedule:</span><b>{selectedBrokerTx.packingDate} ({selectedBrokerTx.packingTimeSlot})</b></div>
-              <div className="flex justify-between"><span>Hatchery Base Rate:</span><b>₹{(selectedBrokerTx.batch?.pricePer1000 || 0).toFixed(2)} / seed</b></div>
-              <div className="flex justify-between border-t border-slate-300/30 pt-2"><span>Your Standard 2% Commission:</span><b>₹{(selectedBrokerTx.settlement?.brokerBaseCommission || 0).toLocaleString('en-IN')}</b></div>
-              <div className="flex justify-between"><span>Your Extra Margin Profit:</span><b>₹{(selectedBrokerTx.settlement?.brokerMarginEarn || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between"><span>Hatchery Fixed Base Rate:</span><b>₹{(selectedBrokerTx.hatcheryFixedRate || 0).toFixed(2)} / seed</b></div>
+              <div className="flex justify-between"><span>Extra Margin Added by You:</span><b className="text-teal-500">+{selectedBrokerTx.brokerMarginPaise || 0} paise / seed</b></div>
+              <div className="flex justify-between"><span>Effective Rate Quoted to Farmer:</span><b>₹{((selectedBrokerTx.hatcheryFixedRate || 0) + ((selectedBrokerTx.brokerMarginPaise || 0) / 100)).toFixed(2)} / seed</b></div>
+              <div className="flex justify-between border-t border-slate-300/30 pt-2">
+                <span>Your 2% Commission (From Advance Hold):</span>
+                <b>₹{(selectedBrokerTx.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')} ({selectedBrokerTx.settlement?.status === 'BALANCE_CLEARED' ? 'Credited' : 'On Hold'})</b>
+              </div>
+              <div className="flex justify-between">
+                <span>Your Extra Margin Profit (Collected at Packing):</span>
+                <b>₹{(selectedBrokerTx.brokerExtraMarginTotal || 0).toLocaleString('en-IN')}</b>
+              </div>
               <div className="flex justify-between border-t border-slate-300/30 pt-2 text-sm font-extrabold text-emerald-500">
-                <span>Total Broker Earnings ({selectedBrokerTx.settlement?.status === 'BALANCE_CLEARED' ? 'Credited' : 'On Hold'}):</span>
-                <span>₹{(selectedBrokerTx.settlement?.brokerAmount || 0).toLocaleString('en-IN')}</span>
+                <span>Total Broker Combined Earnings:</span>
+                <span>₹{((selectedBrokerTx.settlement?.brokerBase2Pct || 0) + (selectedBrokerTx.brokerExtraMarginTotal || 0)).toLocaleString('en-IN')}</span>
               </div>
             </div>
 
@@ -3016,7 +3306,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          HATCHERY INSPECTION MODAL (HISTORY + REVIEWS + MULTIPLE PCR IMAGES)
+          HATCHERY INSPECTION MODAL
          ========================================================= */}
       {inspectedBatch && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -3035,7 +3325,7 @@ function AquaMarkApp() {
             </div>
 
             <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
-              <div><span className="text-[10px] opacity-60 block">Registered Since</span><b>{inspectedBatch.registeredAt || '2026'}</b></div>
+              <div><span className="text-[10px] opacity-60 block">Broodstock</span><b>{inspectedBatch.broodstock || 'SPF Certified'}</b></div>
               <div><span className="text-[10px] opacity-60 block">Orders Fulfilled</span><b>{bookings.filter(b => b.hatcheryOwnerPhone === inspectedBatch.ownerPhone).length} Orders</b></div>
               <div><span className="text-[10px] opacity-60 block">Salinity / Stage</span><b className="text-teal-500">{inspectedBatch.salinity} PPT • {inspectedBatch.plStage}</b></div>
               <div><span className="text-[10px] opacity-60 block">Packing Slot</span><b>{inspectedBatch.availableTimeSlot || 'All Day'}</b></div>
@@ -3083,7 +3373,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          BOOKING MODAL (6% ADVANCE + QR + DIRECT UPI + BANK-TO-BANK)
+          BOOKING MODAL (4% ADVANCE: 2% PLATFORM + 2% HOLD)
          ========================================================= */}
       {selectedBatch && (
         <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -3240,12 +3530,11 @@ function AquaMarkApp() {
 
                   {(() => {
                     const qty = Number(bookingForm.quantity) || 100000;
-                    const effRate = (selectedBatch.pricePer1000 || 0.42) + ((Number(bookingForm.brokerMarginPaise) || 0) / 100);
-                    const total = Math.round(qty * effRate) + (bookingForm.includeTransport ? 1500 : 0);
-                    const token = Math.max(1200, Math.round(total * 0.06));
+                    const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
+                    const token = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
 
                     if (bookingForm.paymentMethod === 'DIRECT_UPI') {
-                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${token}&cu=INR&tn=SeedAdvance6Pct`;
+                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${token}&cu=INR&tn=SeedAdvance4Pct`;
                       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
 
                       return (
@@ -3284,7 +3573,7 @@ function AquaMarkApp() {
                               </div>
                               {bookingForm.upiRequestSent && (
                                 <p className="text-[11px] font-bold text-teal-500">
-                                  ✓ Collect Request of ₹{token.toLocaleString('en-IN')} sent to {bookingForm.payerUpiId}. Approve on mobile & enter UTR below:
+                                  ✓ Collect Request of ₹{token.toLocaleString('en-IN')} sent to {bookingForm.payerUpiId}. Approve & enter UTR below:
                                 </p>
                               )}
                             </div>
@@ -3308,7 +3597,7 @@ function AquaMarkApp() {
                           <div className="font-mono text-[11px] space-y-0.5 select-text">
                             <div><b>Account Name:</b> Aqua Mark Settlement Account</div>
                             <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
-                            <div><b>6% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
+                            <div><b>4% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
                           </div>
                           <input
                             required
@@ -3335,9 +3624,10 @@ function AquaMarkApp() {
 
               {(() => {
                 const qty = Number(bookingForm.quantity) || 100000;
-                const effRate = (selectedBatch.pricePer1000 || 0.42) + ((Number(bookingForm.brokerMarginPaise) || 0) / 100);
-                const total = Math.round(qty * effRate) + (bookingForm.includeTransport ? 1500 : 0);
-                const token = Math.max(1200, Math.round(total * 0.06));
+                const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
+                const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
+                const total = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
+                const token = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
                 return (
                   <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 text-xs">
                     <div className="flex justify-between text-slate-300">
