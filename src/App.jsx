@@ -10,6 +10,7 @@ import {
   MessageSquare, BarChart3, Calendar, Droplets,
   Receipt, Moon, Sun, XCircle, ClipboardList, Gauge, Video
 } from 'lucide-react';
+import { supabase } from './supabaseClient';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -179,7 +180,6 @@ const DICT = {
     ratedLabel: 'Feedback Sent',
     advanceReceiptBtn: 'Advance Receipt',
     finalReceiptBtn: 'Final Cleared Receipt',
-    // Seller
     unifiedRegTitle: 'Hatchery & Bank Registration (One-Time Setup)',
     unifiedRegSub: 'Register your CAA-certified hatchery and settlement bank account in one step. Bound permanently to this mobile.',
     hatcheryNameLabel: 'Hatchery Legal Name',
@@ -225,7 +225,6 @@ const DICT = {
     paymentReceivedBtn: 'Payment Received',
     sellerFeedbackTitle: 'Private Farmer Ratings & Feedback (Visible Only to You)',
     noFeedbackYet: 'No farmer feedback submitted yet.',
-    // Broker
     brokerRegTitle: 'Mandatory Broker Bank & UPI Registration',
     brokerRegSub: 'Enter your settlement bank account & UPI ID to activate your Broker account and receive 2% commissions.',
     brokerActivateBtn: 'Save Bank Details & Activate Broker Account',
@@ -257,6 +256,7 @@ const DICT = {
     brokerMarginLabel: 'Extra Margin (Paise / Seed)',
     transportAddonLabel: 'Include Oxygen Van Delivery (+₹1,500)',
     paymentMethodLabel: 'Select 4% Advance Payment Method',
+    utrPlaceholder: 'Enter 12-Digit UPI / Bank UTR Reference Number',
     salinityWarn: 'Salinity variance exceeds 4 PPT. Hatchery will perform 48-hour gradual acclimatization.',
     totalSeedValue: 'Total Hatchery Value',
     advancePaidLabel: 'Advance Paid Now (4%)',
@@ -272,20 +272,20 @@ const DICT = {
       invalidPhone: 'Please enter a valid 10-digit mobile number.',
       otpSent: 'Verification OTP sent:',
       invalidOtp: 'Incorrect OTP. Please enter the 4-digit code shown.',
-      regComplete: 'Hatchery & Bank details verified and locked to your mobile!',
-      brokerRegComplete: 'Broker Bank & UPI details verified! Broker Portal activated.',
-      profileUpdated: 'Hatchery Name, Address & Bank details updated!',
+      regComplete: 'Hatchery & Bank details saved live to Supabase!',
+      brokerRegComplete: 'Broker Bank & UPI details saved live! Broker Portal activated.',
+      profileUpdated: 'Hatchery Name, Address & Bank details updated live!',
       gpsLocked: 'Tank GPS coordinates locked.',
       uploadPcrFirst: 'Please upload at least 1 PCR Lab Report image.',
-      batchPublished: 'Seed batch published live & upload cleared!',
+      batchPublished: 'Seed batch published live to Supabase!',
       batchUpdated: 'Batch values updated live!',
-      batchRemoved: 'Seed batch removed.',
-      liveVideoRequested: 'Live tank video request sent to Hatchery! They will share live video on WhatsApp.',
-      packingMarked: 'Packing marked complete! Buyer notified on their dashboard.',
-      paymentReceivedDone: 'Payment Received confirmed! Packing revenue credited & Final Cleared Receipt generated.',
-      bookingCancelled: 'Booking cancelled! 2% refundable hold returned to Farmer & stock restored.',
+      batchRemoved: 'Seed batch removed from live database.',
+      liveVideoRequested: 'Live tank video request sent to Hatchery!',
+      packingMarked: 'Packing marked complete! Buyer notified.',
+      paymentReceivedDone: 'Payment Received confirmed! Final Cleared Receipt generated.',
+      bookingCancelled: 'Booking cancelled! 2% refundable hold returned & stock restored.',
       farmerLocked: 'Farmer locked to your Broker ID for 365 days!',
-      paymentSuccess: '4% Advance paid! Stock deducted & Official Receipt ready.',
+      paymentSuccess: '4% Advance paid! Saved live & Official Receipt ready.',
       enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.',
       upiCollectSent: 'Collect request sent to your UPI App! Approve it and verify UTR below.',
       calcUpdated: 'Harvest, Feed & Net Profit estimates recalculated!'
@@ -358,7 +358,7 @@ const DICT = {
     advanceReceiptBtn: 'అడ్వాన్స్ రసీదు (Receipt)',
     finalReceiptBtn: 'ఫైనల్ క్లియర్డ్ రసీదు (Receipt)',
     unifiedRegTitle: 'హేచరీ & బ్యాంక్ రిజిస్ట్రేషన్ (ఒకే స్టెప్‌లో పూర్తి చేయండి)',
-    unifiedRegSub: 'మీ హేచరీ వివరాలు మరియు బ్యాంక్ అకౌంట్ వివరాలు ఒకేసారి నమోదు చేయండి. ఈ మొబైల్ నంబర్ ఈ ఒక్క హేచరీకి మాత్రమే ఫిక్స్ అవుతుంది.',
+    unifiedRegSub: 'మీ హేచరీ వివరాలు మరియు బ్యాంక్ అకౌంట్ వివరాలు ఒకేసారి నమోదు చేయండి.',
     hatcheryNameLabel: 'హేచరీ పేరు',
     caaLicenseLabel: 'CAA లైసెన్స్ నంబర్',
     zoneLabel: 'ప్రాంతం (Zone)',
@@ -394,23 +394,23 @@ const DICT = {
     noBatchesSeller: 'మీరు ఇంకా ఎటువంటి బ్యాచ్‌లు యాడ్ చేయలేదు.',
     saveChangesBtn: 'మార్పులు సేవ్ చేయండి',
     removeBtn: 'తొలగించు',
-    sellerOrdersTitle: 'ప్యాకింగ్ ఆర్డర్లు & ట్రాన్సాక్షన్ లెడ్జర్ (UTR & Buyer వివరాల కోసం క్లిక్ చేయండి)',
+    sellerOrdersTitle: 'ప్యాకింగ్ ఆర్డర్లు & ట్రాన్సాక్షన్ లెడ్జర్',
     noOrdersYet: 'మీ హేచరీకి ఇంకా ఎటువంటి ఆర్డర్లు రాలేదు.',
     creditedBadge: 'Payment Received (పూర్తయింది)',
     onHoldBadge: 'ప్యాకింగ్ & బ్యాలెన్స్ కోసం వేచి ఉంది',
     markPackedBtn: 'ప్యాకింగ్ పూర్తయింది (Notify Buyer)',
     paymentReceivedBtn: 'Payment Received (బ్యాలెన్స్ అందింది)',
-    sellerFeedbackTitle: 'రైతుల రేటింగ్స్ & అభిప్రాయాలు (మీకు మాత్రమే కనిపిస్తాయి)',
+    sellerFeedbackTitle: 'రైతుల రేటింగ్స్ & అభిప్రాయాలు',
     noFeedbackYet: 'ఇంకా ఎటువంటి రైతు అభిప్రాయాలు రాలేదు.',
     brokerRegTitle: 'బ్రోకర్ బ్యాంక్ & UPI రిజిస్ట్రేషన్ (తప్పనిసరి)',
-    brokerRegSub: 'మీ బ్రోకర్ అకౌంట్ యాక్టివేట్ అవ్వడానికి మరియు 2% కమిషన్ పొందడానికి మీ బ్యాంక్ & UPI వివరాలు నమోదు చేయండి.',
+    brokerRegSub: 'మీ బ్రోకర్ అకౌంట్ యాక్టివేట్ అవ్వడానికి మీ బ్యాంక్ & UPI వివరాలు నమోదు చేయండి.',
     brokerActivateBtn: 'బ్యాంక్ వివరాలు సేవ్ చేసి బ్రోకర్ అకౌంట్ ప్రారంభించండి',
-    brokerHoldCard: 'హోల్డ్‌లో ఉన్న 2% కమిషన్ (ప్యాకింగ్ పూర్తయ్యాక వస్తుంది)',
-    brokerHoldSub: 'హేచరీ ఓనర్ Payment Received నొక్కగానే మీ బ్యాంక్ అకౌంట్‌లోకి జమ అవుతుంది',
-    brokerReleasedCard: 'బ్యాంక్ అకౌంట్‌కు జమ అయిన 2% కమిషన్',
-    brokerBookingsTitle: 'నా బ్రోకర్ బుకింగ్స్ & మార్జిన్ ట్రాకర్ (UTR & Buyer వివరాల కోసం క్లిక్ చేయండి)',
+    brokerHoldCard: 'హోల్డ్‌లో ఉన్న 2% కమిషన్',
+    brokerHoldSub: 'హేచరీ ఓనర్ Payment Received నొక్కగానే జమ అవుతుంది',
+    brokerReleasedCard: 'జమ అయిన 2% కమిషన్',
+    brokerBookingsTitle: 'నా బ్రోకర్ బుకింగ్స్ & మార్జిన్ ట్రాకర్',
     noBrokerBookings: 'మీ బ్రోకర్ అకౌంట్ ద్వారా ఇంకా ఎటువంటి బుకింగ్స్ జరగలేదు.',
-    brokerMarketplaceTitle: 'రిజిస్టర్ అయిన హేచరీల లిస్ట్ (ముందుగా హేచరీ ఎంచుకుని బుక్ చేయండి)',
+    brokerMarketplaceTitle: 'రిజిస్టర్ అయిన హేచరీల లిస్ట్',
     selectAndBookBtn: 'ఈ హేచరీని ఎంచుకుని బుక్ చేయండి →',
     lockFarmerTitle: 'కొత్త రైతును లాక్ చేయండి (365 రోజులు)',
     farmerNamePlaceholder: 'రైతు పేరు',
@@ -433,9 +433,10 @@ const DICT = {
     brokerMarginLabel: 'Extra Margin (Paise / Seed)',
     transportAddonLabel: 'ఆక్సిజన్ వ్యాన్ రవాణా జతచేయండి (+₹1,500)',
     paymentMethodLabel: '4% అడ్వాన్స్ పేమెంట్ విధానం ఎంచుకోండి',
-    salinityWarn: 'హేచరీ నీటికి మరియు చెరువు నీటికి మధ్య 4 PPT కంటే ఎక్కువ తేడా ఉంది. 48 గంటల ముందుగా Acclimatization చేయాలని హేచరీకి అలర్ట్ వెళ్తుంది.',
+    utrPlaceholder: '12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి',
+    salinityWarn: 'హేచరీ నీటికి మరియు చెరువు నీటికి మధ్య 4 PPT కంటే ఎక్కువ తేడా ఉంది.',
     totalSeedValue: 'హేచరీ ఆర్డర్ విలువ',
-    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (Advance Paid - 4%)',
+    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
     balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (96%)',
     payNowBtn: '4% అడ్వాన్స్ చెల్లించి బుక్ చేయండి',
     receiptTitle: 'అధికారిక సీడ్ బుకింగ్ రసీదు (RECEIPT)',
@@ -443,28 +444,28 @@ const DICT = {
     sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'మూసివేయండి',
-    calculateBtn: 'దిగుబడి & లాభం లెక్కించండి (Calculate)',
+    calculateBtn: 'దిగుబడి & లాభం లెక్కించండి',
     toasts: {
       invalidPhone: 'దయచేసి సరైన 10-అంకెల మొబైల్ నంబర్ ఎంటర్ చేయండి.',
       otpSent: 'OTP పంపబడింది:',
       invalidOtp: 'తప్పు OTP! స్క్రీన్‌పై ఉన్న 4-అంకెల కోడ్ ఎంటర్ చేయండి.',
-      regComplete: 'హేచరీ & బ్యాంక్ వివరాలు మీ నంబర్‌కు శాశ్వతంగా ఫిక్స్ చేయబడ్డాయి!',
-      brokerRegComplete: 'బ్రోకర్ బ్యాంక్ & UPI వివరాలు సేవ్ అయ్యాయి! బ్రోకర్ పోర్టల్ సిద్ధంగా ఉంది.',
-      profileUpdated: 'హేచరీ పేరు, అడ్రస్ & బ్యాంక్ వివరాలు అప్‌డేట్ అయ్యాయి!',
+      regComplete: 'హేచరీ & బ్యాంక్ వివరాలు లైవ్ డేటాబేస్‌లో సేవ్ అయ్యాయి!',
+      brokerRegComplete: 'బ్రోకర్ బ్యాంక్ & UPI వివరాలు సేవ్ అయ్యాయి!',
+      profileUpdated: 'హేచరీ వివరాలు అప్‌డేట్ అయ్యాయి!',
       gpsLocked: 'హేచరీ GPS లొకేషన్ లాక్ అయింది.',
       uploadPcrFirst: 'దయచేసి కనీసం 1 PCR ల్యాబ్ ఫోటో అప్‌లోడ్ చేయండి.',
       batchPublished: 'కొత్త సీడ్ బ్యాచ్ లైవ్ అయింది!',
       batchUpdated: 'బ్యాచ్ వివరాలు అప్‌డేట్ అయ్యాయి!',
       batchRemoved: 'సీడ్ బ్యాచ్ తొలగించబడింది.',
       liveVideoRequested: 'లైవ్ ట్యాంక్ వీడియో రిక్వెస్ట్ హేచరీకి పంపబడింది!',
-      packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతు డాష్‌బోర్డ్‌కు పంపబడింది!',
-      paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! రైతుకు Final Cleared Receipt జనరేట్ అయింది.',
-      bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! 2% హోల్డ్ రైతుకు వాపస్ వచ్చింది.',
+      packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతుకు పంపబడింది!',
+      paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! Final Receipt సిద్ధం.',
+      bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! 2% వాపస్ వచ్చింది.',
       farmerLocked: 'రైతు 365 రోజుల పాటు మీ ID కి లాక్ చేయబడ్డారు!',
       paymentSuccess: '4% అడ్వాన్స్ పేమెంట్ పూర్తయింది! రసీదు సిద్ధంగా ఉంది.',
       enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి.',
-      upiCollectSent: 'మీ UPI యాప్‌కు పేమెంట్ రిక్వెస్ట్ పంపబడింది! అప్రూవ్ చేసి UTR వెరిఫై చేయండి.',
-      calcUpdated: 'దిగుబడి, ఫీడ్ & నికర లాభాల లెక్కలు అప్‌డేట్ అయ్యాయి!'
+      upiCollectSent: 'మీ UPI యాప్‌కు పేమెంట్ రిక్వెస్ట్ పంపబడింది!',
+      calcUpdated: 'దిగుబడి & లాభాల లెక్కలు అప్‌డేట్ అయ్యాయి!'
     }
   }
 };
@@ -489,17 +490,16 @@ function AquaMarkApp() {
 
   const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v9_user', null));
 
-  // ZERO SAMPLE DATA
-  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeLoadStorage('aqm_v9_hatcheries', {}));
-  const [brokerProfiles, setBrokerProfiles] = useState(() => safeLoadStorage('aqm_v9_brokers', {}));
-  const [batches, setBatches] = useState(() => safeLoadStorage('aqm_v9_batches', []));
-  const [bookings, setBookings] = useState(() => safeLoadStorage('aqm_v9_bookings', []));
-  const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v9_farmers', []));
+  // LIVE SUPABASE STATES
+  const [hatcheryProfiles, setHatcheryProfiles] = useState({});
+  const [brokerProfiles, setBrokerProfiles] = useState({});
+  const [batches, setBatches] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [brokerFarmers, setBrokerFarmers] = useState([]);
   const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v9_wishlist', []));
-  const [liveVideoRequests, setLiveVideoRequests] = useState(() => safeLoadStorage('aqm_v9_live_videos', []));
+  const [liveVideoRequests, setLiveVideoRequests] = useState([]);
+  const [farmerPonds, setFarmerPonds] = useState([]);
 
-  // Buyer Multi-Pond Logbook
-  const [farmerPonds, setFarmerPonds] = useState(() => safeLoadStorage('aqm_v9_ponds', []));
   const [newPondForm, setNewPondForm] = useState({
     pondName: 'Pond-1',
     acres: 2.5,
@@ -509,13 +509,11 @@ function AquaMarkApp() {
     trayLeftover: '0% (Clean)'
   });
 
-  // Inspection Modals
   const [inspectedBatch, setInspectedBatch] = useState(null);
   const [inspectedBuyerBooking, setInspectedBuyerBooking] = useState(null);
   const [inspectedSellerOrder, setInspectedSellerOrder] = useState(null);
   const [selectedBrokerTx, setSelectedBrokerTx] = useState(null);
 
-  // Broker Mandatory Bank Setup Form
   const [brokerBankForm, setBrokerBankForm] = useState({
     accountName: '',
     accountNo: '',
@@ -524,7 +522,6 @@ function AquaMarkApp() {
   });
   const [isEditingBrokerBank, setIsEditingBrokerBank] = useState(false);
 
-  // Seller Unified Registration & Edit Form
   const [unifiedSellerForm, setUnifiedSellerForm] = useState({
     realName: '',
     caaLicense: '',
@@ -538,7 +535,6 @@ function AquaMarkApp() {
   });
   const [isEditingSellerProfile, setIsEditingSellerProfile] = useState(false);
 
-  // Login Form States
   const [loginRole, setLoginRole] = useState('buyer');
   const [loginName, setLoginName] = useState('');
   const [loginPhone, setLoginPhone] = useState('');
@@ -546,7 +542,6 @@ function AquaMarkApp() {
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [enteredOtp, setEnteredOtp] = useState('');
 
-  // Buyer Navigation & Filters
   const [buyerTab, setBuyerTab] = useState('marketplace');
   const [searchQuery, setSearchQuery] = useState('');
   const [zoneFilter, setZoneFilter] = useState('ALL');
@@ -556,15 +551,11 @@ function AquaMarkApp() {
   const [compareIds, setCompareIds] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
 
-  // Buyer Rating & Feedback State
   const [ratingDrafts, setRatingDrafts] = useState({});
-
-  // Buyer Water, Salinity Acclimatization & Oxygen Van Calculator States
   const [waterTest, setWaterTest] = useState({ ph: 7.9, doLevel: 5.2, alkalinity: 145, ammonia: 0.04 });
   const [acclimCalc, setAcclimCalc] = useState({ hatcheryPpt: 18, pondPpt: 10 });
   const [oxygenCalc, setOxygenCalc] = useState({ seedCount: 200000, travelHours: 5 });
 
-  // Seller Batch Inline Editing (1-100 + Lakhs/Millions)
   const [editingBatchId, setEditingBatchId] = useState(null);
   const [editBatchValues, setEditBatchValues] = useState({
     plStage: 'PL12',
@@ -577,6 +568,100 @@ function AquaMarkApp() {
     availableTimeSlot: 'All Day (24 Hours Flexible)'
   });
 
+  // ==========================================
+  // 1. LOAD ALL DATA FROM SUPABASE ON STARTUP
+  // ==========================================
+  const syncAllFromSupabase = async () => {
+    try {
+      const [batchesRes, bookingsRes, kvRes] = await Promise.all([
+        supabase.from('batches').select('*').order('created_at', { ascending: false }),
+        supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+        supabase.from('app_kv_store').select('*')
+      ]);
+
+      if (batchesRes.data) {
+        setBatches(batchesRes.data.map(r => (r.data && r.data.id ? r.data : {
+          id: r.id,
+          ownerPhone: r.owner_phone,
+          realName: r.real_name,
+          species: r.species,
+          plStage: r.pl_stage,
+          pricePer1000: Number(r.price_per_1000 || 0.43),
+          availableStock: Number(r.available_stock || 0),
+          salinity: Number(r.salinity || 16),
+          bonusPercent: Number(r.bonus_percent || 15),
+          zone: r.zone,
+          pcrImages: r.pcr_images || []
+        })));
+      }
+
+      if (bookingsRes.data) {
+        setBookings(bookingsRes.data.map(r => (r.data && r.data.bookingId ? r.data : {
+          bookingId: r.booking_id,
+          farmerPhone: r.farmer_phone,
+          farmerName: r.farmer_name,
+          hatcheryOwnerPhone: r.hatchery_owner_phone,
+          quantity: Number(r.quantity || 0),
+          totalSeedCost: Number(r.total_seed_cost || 0),
+          packingStatus: r.packing_status,
+          settlement: r.settlement || {}
+        })));
+      }
+
+      if (kvRes.data) {
+        kvRes.data.forEach(item => {
+          if (item.key === 'hatcheries') setHatcheryProfiles(item.value || {});
+          if (item.key === 'brokers') setBrokerProfiles(item.value || {});
+          if (item.key === 'farmers') setBrokerFarmers(item.value || []);
+          if (item.key === 'ponds') setFarmerPonds(item.value || []);
+          if (item.key === 'live_videos') setLiveVideoRequests(item.value || []);
+        });
+      }
+    } catch (err) {
+      console.error('Supabase initial sync error:', err);
+    }
+  };
+
+  useEffect(() => {
+    syncAllFromSupabase();
+  }, []);
+
+  // Helper functions to save directly to Supabase
+  const saveKvToSupabase = async (key, value) => {
+    await supabase.from('app_kv_store').upsert({ key, value, updated_at: new Date().toISOString() });
+  };
+
+  const saveBatchToSupabase = async (batchObj) => {
+    await supabase.from('batches').upsert({
+      id: batchObj.id,
+      owner_phone: batchObj.ownerPhone,
+      real_name: batchObj.realName,
+      species: batchObj.species,
+      pl_stage: batchObj.plStage,
+      price_per_1000: batchObj.pricePer1000,
+      available_stock: batchObj.availableStock,
+      salinity: batchObj.salinity,
+      bonus_percent: batchObj.bonusPercent,
+      zone: batchObj.zone,
+      pcr_images: batchObj.pcrImages || [],
+      data: batchObj
+    });
+  };
+
+  const saveBookingToSupabase = async (bkObj) => {
+    await supabase.from('bookings').upsert({
+      booking_id: bkObj.bookingId,
+      farmer_phone: bkObj.farmerPhone,
+      farmer_name: bkObj.farmerName,
+      hatchery_owner_phone: bkObj.hatcheryOwnerPhone,
+      quantity: bkObj.quantity,
+      total_seed_cost: bkObj.totalSeedCost,
+      packing_status: bkObj.packingStatus,
+      settlement: bkObj.settlement,
+      data: bkObj
+    });
+  };
+
   useEffect(() => { try { localStorage.setItem('aqm_v9_dark', JSON.stringify(darkMode)); } catch { } }, [darkMode]);
   useEffect(() => {
     try {
@@ -584,14 +669,7 @@ function AquaMarkApp() {
       else localStorage.removeItem('aqm_v9_user');
     } catch { }
   }, [currentUser]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_hatcheries', JSON.stringify(hatcheryProfiles)); } catch { } }, [hatcheryProfiles]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_brokers', JSON.stringify(brokerProfiles)); } catch { } }, [brokerProfiles]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_batches', JSON.stringify(batches)); } catch { } }, [batches]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
   useEffect(() => { try { localStorage.setItem('aqm_v9_wishlist', JSON.stringify(savedBatchIds)); } catch { } }, [savedBatchIds]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_live_videos', JSON.stringify(liveVideoRequests)); } catch { } }, [liveVideoRequests]);
-  useEffect(() => { try { localStorage.setItem('aqm_v9_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
 
   useEffect(() => {
     if (otpSent && otpInputRef.current) {
@@ -599,18 +677,17 @@ function AquaMarkApp() {
     }
   }, [otpSent]);
 
-  // Booking Modal State (1-100 + Lakhs/Millions, Clean 2-Digit Margin, Inline Modal Error)
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [modalError, setModalError] = useState('');
   const [bookingForm, setBookingForm] = useState({
     farmerName: '',
     farmerPhone: '',
     qtyAmount: '2',
-    qtyUnit: 'LAKHS', // 'LAKHS' (1,00,000) | 'MILLIONS' (10,00,000)
+    qtyUnit: 'LAKHS',
     pondSalinity: '15',
     packingDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
     packingTimeSlot: 'All Day (24 Hours Flexible)',
-    brokerMarginPaise: '', // Clean 2-digit string without leading zero
+    brokerMarginPaise: '',
     includeTransport: false,
     paymentMethod: 'RAZORPAY',
     payerUpiId: '',
@@ -621,7 +698,6 @@ function AquaMarkApp() {
   const [activeInvoice, setActiveInvoice] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Harvest, Feed & Profit Estimator
   const [calcInputs, setCalcInputs] = useState({
     ponds: 2,
     acresPerPond: 2.5,
@@ -682,7 +758,6 @@ function AquaMarkApp() {
 
   const [newFarmer, setNewFarmer] = useState({ name: '', phone: '', village: '', acres: '' });
 
-  // New Batch Form (Includes Custom Batch Number + 1-100 Stock with Lakhs/Millions)
   const [newBatchForm, setNewBatchForm] = useState({
     batchNumber: '',
     species: 'Litopenaeus vannamei (SyAqua Line)',
@@ -699,6 +774,7 @@ function AquaMarkApp() {
     availableTimeSlot: 'All Day (24 Hours Flexible)'
   });
   const [pcrImages, setPcrImages] = useState([]);
+  const [isUploadingPcr, setIsUploadingPcr] = useState(false);
   const [gpsLocation, setGpsLocation] = useState('');
 
   const showToast = (msg) => {
@@ -706,7 +782,6 @@ function AquaMarkApp() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Helper to convert 1-100 + Lakhs/Millions into exact PL seed count
   const computeSeedCount = (amountStr, unit) => {
     const num = Math.max(1, Math.min(100, Number(amountStr) || 1));
     const multiplier = unit === 'MILLIONS' ? 1000000 : 100000;
@@ -720,9 +795,7 @@ function AquaMarkApp() {
     ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-teal-500'
     : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-600';
 
-  // ==========================================
   // OTP LOGIN HANDLERS
-  // ==========================================
   const handleSendOtp = (e) => {
     e.preventDefault();
     const digitsOnly = (loginPhone || '').replace(/\D/g, '');
@@ -760,6 +833,7 @@ function AquaMarkApp() {
     }
     setOtpSent(false);
     setEnteredOtp('');
+    syncAllFromSupabase();
   };
 
   const handleLogout = () => {
@@ -770,7 +844,7 @@ function AquaMarkApp() {
     setModalError('');
   };
 
-  const handleCompleteUnifiedSellerReg = (e) => {
+  const handleCompleteUnifiedSellerReg = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
     const finalZone = unifiedSellerForm.zone === 'OTHER_CUSTOM'
@@ -792,11 +866,13 @@ function AquaMarkApp() {
         upiId: unifiedSellerForm.upiId
       }
     };
-    setHatcheryProfiles(prev => ({ ...prev, [currentUser.phone]: profile }));
+    const nextProfiles = { ...hatcheryProfiles, [currentUser.phone]: profile };
+    setHatcheryProfiles(nextProfiles);
+    await saveKvToSupabase('hatcheries', nextProfiles);
     showToast(t.toasts.regComplete);
   };
 
-  const handleCompleteBrokerReg = (e) => {
+  const handleCompleteBrokerReg = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
     const profile = {
@@ -809,12 +885,14 @@ function AquaMarkApp() {
         upiId: brokerBankForm.upiId
       }
     };
-    setBrokerProfiles(prev => ({ ...prev, [currentUser.phone]: profile }));
+    const nextBrokers = { ...brokerProfiles, [currentUser.phone]: profile };
+    setBrokerProfiles(nextBrokers);
     setIsEditingBrokerBank(false);
+    await saveKvToSupabase('brokers', nextBrokers);
     showToast(t.toasts.brokerRegComplete);
   };
 
-  const handleUpdateSellerProfileAndBank = (e) => {
+  const handleUpdateSellerProfileAndBank = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone || !hatcheryProfiles[currentUser.phone]) return;
     const existing = hatcheryProfiles[currentUser.phone];
@@ -834,9 +912,11 @@ function AquaMarkApp() {
         upiId: unifiedSellerForm.upiId
       }
     };
-    setHatcheryProfiles(prev => ({ ...prev, [currentUser.phone]: updatedProfile }));
+    const nextProfiles = { ...hatcheryProfiles, [currentUser.phone]: updatedProfile };
+    setHatcheryProfiles(nextProfiles);
+    await saveKvToSupabase('hatcheries', nextProfiles);
 
-    setBatches(prev => prev.map(b =>
+    const updatedBatchesList = batches.map(b =>
       b.ownerPhone === currentUser.phone
         ? {
           ...b,
@@ -846,30 +926,50 @@ function AquaMarkApp() {
           bankDetails: updatedProfile.bankDetails
         }
         : b
-    ));
+    );
+    setBatches(updatedBatchesList);
+    for (const b of updatedBatchesList.filter(x => x.ownerPhone === currentUser.phone)) {
+      await saveBatchToSupabase(b);
+    }
 
     setIsEditingSellerProfile(false);
     showToast(t.toasts.profileUpdated);
   };
 
+  // ==========================================================
+  // DIRECT UPLOAD PCR IMAGES TO SUPABASE BUCKET ('pcr-reports')
+  // ==========================================================
   const handleMultiplePcrUpload = async (fileList) => {
     if (!fileList || fileList.length === 0) return;
+    setIsUploadingPcr(true);
     const filesArray = Array.from(fileList);
-    const readPromises = filesArray.map((file, index) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          resolve({
-            label: `Image-${pcrImages.length + index + 1}`,
-            url: reader.result || ''
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-    });
+    const uploadedResults = [];
 
-    const loadedImages = await Promise.all(readPromises);
-    setPcrImages(prev => [...prev, ...loadedImages]);
+    for (let i = 0; i < filesArray.length; i++) {
+      const file = filesArray[i];
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filePath = `pcr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from('pcr-reports')
+        .upload(filePath, file, { upsert: true });
+
+      if (!error) {
+        const { data: pub } = supabase.storage.from('pcr-reports').getPublicUrl(filePath);
+        uploadedResults.push({
+          label: `Image-${pcrImages.length + i + 1}`,
+          url: pub.publicUrl
+        });
+      } else {
+        showToast(`Storage Error: ${error.message}`);
+      }
+    }
+
+    if (uploadedResults.length > 0) {
+      setPcrImages(prev => [...prev, ...uploadedResults]);
+      showToast(`${uploadedResults.length} PCR image(s) uploaded to Supabase Storage!`);
+    }
+    setIsUploadingPcr(false);
     if (pcrInputRef.current) pcrInputRef.current.value = '';
   };
 
@@ -892,7 +992,7 @@ function AquaMarkApp() {
     );
   };
 
-  const handlePublishBatch = (e) => {
+  const handlePublishBatch = async (e) => {
     e.preventDefault();
     const myHatchery = hatcheryProfiles[currentUser?.phone];
     if (!myHatchery) return;
@@ -941,6 +1041,8 @@ function AquaMarkApp() {
     };
 
     setBatches([created, ...batches]);
+    await saveBatchToSupabase(created);
+
     setPcrImages([]);
     setNewBatchForm(prev => ({ ...prev, batchNumber: '' }));
     if (pcrInputRef.current) pcrInputRef.current.value = '';
@@ -966,11 +1068,12 @@ function AquaMarkApp() {
     });
   };
 
-  const saveEditedBatch = (batchId) => {
+  const saveEditedBatch = async (batchId) => {
     const updatedStock = computeSeedCount(editBatchValues.stockAmount, editBatchValues.stockUnit);
-    setBatches(batches.map(b => {
+    let updatedObj = null;
+    const updatedList = batches.map(b => {
       if (b.id !== batchId) return b;
-      return {
+      updatedObj = {
         ...b,
         plStage: editBatchValues.plStage,
         salinity: Number(editBatchValues.salinity),
@@ -980,20 +1083,21 @@ function AquaMarkApp() {
         availableDate: editBatchValues.availableDate,
         availableTimeSlot: editBatchValues.availableTimeSlot
       };
-    }));
+      return updatedObj;
+    });
+    setBatches(updatedList);
+    if (updatedObj) await saveBatchToSupabase(updatedObj);
     setEditingBatchId(null);
     showToast(t.toasts.batchUpdated);
   };
 
-  const removeBatch = (batchId) => {
+  const removeBatch = async (batchId) => {
     setBatches(batches.filter(b => b.id !== batchId));
+    await supabase.from('batches').delete().eq('id', batchId);
     showToast(t.toasts.batchRemoved);
   };
 
-  // =========================================================================
-  // BOOKING SUBMISSION WITH IN-MODAL ERROR BANNER (NEVER BLURRED BEHIND MODAL)
-  // =========================================================================
-  const finalizeBookingRecord = (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct) => {
+  const finalizeBookingRecord = async (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct) => {
     const bonusSeeds = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
     const matchedBrokerFarmer = brokerFarmers.find(
       (f) => (f.phone || '').slice(-10) === (bookingForm.farmerPhone || '').slice(-10)
@@ -1046,14 +1150,17 @@ function AquaMarkApp() {
       rated: false
     };
 
-    // Deduct booked seeds from hatchery stock immediately
-    setBatches(prev => prev.map(b =>
-      b.id === selectedBatch.id
-        ? { ...b, availableStock: Math.max(0, (b.availableStock || 0) - qty) }
-        : b
-    ));
+    const updatedBatch = {
+      ...selectedBatch,
+      availableStock: Math.max(0, (selectedBatch.availableStock || 0) - qty)
+    };
 
+    setBatches(prev => prev.map(b => (b.id === selectedBatch.id ? updatedBatch : b)));
     setBookings([newBooking, ...bookings]);
+
+    await saveBookingToSupabase(newBooking);
+    await saveBatchToSupabase(updatedBatch);
+
     setSelectedBatch(null);
     setModalError('');
     setBookingForm(prev => ({ ...prev, utrReference: '', upiRequestSent: false }));
@@ -1143,7 +1250,6 @@ function AquaMarkApp() {
     }
   };
 
-  // Send Direct UPI Collect Request & Generate Auto-Verified Reference Option
   const handleSendDirectUpiRequest = (advanceAmount) => {
     setModalError('');
     const upi = (bookingForm.payerUpiId || '').trim();
@@ -1160,26 +1266,25 @@ function AquaMarkApp() {
     showToast(t.toasts.upiCollectSent);
   };
 
-  const handleBuyerCancelBooking = (bk) => {
-    setBookings(prev => prev.map(item =>
-      item.bookingId === bk.bookingId
-        ? {
-          ...item,
-          packingStatus: 'CANCELLED',
-          settlement: { ...item.settlement, status: 'CANCELLED_REFUNDED' }
-        }
-        : item
-    ));
-    setBatches(prev => prev.map(b =>
-      b.id === bk.batch?.id
-        ? { ...b, availableStock: (b.availableStock || 0) + (bk.quantity || 0) }
-        : b
-    ));
+  const handleBuyerCancelBooking = async (bk) => {
+    const updatedBk = {
+      ...bk,
+      packingStatus: 'CANCELLED',
+      settlement: { ...bk.settlement, status: 'CANCELLED_REFUNDED' }
+    };
+    setBookings(prev => prev.map(item => (item.bookingId === bk.bookingId ? updatedBk : item)));
+    await saveBookingToSupabase(updatedBk);
+
+    const targetBatch = batches.find(b => b.id === bk.batch?.id);
+    if (targetBatch) {
+      const restoredBatch = { ...targetBatch, availableStock: (targetBatch.availableStock || 0) + (bk.quantity || 0) };
+      setBatches(prev => prev.map(b => (b.id === restoredBatch.id ? restoredBatch : b)));
+      await saveBatchToSupabase(restoredBatch);
+    }
     showToast(t.toasts.bookingCancelled);
   };
 
-  // Replaced ₹500 Sample with Ask for Live Video
-  const handleAskLiveVideo = (batch) => {
+  const handleAskLiveVideo = async (batch) => {
     const reqObj = {
       id: `VID-${Math.floor(1000 + Math.random() * 9000)}`,
       batchId: batch.id,
@@ -1188,24 +1293,31 @@ function AquaMarkApp() {
       farmerPhone: currentUser.phone,
       requestedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
     };
-    setLiveVideoRequests([reqObj, ...liveVideoRequests]);
+    const nextReqs = [reqObj, ...liveVideoRequests];
+    setLiveVideoRequests(nextReqs);
+    await saveKvToSupabase('live_videos', nextReqs);
     showToast(t.toasts.liveVideoRequested);
   };
 
-  const handleSellerMarkPacked = (bookingId) => {
-    setBookings(bookings.map(bk =>
-      bk.bookingId === bookingId ? { ...bk, packingStatus: 'PACKING_DONE_BY_SELLER' } : bk
-    ));
+  const handleSellerMarkPacked = async (bookingId) => {
+    let targetBk = null;
+    setBookings(bookings.map(bk => {
+      if (bk.bookingId !== bookingId) return bk;
+      targetBk = { ...bk, packingStatus: 'PACKING_DONE_BY_SELLER' };
+      return targetBk;
+    }));
+    if (targetBk) await saveBookingToSupabase(targetBk);
     showToast(t.toasts.packingMarked);
   };
 
-  const handleHatcheryPaymentReceived = (bookingId) => {
+  const handleHatcheryPaymentReceived = async (bookingId) => {
     const now = new Date();
     const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    let targetBk = null;
 
     setBookings(bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
-      return {
+      targetBk = {
         ...bk,
         packingStatus: 'FINAL_CLEARED',
         clearedAt: clearedStamp,
@@ -1214,21 +1326,26 @@ function AquaMarkApp() {
           status: 'BALANCE_CLEARED'
         }
       };
+      return targetBk;
     }));
+    if (targetBk) await saveBookingToSupabase(targetBk);
     showToast(t.toasts.paymentReceivedDone);
   };
 
-  const handleSubmitRatingAndFeedback = (bookingId, batchId) => {
+  const handleSubmitRatingAndFeedback = async (bookingId, batchId) => {
     const draft = ratingDrafts[bookingId] || { stars: 5, comment: '' };
     const stars = Number(draft.stars) || 5;
     const comment = (draft.comment || '').trim();
 
-    setBookings(bookings.map(bk =>
-      bk.bookingId === bookingId
-        ? { ...bk, rated: true, userRating: stars, userFeedback: comment }
-        : bk
-    ));
+    let updatedBk = null;
+    setBookings(bookings.map(bk => {
+      if (bk.bookingId !== bookingId) return bk;
+      updatedBk = { ...bk, rated: true, userRating: stars, userFeedback: comment };
+      return updatedBk;
+    }));
+    if (updatedBk) await saveBookingToSupabase(updatedBk);
 
+    let updatedBatch = null;
     setBatches(batches.map(b => {
       if (b.id !== batchId) return b;
       const prevCount = b.reviewCount || 0;
@@ -1243,19 +1360,18 @@ function AquaMarkApp() {
         comment: comment || 'Verified Packing & Seed Quality',
         date: new Date().toLocaleDateString('en-IN')
       };
-      return {
+      updatedBatch = {
         ...b,
         rating: newAvg,
         reviewCount: newCount,
         reviews: [newReviewObj, ...(b.reviews || [])]
       };
+      return updatedBatch;
     }));
+    if (updatedBatch) await saveBatchToSupabase(updatedBatch);
     showToast(`${t.ratedLabel} (${stars}★)`);
   };
 
-  // ==========================================
-  // FULL-PAGE A4 RECEIPT PDF GENERATOR
-  // ==========================================
   const handleDownloadVerifiedPdf = (bk, isFinalCleared = false) => {
     const printWin = window.open('', '_blank', 'width=860,height=1050');
     if (!printWin) return;
@@ -1435,7 +1551,7 @@ function AquaMarkApp() {
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const handleAddBrokerFarmer = (e) => {
+  const handleAddBrokerFarmer = async (e) => {
     e.preventDefault();
     if ((newFarmer.phone || '').replace(/\D/g, '').length !== 10) {
       showToast(t.toasts.invalidPhone);
@@ -1451,20 +1567,24 @@ function AquaMarkApp() {
       acres: Number(newFarmer.acres) || 1,
       lockedUntil: lockDate.toISOString().split('T')[0]
     };
-    setBrokerFarmers([entry, ...brokerFarmers]);
+    const nextFarmers = [entry, ...brokerFarmers];
+    setBrokerFarmers(nextFarmers);
+    await saveKvToSupabase('farmers', nextFarmers);
     setNewFarmer({ name: '', phone: '', village: '', acres: '' });
     showToast(t.toasts.farmerLocked);
   };
 
-  const handleAddPondLog = (e) => {
+  const handleAddPondLog = async (e) => {
     e.preventDefault();
     const entry = {
       id: `PND-${farmerPonds.length + 1}`,
       ...newPondForm,
       loggedAt: new Date().toLocaleDateString('en-IN')
     };
-    setFarmerPonds([entry, ...farmerPonds]);
-    showToast(lang === 'te' ? 'చెరువు ఫీడ్ & స్టాకింగ్ వివరాలు నమోదయ్యాయి!' : 'Pond Stocking & Daily Feed Log added!');
+    const nextPonds = [entry, ...farmerPonds];
+    setFarmerPonds(nextPonds);
+    await saveKvToSupabase('ponds', nextPonds);
+    showToast(lang === 'te' ? 'చెరువు ఫీడ్ & స్టాకింగ్ వివరాలు సేవ్ అయ్యాయి!' : 'Pond Stocking & Daily Feed Log saved live!');
   };
 
   const toggleCompareBatch = (id) => {
@@ -1725,7 +1845,7 @@ function AquaMarkApp() {
         </div>
 
         <footer className="text-center py-4 text-[11px] opacity-50">
-          Aqua Mark © 2026 • CAA Verified Hatchery Network
+          Aqua Mark © 2026 • Live Cloud Database Connected
         </footer>
       </div>
     );
@@ -1743,7 +1863,6 @@ function AquaMarkApp() {
     : [];
   const myPrivateReviews = myOwnedBatches.flatMap(b => (b.reviews || []).map(r => ({ ...r, batchId: b.id, plStage: b.plStage })));
 
-  // Hatchery Packing Revenue Totals
   const hatcheryClearedRevenue = myHatcheryOrders
     .filter(o => o.settlement?.status === 'BALANCE_CLEARED')
     .reduce((sum, o) => sum + (o.hatcheryFixedTotal || 0), 0);
@@ -1899,7 +2018,7 @@ function AquaMarkApp() {
                                   </span>
                                   <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
                                   <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating} ({batch.reviewCount || 0})
+                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
                                   </span>
                                   {isSoldOut && (
                                     <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
@@ -1909,7 +2028,7 @@ function AquaMarkApp() {
                                   {isUnlocked ? (
                                     <span className="text-teal-500 inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-500" /> {batch.realName}</span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode}</span>
+                                    <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || batch.realName}</span>
                                   )}
                                 </h3>
                                 <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
@@ -2430,7 +2549,7 @@ function AquaMarkApp() {
         )}
 
         {/* =========================================================
-            2. SELLER (HATCHERY) PORTAL — PACKING REVENUE LEDGER + BATCH NUMBER + 1-100 LAKHS/MILLIONS
+            2. SELLER (HATCHERY) PORTAL
            ========================================================= */}
         {currentUser.role === 'seller' && (
           <div className="max-w-4xl mx-auto space-y-6">
@@ -2502,7 +2621,6 @@ function AquaMarkApp() {
               </div>
             ) : (
               <>
-                {/* HATCHERY PACKING REVENUE SUMMARY CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
                     <span className="text-xs text-emerald-500 font-bold flex items-center gap-1.5">
@@ -2622,7 +2740,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* ADD NEW SEED BATCH WITH BATCH NUMBER + 1-100 LAKHS/MILLIONS + "Rate (₹ / Seed)" */}
+                {/* ADD NEW SEED BATCH */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="text-base font-bold flex items-center gap-2">
                     <PlusCircle className="w-5 h-5 text-teal-600" /> {t.addBatchTitle}
@@ -2682,7 +2800,6 @@ function AquaMarkApp() {
                         <input type="number" value={newBatchForm.bonusPercent} onChange={(e) => setNewBatchForm({ ...newBatchForm, bonusPercent: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
 
-                      {/* 1 to 100 + Lakhs / Millions Selector */}
                       <div className="md:col-span-2">
                         <label className="text-xs font-bold opacity-75 block mb-1">{t.stockLabel}</label>
                         <div className="flex gap-1.5">
@@ -2735,16 +2852,17 @@ function AquaMarkApp() {
                         />
                         <button
                           type="button"
+                          disabled={isUploadingPcr}
                           onClick={() => pcrInputRef.current?.click()}
                           className={`w-full border border-teal-500/40 text-teal-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
                         >
-                          <Upload className="w-4 h-4" /> {t.pcrUploadBtnLabel}
+                          <Upload className="w-4 h-4" /> {isUploadingPcr ? 'Uploading to Cloud...' : t.pcrUploadBtnLabel}
                         </button>
                         {pcrImages.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {pcrImages.map((img, i) => (
                               <span key={i} className="bg-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded">
-                                {img.label}
+                                {img.label} ✓
                               </span>
                             ))}
                           </div>
@@ -2764,7 +2882,7 @@ function AquaMarkApp() {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
+                    <button type="submit" disabled={isUploadingPcr} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
                       {t.publishBtn}
                     </button>
                   </form>
@@ -2862,7 +2980,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* CLICKABLE PACKING ORDERS & TRANSACTION LEDGER (SHOWS UTR + FULL BUYER DETAILS) */}
+                {/* SELLER ORDERS */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Clock className="w-5 h-5 text-teal-600" /> {t.sellerOrdersTitle}
@@ -3081,7 +3199,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* CLICKABLE BROKER TRANSACTION & UTR TRACKER */}
+                {/* BROKER BOOKINGS */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
@@ -3118,7 +3236,7 @@ function AquaMarkApp() {
                                 Farmer: {bk.farmerName} (+91 {bk.farmerPhone}) → Hatchery: {bk.batch?.realName || bk.batch?.hatcheryCode} (Batch {bk.batch?.id})
                               </p>
                               <p className="opacity-70">
-                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • Packing: {bk.packingDate} • Click to inspect UTR & full breakdown
+                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • Packing: {bk.packingDate}
                               </p>
                             </div>
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -3137,7 +3255,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* ALL REGISTERED HATCHERIES SORTABLE FOR BROKER */}
+                {/* BROKER MARKETPLACE */}
                 <div className="space-y-4">
                   <h2 className="text-base font-extrabold flex items-center gap-2">
                     <Building2 className="w-5 h-5 text-teal-600" /> {t.brokerMarketplaceTitle}
@@ -3167,14 +3285,14 @@ function AquaMarkApp() {
                                     </span>
                                     <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
                                     <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating}
+                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0}
                                     </span>
                                   </div>
-                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode}</h3>
+                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode || batch.realName}</h3>
                                   <p className="text-xs opacity-65">{batch.species}</p>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-xl font-black">₹{batch.pricePer1000.toFixed(2)}</div>
+                                  <div className="text-xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
                                   <span className="text-[11px] opacity-55">{t.perSeed}</span>
                                 </div>
                               </div>
@@ -3274,9 +3392,7 @@ function AquaMarkApp() {
         )}
       </main>
 
-      {/* =========================================================
-          BUYER OLD TRANSACTION INSPECTION MODAL (WITH UTR & FULL DETAILS)
-         ========================================================= */}
+      {/* BUYER OLD TRANSACTION INSPECTION MODAL */}
       {inspectedBuyerBooking && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
@@ -3313,9 +3429,7 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* =========================================================
-          SELLER ASSIGNED ORDER FULL DETAILS MODAL (WITH UTR & BUYER DETAILS)
-         ========================================================= */}
+      {/* SELLER ASSIGNED ORDER MODAL */}
       {inspectedSellerOrder && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
@@ -3345,9 +3459,7 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* =========================================================
-          BROKER TRANSACTION AUDIT MODAL (WITH UTR & BUYER DETAILS)
-         ========================================================= */}
+      {/* BROKER TRANSACTION AUDIT MODAL */}
       {selectedBrokerTx && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
@@ -3402,9 +3514,7 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* =========================================================
-          HATCHERY INSPECTION MODAL
-         ========================================================= */}
+      {/* HATCHERY INSPECTION MODAL (WITH LIVE SUPABASE PCR IMAGES) */}
       {inspectedBatch && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-4 max-h-[90vh] overflow-y-auto ${cardBg}`}>
@@ -3415,9 +3525,9 @@ function AquaMarkApp() {
                   <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                     {t.caaVerified}
                   </span>
-                  <span className="text-xs font-bold text-amber-500">{inspectedBatch.rating}★ ({inspectedBatch.reviewCount || 0} Reviews)</span>
+                  <span className="text-xs font-bold text-amber-500">{inspectedBatch.rating || 5.0}★ ({inspectedBatch.reviewCount || 0} Reviews)</span>
                 </div>
-                <h3 className="font-extrabold text-lg mt-1">{inspectedBatch.hatcheryCode} • {inspectedBatch.zone}</h3>
+                <h3 className="font-extrabold text-lg mt-1">{inspectedBatch.hatcheryCode || inspectedBatch.realName} • {inspectedBatch.zone}</h3>
               </div>
               <button type="button" onClick={() => setInspectedBatch(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
             </div>
@@ -3471,21 +3581,18 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* =========================================================
-          BOOKING MODAL (1-100 + LAKHS/MILLIONS, CLEAN 2-DIGIT MARGIN, INLINE ERROR, WORKING UPI COLLECT)
-         ========================================================= */}
+      {/* BOOKING MODAL */}
       {selectedBatch && (
         <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[92vh] overflow-y-auto ${cardBg}`}>
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div>
                 <h3 className="font-extrabold text-base">{t.modalTitle}</h3>
-                <p className="text-xs opacity-60">{selectedBatch.hatcheryCode} • {selectedBatch.id} • {selectedBatch.zone}</p>
+                <p className="text-xs opacity-60">{selectedBatch.hatcheryCode || selectedBatch.realName} • {selectedBatch.id} • {selectedBatch.zone}</p>
               </div>
               <button type="button" onClick={() => { setSelectedBatch(null); setModalError(''); }} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
             </div>
 
-            {/* CLEAR IN-MODAL ERROR BANNER (NEVER BLURRED BEHIND MODAL) */}
             {modalError && (
               <div className="bg-rose-500/15 border border-rose-500/40 text-rose-500 px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -3505,11 +3612,11 @@ function AquaMarkApp() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <div>
-                    <span className="font-extrabold block">{selectedBatch.hatcheryCode} ({selectedBatch.plStage})</span>
+                    <span className="font-extrabold block">{selectedBatch.hatcheryCode || selectedBatch.realName} ({selectedBatch.plStage})</span>
                     <span className="opacity-75">{selectedBatch.species} • Remaining: {(selectedBatch.availableStock || 0).toLocaleString('en-IN')} PL</span>
                   </div>
                   <div className="text-right font-black text-teal-600 text-base">
-                    ₹{selectedBatch.pricePer1000.toFixed(2)}<span className="text-[10px] font-normal block">/seed</span>
+                    ₹{(selectedBatch.pricePer1000 || 0).toFixed(2)}<span className="text-[10px] font-normal block">/seed</span>
                   </div>
                 </div>
               </div>
@@ -3543,7 +3650,6 @@ function AquaMarkApp() {
                         placeholder="0 - 99"
                         value={bookingForm.brokerMarginPaise}
                         onChange={(e) => {
-                          // Strictly 2 digits only, no leading zero allowed (e.g. "010" impossible)
                           const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 2);
                           setBookingForm({ ...bookingForm, brokerMarginPaise: clean });
                         }}
@@ -3572,7 +3678,6 @@ function AquaMarkApp() {
                   </div>
                 </div>
 
-                {/* 1-100 + LAKHS / MILLIONS SELECTOR FOR QUANTITY + SALINITY */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div className="sm:col-span-2">
                     <label className="text-xs font-bold opacity-75 block mb-1">{t.quantityLabel}</label>
@@ -3793,14 +3898,14 @@ function AquaMarkApp() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               {batches.filter(b => compareIds.includes(b.id)).map(b => (
                 <div key={b.id} className={`border rounded-xl p-3.5 space-y-2 ${subCardBg}`}>
-                  <div className="font-extrabold">{b.hatcheryCode} ({b.id})</div>
+                  <div className="font-extrabold">{b.hatcheryCode || b.realName} ({b.id})</div>
                   <div className="text-teal-500 font-bold">{b.zone}</div>
                   <div className="border-t border-slate-300/20 pt-2 space-y-1">
                     <div className="flex justify-between"><span>{t.stage}:</span><b>{b.plStage}</b></div>
-                    <div className="flex justify-between"><span>{t.perSeed}:</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
+                    <div className="flex justify-between"><span>{t.perSeed}:</span><b>₹{(b.pricePer1000 || 0).toFixed(2)}</b></div>
                     <div className="flex justify-between"><span>{t.salinity}:</span><b>{b.salinity} PPT</b></div>
                     <div className="flex justify-between"><span>{t.bonus}:</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
-                    <div className="flex justify-between"><span>Rating:</span><b>{b.rating}★</b></div>
+                    <div className="flex justify-between"><span>Rating:</span><b>{b.rating || 5.0}★</b></div>
                   </div>
                 </div>
               ))}
