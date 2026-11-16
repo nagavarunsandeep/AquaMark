@@ -8,7 +8,8 @@ import {
   Trash2, ArrowUpDown, Scale, FileCheck2, Upload, PlusCircle,
   Heart, Truck, TrendingUp, Eye, CreditCard, QrCode,
   MessageSquare, BarChart3, Calendar, Droplets,
-  Receipt, Moon, Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink
+  Receipt, Moon, Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink,
+  FolderOpen, Maximize2
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -114,10 +115,23 @@ const DOC_SCHEDULE_TABLE = [
 ];
 
 // =========================================================================
-// INBUILT CLIENT-SIDE MEDIA COMPRESSOR (IMAGES <= 2MB, VIDEOS <= 10MB)
+// GPS + TIMESTAMP WATERMARKING & CLIENT-SIDE AUTO-COMPRESSION (<=2MB / <=10MB)
 // =========================================================================
-async function compressImageIfNeeded(file, maxBytes = 2 * 1024 * 1024) {
-  if (file.size <= maxBytes) return file;
+function getCurrentLocationString() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve('16.9891° N, 82.2475° E (AP Coast)');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve(`${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E`),
+      () => resolve('16.9891° N, 82.2475° E (Verified)'),
+      { timeout: 4000 }
+    );
+  });
+}
+
+async function stampAndCompressImage(file, stampText, maxBytes = 2 * 1024 * 1024) {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -140,7 +154,15 @@ async function compressImageIfNeeded(file, maxBytes = 2 * 1024 * 1024) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      let quality = 0.82;
+      // Burn Timestamp + GPS Location watermark onto image
+      const barHeight = Math.max(30, Math.round(height * 0.045));
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+      ctx.fillRect(0, height - barHeight, width, barHeight);
+      ctx.fillStyle = '#34d399';
+      ctx.font = `bold ${Math.max(12, Math.round(barHeight * 0.48))}px monospace`;
+      ctx.fillText(`AQUA MARK • ${stampText}`, 14, height - Math.round(barHeight * 0.32));
+
+      let quality = 0.85;
       const attempt = () => {
         canvas.toBlob(
           (blob) => {
@@ -163,8 +185,7 @@ async function compressImageIfNeeded(file, maxBytes = 2 * 1024 * 1024) {
   });
 }
 
-async function compressVideoIfNeeded(file, maxBytes = 10 * 1024 * 1024) {
-  if (file.size <= maxBytes) return file;
+async function stampAndCompressVideo(file, stampText, maxBytes = 10 * 1024 * 1024) {
   return new Promise((resolve) => {
     try {
       const video = document.createElement('video');
@@ -174,14 +195,14 @@ async function compressVideoIfNeeded(file, maxBytes = 10 * 1024 * 1024) {
       video.src = url;
 
       video.onloadedmetadata = () => {
-        const duration = Math.min(video.duration || 10, 20);
+        const duration = Math.min(video.duration || 10, 18);
         const canvas = document.createElement('canvas');
         const scale = Math.min(1, 720 / Math.max(video.videoWidth || 720, video.videoHeight || 720));
-        canvas.width = Math.round((video.videoWidth || 640) * scale);
-        canvas.height = Math.round((video.videoHeight || 360) * scale);
+        canvas.width = Math.max(320, Math.round((video.videoWidth || 640) * scale));
+        canvas.height = Math.max(240, Math.round((video.videoHeight || 360) * scale));
         const ctx = canvas.getContext('2d');
 
-        const targetBitrate = Math.max(400000, Math.floor((maxBytes * 8 * 0.8) / duration));
+        const targetBitrate = Math.max(450000, Math.floor((maxBytes * 8 * 0.8) / duration));
         const stream = canvas.captureStream(24);
         const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
           ? 'video/webm;codecs=vp9'
@@ -200,12 +221,18 @@ async function compressVideoIfNeeded(file, maxBytes = 10 * 1024 * 1024) {
         video.play();
         recorder.start();
 
+        const barH = 26;
         const drawFrame = () => {
           if (video.paused || video.ended || video.currentTime >= duration) {
             if (recorder.state !== 'inactive') recorder.stop();
             return;
           }
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+          ctx.fillRect(0, canvas.height - barH, canvas.width, barH);
+          ctx.fillStyle = '#34d399';
+          ctx.font = 'bold 11px monospace';
+          ctx.fillText(`AQUA MARK • ${stampText}`, 10, canvas.height - 8);
           requestAnimationFrame(drawFrame);
         };
         drawFrame();
@@ -215,6 +242,15 @@ async function compressVideoIfNeeded(file, maxBytes = 10 * 1024 * 1024) {
       resolve(file);
     }
   });
+}
+
+// Helper to extract storage object path from public URL so deleted media frees 1GB free storage
+function extractStoragePathFromUrl(publicUrl, bucketName) {
+  if (!publicUrl || typeof publicUrl !== 'string') return null;
+  const marker = `/object/public/${bucketName}/`;
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(publicUrl.slice(idx + marker.length));
 }
 
 const DICT = {
@@ -298,7 +334,8 @@ const DICT = {
     upiLabel: 'Settlement UPI ID',
     completeRegBtn: 'Verify & Register Hatchery + Bank',
     hatcheryLockedBanner: 'Verified Hatchery Locked to +91',
-    editProfileBankBtn: 'Edit Profile, Maps & Bank',
+    editSellerProfileBtn: 'Edit Profile, Maps & Bank',
+    editBrokerProfileBtn: 'Edit Profile & Bank',
     editBatchBtn: 'Edit Batch',
     saveBtn: 'Save Changes',
     addBatchTitle: 'Publish New Seed Batch & Packing Schedule',
@@ -313,20 +350,16 @@ const DICT = {
     stockLabel: 'Available Stock (1 - 100)',
     availDateLabel: 'Available Packing Date',
     availTimeLabel: 'Available Time Slot',
-    pcrUploadBtnLabel: 'Upload PCR Images',
-    videoUploadBtnLabel: 'Upload Tank Videos (Upto 20 Sec)',
-    pcrHintLabel: 'Required: At least 1 PCR lab report image',
+    pcrUploadBtnLabel: 'Upload PCR Images (≤2MB)',
+    videoUploadBtnLabel: 'Upload Tank Videos (≤10MB)',
+    pcrHintLabel: 'Required: At least 1 PCR lab report image (Camera or Files)',
     gpsLockedBtn: 'GPS Locked',
     captureGpsBtn: 'Tag Tank GPS',
     publishBtn: 'Publish Batch Live',
-    myBatchesTitle: 'Your Active Seed Batches',
+    myBatchesTitle: 'Your Active Seed Batches (Edit All Details, Images & Videos)',
     noBatchesSeller: 'No active batches published yet.',
     saveChangesBtn: 'Save Batch',
     removeBtn: 'Remove',
-    sellerOrdersTitle: 'Packing Orders & Transaction Ledger (Click Any Order for UTR & Buyer Details)',
-    noOrdersYet: 'No packing orders received for your hatchery yet.',
-    creditedBadge: 'Payment Received (Cleared)',
-    onHoldBadge: 'Pending Packing & Balance',
     markPackedBtn: 'Mark Packing Complete',
     paymentReceivedBtn: 'Payment Received',
     sellerFeedbackTitle: 'Farmer Ratings & Feedback',
@@ -334,9 +367,9 @@ const DICT = {
     brokerRegTitle: 'Mandatory Broker Bank & UPI Registration',
     brokerRegSub: 'Enter your settlement bank account & UPI ID to activate your Broker account and receive 2% commissions.',
     brokerActivateBtn: 'Save Bank Details & Activate Broker Account',
-    brokerHoldCard: '2% Commission on Hold (Pending Packing)',
-    brokerHoldSub: 'Credits automatically once hatchery confirms Payment Received',
-    brokerReleasedCard: 'Credited 2% Commission',
+    brokerHoldCard: '2% Commission on Hold (Upcoming)',
+    brokerHoldSub: 'Click to view all upcoming commission deals',
+    brokerReleasedCard: 'Credited 2% Commission (Received)',
     brokerBookingsTitle: 'My Broker Bookings & Margin Breakdown',
     noBrokerBookings: 'No bookings placed under your Broker account yet.',
     brokerMarketplaceTitle: 'All Registered Hatcheries (Select Hatchery First to Book)',
@@ -380,12 +413,12 @@ const DICT = {
       invalidOtp: 'Incorrect OTP. Please enter the 4-digit code shown.',
       regComplete: 'Hatchery & Bank details saved successfully!',
       brokerRegComplete: 'Broker Bank & UPI details saved! Broker Portal activated.',
-      profileUpdated: 'Hatchery Details, Maps Link & Bank updated!',
+      profileUpdated: 'Details & Bank saved successfully!',
       gpsLocked: 'Tank GPS coordinates locked.',
       uploadPcrFirst: 'Please upload at least 1 PCR Lab Report image.',
       batchPublished: 'Seed batch published live!',
-      batchUpdated: 'Batch details & media updated!',
-      batchRemoved: 'Seed batch removed.',
+      batchUpdated: 'Batch details & cloud files updated!',
+      batchRemoved: 'Seed batch & storage files deleted completely!',
       liveVideoRequested: 'Live tank video request sent to Hatchery!',
       packingMarked: 'Packing marked complete! Buyer notified.',
       paymentReceivedDone: 'Payment Received confirmed! Final Cleared Receipt generated.',
@@ -477,7 +510,8 @@ const DICT = {
     upiLabel: 'UPI ID (పేమెంట్స్ కోసం)',
     completeRegBtn: 'హేచరీ & బ్యాంక్ వివరాలు నిర్ధారించండి',
     hatcheryLockedBanner: 'ఈ హేచరీ మీ మొబైల్ నంబర్‌కు ఫిక్స్ చేయబడింది: +91',
-    editProfileBankBtn: 'Edit Profile, Maps & Bank',
+    editSellerProfileBtn: 'Edit Profile, Maps & Bank',
+    editBrokerProfileBtn: 'Edit Profile & Bank',
     editBatchBtn: 'Edit Batch',
     saveBtn: 'మార్పులు సేవ్ చేయండి',
     addBatchTitle: 'కొత్త సీడ్ బ్యాచ్ & ప్యాకింగ్ సమయం పబ్లిష్ చేయండి',
@@ -492,9 +526,9 @@ const DICT = {
     stockLabel: 'అందుబాటులో ఉన్న స్టాక్ (1 - 100)',
     availDateLabel: 'ప్యాకింగ్ అందుబాటు తేదీ',
     availTimeLabel: 'ప్యాకింగ్ అందుబాటు సమయం',
-    pcrUploadBtnLabel: 'PCR ఫోటోలు అప్‌లోడ్ (Auto-Compress ≤2MB)',
-    videoUploadBtnLabel: 'ట్యాంక్ వీడియోలు అప్‌లోడ్ (Auto-Compress ≤10MB)',
-    pcrHintLabel: 'కనీసం 1 PCR ల్యాబ్ ఫోటో తప్పనిసరి',
+    pcrUploadBtnLabel: 'PCR ఫోటోలు అప్‌లోడ్ (≤2MB)',
+    videoUploadBtnLabel: 'ట్యాంక్ వీడియోలు అప్‌లోడ్ (≤10MB)',
+    pcrHintLabel: 'కనీసం 1 PCR ల్యాబ్ ఫోటో తప్పనిసరి (Camera లేదా Files)',
     gpsLockedBtn: 'GPS లాక్ అయింది',
     captureGpsBtn: 'GPS ట్యాగ్ చేయండి',
     publishBtn: 'బ్యాచ్ లైవ్ చేయండి',
@@ -502,10 +536,6 @@ const DICT = {
     noBatchesSeller: 'మీరు ఇంకా ఎటువంటి బ్యాచ్‌లు యాడ్ చేయలేదు.',
     saveChangesBtn: 'మార్పులు సేవ్ చేయండి',
     removeBtn: 'తొలగించు',
-    sellerOrdersTitle: 'ప్యాకింగ్ ఆర్డర్లు & ట్రాన్సాక్షన్ లెడ్జర్',
-    noOrdersYet: 'మీ హేచరీకి ఇంకా ఎటువంటి ఆర్డర్లు రాలేదు.',
-    creditedBadge: 'Payment Received (పూర్తయింది)',
-    onHoldBadge: 'ప్యాకింగ్ & బ్యాలెన్స్ కోసం వేచి ఉంది',
     markPackedBtn: 'ప్యాకింగ్ పూర్తయింది (Notify Buyer)',
     paymentReceivedBtn: 'Payment Received (బ్యాలెన్స్ అందింది)',
     sellerFeedbackTitle: 'రైతుల రేటింగ్స్ & అభిప్రాయాలు',
@@ -513,9 +543,9 @@ const DICT = {
     brokerRegTitle: 'బ్రోకర్ బ్యాంక్ & UPI రిజిస్ట్రేషన్ (తప్పనిసరి)',
     brokerRegSub: 'మీ బ్రోకర్ అకౌంట్ యాక్టివేట్ అవ్వడానికి మీ బ్యాంక్ & UPI వివరాలు నమోదు చేయండి.',
     brokerActivateBtn: 'బ్యాంక్ వివరాలు సేవ్ చేసి బ్రోకర్ అకౌంట్ ప్రారంభించండి',
-    brokerHoldCard: 'హోల్డ్‌లో ఉన్న 2% కమిషన్',
-    brokerHoldSub: 'హేచరీ ఓనర్ Payment Received నొక్కగానే జమ అవుతుంది',
-    brokerReleasedCard: 'జమ అయిన 2% కమిషన్',
+    brokerHoldCard: 'హోల్డ్‌లో ఉన్న 2% కమిషన్ (Upcoming)',
+    brokerHoldSub: 'వివరాల కోసం క్లిక్ చేయండి',
+    brokerReleasedCard: 'జమ అయిన 2% కమిషన్ (Received)',
     brokerBookingsTitle: 'నా బ్రోకర్ బుకింగ్స్ & మార్జిన్ ట్రాకర్',
     noBrokerBookings: 'మీ బ్రోకర్ అకౌంట్ ద్వారా ఇంకా ఎటువంటి బుకింగ్స్ జరగలేదు.',
     brokerMarketplaceTitle: 'రిజిస్టర్ అయిన హేచరీల లిస్ట్',
@@ -559,12 +589,12 @@ const DICT = {
       invalidOtp: 'తప్పు OTP! స్క్రీన్‌పై ఉన్న 4-అంకెల కోడ్ ఎంటర్ చేయండి.',
       regComplete: 'హేచరీ & బ్యాంక్ వివరాలు సేవ్ అయ్యాయి!',
       brokerRegComplete: 'బ్రోకర్ బ్యాంక్ & UPI వివరాలు సేవ్ అయ్యాయి!',
-      profileUpdated: 'హేచరీ వివరాలు, Maps లింక్ & బ్యాంక్ అప్‌డేట్ అయ్యాయి!',
+      profileUpdated: 'వివరాలు & బ్యాంక్ అప్‌డేట్ అయ్యాయి!',
       gpsLocked: 'హేచరీ GPS లొకేషన్ లాక్ అయింది.',
       uploadPcrFirst: 'దయచేసి కనీసం 1 PCR ల్యాబ్ ఫోటో అప్‌లోడ్ చేయండి.',
       batchPublished: 'కొత్త సీడ్ బ్యాచ్ లైవ్ అయింది!',
-      batchUpdated: 'బ్యాచ్ వివరాలు & ఫోటోలు అప్‌డేట్ అయ్యాయి!',
-      batchRemoved: 'సీడ్ బ్యాచ్ తొలగించబడింది.',
+      batchUpdated: 'బ్యాచ్ వివరాలు & ఫైల్స్ అప్‌డేట్ అయ్యాయి!',
+      batchRemoved: 'సీడ్ బ్యాచ్ & స్టోరేజ్ ఫైల్స్ పూర్తిగా తొలగించబడ్డాయి.',
       liveVideoRequested: 'లైవ్ ట్యాంక్ వీడియో రిక్వెస్ట్ హేచరీకి పంపబడింది!',
       packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతుకు పంపబడింది!',
       paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! Final Receipt సిద్ధం.',
@@ -594,10 +624,16 @@ function AquaMarkApp() {
   const [darkMode, setDarkMode] = useState(() => safeLoadStorage('aqm_v9_dark', false));
   const t = DICT[lang] || DICT.en;
   const otpInputRef = useRef(null);
-  const pcrInputRef = useRef(null);
-  const videoInputRef = useRef(null);
-  const editPcrInputRef = useRef(null);
-  const editVideoInputRef = useRef(null);
+
+  // Separate Camera & File Refs for PCR Images and Tank Videos (Create & Edit)
+  const pcrFileRef = useRef(null);
+  const pcrCamRef = useRef(null);
+  const vidFileRef = useRef(null);
+  const vidCamRef = useRef(null);
+  const editPcrFileRef = useRef(null);
+  const editPcrCamRef = useRef(null);
+  const editVidFileRef = useRef(null);
+  const editVidCamRef = useRef(null);
 
   const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v9_user', null));
 
@@ -610,6 +646,17 @@ function AquaMarkApp() {
   const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v9_wishlist', []));
   const [liveVideoRequests, setLiveVideoRequests] = useState([]);
   const [farmerPonds, setFarmerPonds] = useState([]);
+
+  // Upload Progress Bar & Choice Popover
+  const [uploadProgress, setUploadProgress] = useState({ active: false, percent: 0, label: '' });
+  const [mediaPickerTarget, setMediaPickerTarget] = useState(null); // 'NEW_PCR' | 'NEW_VID' | 'EDIT_PCR' | 'EDIT_VID'
+
+  // Full-Screen Image / Video Lightbox
+  const [fullScreenMedia, setFullScreenMedia] = useState(null); // { type: 'image' | 'video', url: '', label: '' }
+
+  // Modals for Seller & Broker Transaction Lists
+  const [sellerTxModal, setSellerTxModal] = useState(null); // { title: '', list: [] }
+  const [brokerTxListModal, setBrokerTxListModal] = useState(null); // { title: '', list: [] }
 
   // Live Video Request Modal (Buyer) & Inspector Modal (Owner)
   const [videoRequestTargetBatch, setVideoRequestTargetBatch] = useState(null);
@@ -674,7 +721,6 @@ function AquaMarkApp() {
   const [acclimCalc, setAcclimCalc] = useState({ hatcheryPpt: 18, pondPpt: 10 });
   const [oxygenCalc, setOxygenCalc] = useState({ seedCount: 200000, travelHours: 5 });
 
-  // Full Batch Inline Editing (All fields + Images + Videos)
   const [editingBatchId, setEditingBatchId] = useState(null);
   const [editBatchValues, setEditBatchValues] = useState({
     species: 'Litopenaeus vannamei (SyAqua Line)',
@@ -688,7 +734,9 @@ function AquaMarkApp() {
     availableDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     availableTimeSlot: 'All Day (24 Hours Flexible)',
     pcrImages: [],
-    tankVideos: []
+    tankVideos: [],
+    removedPcrUrls: [],
+    removedVideoUrls: []
   });
 
   // ==========================================
@@ -783,6 +831,15 @@ function AquaMarkApp() {
       settlement: bkObj.settlement,
       data: bkObj
     });
+  };
+
+  // Delete removed files from Supabase Storage buckets to keep 1GB free tier clean
+  const deleteStorageFilesByUrls = async (urls, bucketName) => {
+    if (!urls || urls.length === 0) return;
+    const paths = urls.map(u => extractStoragePathFromUrl(u, bucketName)).filter(Boolean);
+    if (paths.length > 0) {
+      await supabase.storage.from(bucketName).remove(paths);
+    }
   };
 
   useEffect(() => { try { localStorage.setItem('aqm_v9_dark', JSON.stringify(darkMode)); } catch { } }, [darkMode]);
@@ -898,7 +955,6 @@ function AquaMarkApp() {
   });
   const [pcrImages, setPcrImages] = useState([]);
   const [tankVideos, setTankVideos] = useState([]);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [gpsLocation, setGpsLocation] = useState('');
 
   const showToast = (msg) => {
@@ -920,7 +976,7 @@ function AquaMarkApp() {
     : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-600';
 
   // ==========================================
-  // OTP LOGIN HANDLERS + SAVE USER TO SUPABASE
+  // OTP LOGIN HANDLERS
   // ==========================================
   const handleSendOtp = (e) => {
     e.preventDefault();
@@ -949,7 +1005,6 @@ function AquaMarkApp() {
     };
     setCurrentUser(userObj);
 
-    // Record user login details directly in Supabase app_users table
     await supabase.from('app_users').upsert({
       phone: userObj.phone,
       name: userObj.name,
@@ -1078,24 +1133,29 @@ function AquaMarkApp() {
   };
 
   // =========================================================================
-  // AUTO-COMPRESS & UPLOAD PCR IMAGES (MAX 2MB) TO SUPABASE ('pcr-reports')
+  // STAMP TIMESTAMP + LOCATION + COMPRESS & UPLOAD IMAGES (<=2MB) WITH PROGRESS
   // =========================================================================
   const handleMultiplePcrUpload = async (fileList, isEditMode = false) => {
     if (!fileList || fileList.length === 0) return;
-    setIsUploadingMedia(true);
+    setMediaPickerTarget(null);
     const filesArray = Array.from(fileList);
     const uploadedResults = [];
     const baseCount = isEditMode ? (editBatchValues.pcrImages || []).length : pcrImages.length;
 
+    setUploadProgress({ active: true, percent: 10, label: 'Fetching GPS & Timestamp...' });
+    const locStr = gpsLocation || await getCurrentLocationString();
+    const timeStr = `${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    const stampText = `${timeStr} | ${locStr}`;
+
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      if (rawFile.size > 2 * 1024 * 1024) {
-        showToast(`Compressing ${rawFile.name} to fit 2MB limit...`);
-      }
-      const readyFile = await compressImageIfNeeded(rawFile, 2 * 1024 * 1024);
-      const ext = readyFile.name.split('.').pop() || 'jpg';
-      const filePath = `pcr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const basePct = Math.round((i / filesArray.length) * 100);
+      setUploadProgress({ active: true, percent: Math.min(90, basePct + 25), label: `Compressing & Stamping Image ${i + 1}/${filesArray.length}...` });
 
+      const readyFile = await stampAndCompressImage(rawFile, stampText, 2 * 1024 * 1024);
+      setUploadProgress({ active: true, percent: Math.min(95, basePct + 65), label: `Uploading Image ${i + 1}/${filesArray.length} to Cloud...` });
+
+      const filePath = `pcr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
       const { error } = await supabase.storage
         .from('pcr-reports')
         .upload(filePath, readyFile, { upsert: true });
@@ -1104,12 +1164,16 @@ function AquaMarkApp() {
         const { data: pub } = supabase.storage.from('pcr-reports').getPublicUrl(filePath);
         uploadedResults.push({
           label: `Image-${baseCount + i + 1}`,
-          url: pub.publicUrl
+          url: pub.publicUrl,
+          stamp: stampText
         });
       } else {
         showToast(`Image Upload Error: ${error.message}`);
       }
     }
+
+    setUploadProgress({ active: true, percent: 100, label: 'Upload Complete!' });
+    setTimeout(() => setUploadProgress({ active: false, percent: 0, label: '' }), 900);
 
     if (uploadedResults.length > 0) {
       if (isEditMode) {
@@ -1117,30 +1181,33 @@ function AquaMarkApp() {
       } else {
         setPcrImages(prev => [...prev, ...uploadedResults]);
       }
-      showToast(`${uploadedResults.length} PCR image(s) uploaded!`);
+      showToast(`${uploadedResults.length} PCR image(s) stamped & uploaded!`);
     }
-    setIsUploadingMedia(false);
-    if (pcrInputRef.current) pcrInputRef.current.value = '';
-    if (editPcrInputRef.current) editPcrInputRef.current.value = '';
   };
 
   // =========================================================================
-  // AUTO-COMPRESS & UPLOAD TANK VIDEOS (MAX 10MB) TO SUPABASE ('tank-videos')
+  // STAMP TIMESTAMP + LOCATION + COMPRESS & UPLOAD VIDEOS (<=10MB) WITH PROGRESS
   // =========================================================================
   const handleMultipleVideoUpload = async (fileList, isEditMode = false) => {
     if (!fileList || fileList.length === 0) return;
-    setIsUploadingMedia(true);
+    setMediaPickerTarget(null);
     const filesArray = Array.from(fileList);
     const uploadedVideos = [];
     const baseCount = isEditMode ? (editBatchValues.tankVideos || []).length : tankVideos.length;
 
+    setUploadProgress({ active: true, percent: 10, label: 'Fetching GPS & Timestamp for Video...' });
+    const locStr = gpsLocation || await getCurrentLocationString();
+    const timeStr = `${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    const stampText = `${timeStr} | ${locStr}`;
+
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      if (rawFile.size > 10 * 1024 * 1024) {
-        showToast(`Compressing video ${rawFile.name} to fit 10MB limit...`);
-      }
-      const readyVideo = await compressVideoIfNeeded(rawFile, 10 * 1024 * 1024);
-      const ext = readyVideo.name.split('.').pop() || 'mp4';
+      setUploadProgress({ active: true, percent: 35, label: `Stamping & Compressing Video ${i + 1}/${filesArray.length} (≤10MB)...` });
+
+      const readyVideo = await stampAndCompressVideo(rawFile, stampText, 10 * 1024 * 1024);
+      setUploadProgress({ active: true, percent: 75, label: `Uploading Video ${i + 1}/${filesArray.length} to Cloud...` });
+
+      const ext = readyVideo.name.split('.').pop() || 'webm';
       const filePath = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
       const { error } = await supabase.storage
@@ -1151,12 +1218,16 @@ function AquaMarkApp() {
         const { data: pub } = supabase.storage.from('tank-videos').getPublicUrl(filePath);
         uploadedVideos.push({
           label: `Tank-Video-${baseCount + i + 1}`,
-          url: pub.publicUrl
+          url: pub.publicUrl,
+          stamp: stampText
         });
       } else {
         showToast(`Video Upload Error: ${error.message}`);
       }
     }
+
+    setUploadProgress({ active: true, percent: 100, label: 'Video Upload Complete!' });
+    setTimeout(() => setUploadProgress({ active: false, percent: 0, label: '' }), 900);
 
     if (uploadedVideos.length > 0) {
       if (isEditMode) {
@@ -1164,30 +1235,14 @@ function AquaMarkApp() {
       } else {
         setTankVideos(prev => [...prev, ...uploadedVideos]);
       }
-      showToast(`${uploadedVideos.length} Tank video(s) uploaded!`);
+      showToast(`${uploadedVideos.length} Tank video(s) stamped & uploaded!`);
     }
-    setIsUploadingMedia(false);
-    if (videoInputRef.current) videoInputRef.current.value = '';
-    if (editVideoInputRef.current) editVideoInputRef.current.value = '';
   };
 
-  const handleCaptureGps = () => {
-    if (!navigator.geolocation) {
-      setGpsLocation('16.9891° N, 82.2475° E (Verified)');
-      showToast(t.toasts.gpsLocked);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const coords = `${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E`;
-        setGpsLocation(coords);
-        showToast(t.toasts.gpsLocked);
-      },
-      () => {
-        setGpsLocation('16.9891° N, 82.2475° E (Verified)');
-        showToast(t.toasts.gpsLocked);
-      }
-    );
+  const handleCaptureGps = async () => {
+    const coords = await getCurrentLocationString();
+    setGpsLocation(coords);
+    showToast(t.toasts.gpsLocked);
   };
 
   const handlePublishBatch = async (e) => {
@@ -1247,8 +1302,6 @@ function AquaMarkApp() {
     setPcrImages([]);
     setTankVideos([]);
     setNewBatchForm(prev => ({ ...prev, batchNumber: '' }));
-    if (pcrInputRef.current) pcrInputRef.current.value = '';
-    if (videoInputRef.current) videoInputRef.current.value = '';
     showToast(t.toasts.batchPublished);
   };
 
@@ -1271,7 +1324,9 @@ function AquaMarkApp() {
       availableDate: batch.availableDate || new Date().toISOString().split('T')[0],
       availableTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
       pcrImages: [...(batch.pcrImages || [])],
-      tankVideos: [...(batch.tankVideos || [])]
+      tankVideos: [...(batch.tankVideos || [])],
+      removedPcrUrls: [],
+      removedVideoUrls: []
     });
   };
 
@@ -1296,6 +1351,11 @@ function AquaMarkApp() {
       };
       return updatedObj;
     });
+
+    // Delete any removed PCR images or Tank videos from Supabase Storage immediately
+    await deleteStorageFilesByUrls(editBatchValues.removedPcrUrls, 'pcr-reports');
+    await deleteStorageFilesByUrls(editBatchValues.removedVideoUrls, 'tank-videos');
+
     setBatches(updatedList);
     if (updatedObj) await saveBatchToSupabase(updatedObj);
     setEditingBatchId(null);
@@ -1303,6 +1363,13 @@ function AquaMarkApp() {
   };
 
   const removeBatch = async (batchId) => {
+    const targetBatch = batches.find(b => b.id === batchId);
+    if (targetBatch) {
+      const pcrUrls = (targetBatch.pcrImages || []).map(i => i.url);
+      const vidUrls = (targetBatch.tankVideos || []).map(v => v.url);
+      await deleteStorageFilesByUrls(pcrUrls, 'pcr-reports');
+      await deleteStorageFilesByUrls(vidUrls, 'tank-videos');
+    }
     setBatches(batches.filter(b => b.id !== batchId));
     await supabase.from('batches').delete().eq('id', batchId);
     showToast(t.toasts.batchRemoved);
@@ -1461,7 +1528,7 @@ function AquaMarkApp() {
     }
   };
 
-  const handleSendDirectUpiRequest = (advanceAmount) => {
+  const handleSendDirectUpiRequest = () => {
     setModalError('');
     const upi = (bookingForm.payerUpiId || '').trim();
     if (!upi || !upi.includes('@')) {
@@ -1495,9 +1562,6 @@ function AquaMarkApp() {
     showToast(t.toasts.bookingCancelled);
   };
 
-  // =========================================================================
-  // BUYER LIVE VIDEO REQUEST MODAL SUBMIT
-  // =========================================================================
   const openVideoRequestModal = (batch) => {
     setVideoRequestForm({
       name: currentUser.name || '',
@@ -1535,11 +1599,18 @@ function AquaMarkApp() {
 
   const handleSellerMarkPacked = async (bookingId) => {
     let targetBk = null;
-    setBookings(bookings.map(bk => {
+    const nextList = bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
       targetBk = { ...bk, packingStatus: 'PACKING_DONE_BY_SELLER' };
       return targetBk;
-    }));
+    });
+    setBookings(nextList);
+    if (sellerTxModal) {
+      setSellerTxModal(prev => ({
+        ...prev,
+        list: prev.list.map(item => (item.bookingId === bookingId ? targetBk : item))
+      }));
+    }
     if (targetBk) await saveBookingToSupabase(targetBk);
     showToast(t.toasts.packingMarked);
   };
@@ -1549,7 +1620,7 @@ function AquaMarkApp() {
     const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
     let targetBk = null;
 
-    setBookings(bookings.map(bk => {
+    const nextList = bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
       targetBk = {
         ...bk,
@@ -1561,7 +1632,14 @@ function AquaMarkApp() {
         }
       };
       return targetBk;
-    }));
+    });
+    setBookings(nextList);
+    if (sellerTxModal) {
+      setSellerTxModal(prev => ({
+        ...prev,
+        list: prev.list.map(item => (item.bookingId === bookingId ? targetBk : item))
+      }));
+    }
     if (targetBk) await saveBookingToSupabase(targetBk);
     showToast(t.toasts.paymentReceivedDone);
   };
@@ -1831,13 +1909,11 @@ function AquaMarkApp() {
     else setSavedBatchIds([...savedBatchIds, id]);
   };
 
-  const brokerHeld2PctTotal = bookings
-    .filter(b => b.isBrokerLinked && b.settlement?.status === 'ADVANCE_HOLD')
-    .reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
+  const brokerHeldBookings = bookings.filter(b => b.isBrokerLinked && b.settlement?.status === 'ADVANCE_HOLD');
+  const brokerCreditedBookings = bookings.filter(b => b.isBrokerLinked && b.settlement?.status === 'BALANCE_CLEARED');
 
-  const brokerCredited2PctTotal = bookings
-    .filter(b => b.isBrokerLinked && b.settlement?.status === 'BALANCE_CLEARED')
-    .reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
+  const brokerHeld2PctTotal = brokerHeldBookings.reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
+  const brokerCredited2PctTotal = brokerCreditedBookings.reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
 
   const filteredAndSortedBatches = batches
     .filter(b => {
@@ -2097,12 +2173,12 @@ function AquaMarkApp() {
     : [];
   const myPrivateReviews = myOwnedBatches.flatMap(b => (b.reviews || []).map(r => ({ ...r, batchId: b.id, plStage: b.plStage })));
 
-  const hatcheryClearedRevenue = myHatcheryOrders
-    .filter(o => o.settlement?.status === 'BALANCE_CLEARED')
-    .reduce((sum, o) => sum + (o.hatcheryFixedTotal || 0), 0);
-  const hatcheryPendingRevenue = myHatcheryOrders
-    .filter(o => o.settlement?.status === 'ADVANCE_HOLD')
-    .reduce((sum, o) => sum + (o.hatcheryFixedTotal || 0), 0);
+  // Hatchery Cleared & Upcoming Packing Orders
+  const hatcheryClearedOrders = myHatcheryOrders.filter(o => o.settlement?.status === 'BALANCE_CLEARED');
+  const hatcheryUpcomingOrders = myHatcheryOrders.filter(o => o.settlement?.status === 'ADVANCE_HOLD');
+
+  const hatcheryClearedRevenue = hatcheryClearedOrders.reduce((sum, o) => sum + (o.hatcheryFixedTotal || 0), 0);
+  const hatcheryPendingRevenue = hatcheryUpcomingOrders.reduce((sum, o) => sum + (o.hatcheryFixedTotal || 0), 0);
 
   const myFixedBroker = currentUser.role === 'mediator' ? brokerProfiles[currentUser.phone] : null;
   const myBrokerBookings = currentUser.role === 'mediator'
@@ -2117,6 +2193,32 @@ function AquaMarkApp() {
 
   return (
     <div className={`min-h-screen font-sans select-none transition-colors ${pageBg}`}>
+      {/* HIDDEN INPUTS FOR CAMERA vs FILES */}
+      <input ref={pcrFileRef} type="file" multiple accept="image/*" onChange={(e) => handleMultiplePcrUpload(e.target.files, false)} className="hidden" />
+      <input ref={pcrCamRef} type="file" accept="image/*" capture="environment" onChange={(e) => handleMultiplePcrUpload(e.target.files, false)} className="hidden" />
+      <input ref={vidFileRef} type="file" multiple accept="video/*" onChange={(e) => handleMultipleVideoUpload(e.target.files, false)} className="hidden" />
+      <input ref={vidCamRef} type="file" accept="video/*" capture="environment" onChange={(e) => handleMultipleVideoUpload(e.target.files, false)} className="hidden" />
+      <input ref={editPcrFileRef} type="file" multiple accept="image/*" onChange={(e) => handleMultiplePcrUpload(e.target.files, true)} className="hidden" />
+      <input ref={editPcrCamRef} type="file" accept="image/*" capture="environment" onChange={(e) => handleMultiplePcrUpload(e.target.files, true)} className="hidden" />
+      <input ref={editVidFileRef} type="file" multiple accept="video/*" onChange={(e) => handleMultipleVideoUpload(e.target.files, true)} className="hidden" />
+      <input ref={editVidCamRef} type="file" accept="video/*" capture="environment" onChange={(e) => handleMultipleVideoUpload(e.target.files, true)} className="hidden" />
+
+      {/* LIVE UPLOAD PROGRESS BAR OVERLAY */}
+      {uploadProgress.active && (
+        <div className="fixed bottom-20 right-5 z-50 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-teal-500/50 w-80 space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold">
+            <span className="text-teal-400 truncate pr-2">{uploadProgress.label}</span>
+            <span className="font-mono text-emerald-400">{uploadProgress.percent}%</span>
+          </div>
+          <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300"
+              style={{ width: `${uploadProgress.percent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 max-w-md">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -2230,139 +2332,142 @@ function AquaMarkApp() {
                     <p className="text-xs opacity-60 max-w-md mx-auto">{t.emptyMarketSub}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredAndSortedBatches.map((batch) => {
-                      const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
-                      const isComparing = compareIds.includes(batch.id);
-                      const isSaved = savedBatchIds.includes(batch.id);
-                      const isSoldOut = (batch.availableStock || 0) <= 0;
-                      const videoRequested = liveVideoRequests.some(r => r.batchId === batch.id && r.farmerPhone === currentUser.phone);
-                      const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
-                      const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
+                  /* SCROLLABLE HATCHERIES CONTAINER SO PAGE STAYS NEAT */
+                  <div className="max-h-[72vh] overflow-y-auto pr-1.5 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {filteredAndSortedBatches.map((batch) => {
+                        const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
+                        const isComparing = compareIds.includes(batch.id);
+                        const isSaved = savedBatchIds.includes(batch.id);
+                        const isSoldOut = (batch.availableStock || 0) <= 0;
+                        const videoRequested = liveVideoRequests.some(r => r.batchId === batch.id && r.farmerPhone === currentUser.phone);
+                        const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
+                        const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
 
-                      return (
-                        <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg}`}>
-                          <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">
-                                    {batch.id}
-                                  </span>
-                                  <span className="bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                    <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
-                                  </span>
-                                  <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
-                                  <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
-                                  </span>
-                                  {isSoldOut && (
-                                    <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
-                                  )}
-                                </div>
-                                <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
-                                  {isUnlocked ? (
-                                    <span className="text-teal-500 inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-500" /> {batch.realName}</span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
-                                  )}
-                                </h3>
-                                <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
-                                {isUnlocked ? (
-                                  <div className="mt-1 space-y-1">
-                                    <p className="text-xs opacity-80">{batch.realAddress} • +91 {batch.realPhone}</p>
-                                    {mapsUrl && (
-                                      <a
-                                        href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
-                                      >
-                                        <MapPin className="w-3.5 h-3.5" /> Open Google Maps Location <ExternalLink className="w-3 h-3" />
-                                      </a>
+                        return (
+                          <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg}`}>
+                            <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">
+                                      {batch.id}
+                                    </span>
+                                    <span className="bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
+                                    </span>
+                                    <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
+                                    <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
+                                    </span>
+                                    {isSoldOut && (
+                                      <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
                                     )}
                                   </div>
-                                ) : (
-                                  <p className="text-[11px] opacity-50 mt-0.5">{t.unlockHint}</p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
-                                  className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                >
-                                  <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-50'}`} />
-                                </button>
-                                <div className="text-right">
-                                  <div className="text-2xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
-                                  <div className="text-[11px] opacity-60">{t.perSeed}</div>
+                                  <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
+                                    {isUnlocked ? (
+                                      <span className="text-teal-500 inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-500" /> {batch.realName}</span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
+                                    )}
+                                  </h3>
+                                  <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
+                                  {isUnlocked ? (
+                                    <div className="mt-1 space-y-1">
+                                      <p className="text-xs opacity-80">{batch.realAddress} • +91 {batch.realPhone}</p>
+                                      {mapsUrl && (
+                                        <a
+                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                        >
+                                          <MapPin className="w-3.5 h-3.5" /> Open Google Maps Location <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[11px] opacity-50 mt-0.5">{t.unlockHint}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
+                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                                  >
+                                    <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-50'}`} />
+                                  </button>
+                                  <div className="text-right">
+                                    <div className="text-2xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
+                                    <div className="text-[11px] opacity-60">{t.perSeed}</div>
+                                  </div>
                                 </div>
                               </div>
+
+                              <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
+                                <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
+                                <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
+                                <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
+                                <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
+                              </div>
+
+                              <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
+                                <span className="font-semibold">
+                                  📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'})
+                                </span>
+                                <span className="inline-flex items-center gap-1 font-bold text-teal-500">
+                                  <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                                </span>
+                              </div>
                             </div>
 
-                            <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
-                              <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
-                              <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
-                              <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
-                              <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
-                            </div>
-
-                            <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
-                              <span className="font-semibold">
-                                📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'})
-                              </span>
-                              <span className="inline-flex items-center gap-1 font-bold text-teal-500">
-                                <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
-                              </span>
+                            <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
+                              <button
+                                type="button"
+                                onClick={() => openVideoRequestModal(batch)}
+                                className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${videoRequested ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : cardBg
+                                  }`}
+                              >
+                                <Video className="w-3.5 h-3.5 text-teal-600" /> {videoRequested ? t.liveVideoSentBadge : t.liveVideoBtn}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleCompareBatch(batch.id)}
+                                className={`px-3 py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${isComparing ? 'bg-teal-600 text-white border-teal-600' : cardBg
+                                  }`}
+                              >
+                                {isComparing ? t.comparingBtn : t.compareBtn}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSoldOut}
+                                onClick={() => {
+                                  setModalError('');
+                                  setBookingForm(prev => ({
+                                    ...prev,
+                                    farmerName: currentUser.name,
+                                    farmerPhone: currentUser.phone,
+                                    qtyAmount: '2',
+                                    qtyUnit: 'LAKHS',
+                                    packingDate: batch.availableDate || prev.packingDate,
+                                    packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                    brokerMarginPaise: '',
+                                    upiRequestSent: false,
+                                    utrReference: ''
+                                  }));
+                                  setSelectedBatch(batch);
+                                }}
+                                className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                {isSoldOut ? t.soldOutBadge : t.bookSlotBtn} {!isSoldOut && <ChevronRight className="w-4 h-4" />}
+                              </button>
                             </div>
                           </div>
-
-                          <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
-                            <button
-                              type="button"
-                              onClick={() => openVideoRequestModal(batch)}
-                              className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${videoRequested ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : cardBg
-                                }`}
-                            >
-                              <Video className="w-3.5 h-3.5 text-teal-600" /> {videoRequested ? t.liveVideoSentBadge : t.liveVideoBtn}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => toggleCompareBatch(batch.id)}
-                              className={`px-3 py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${isComparing ? 'bg-teal-600 text-white border-teal-600' : cardBg
-                                }`}
-                            >
-                              {isComparing ? t.comparingBtn : t.compareBtn}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isSoldOut}
-                              onClick={() => {
-                                setModalError('');
-                                setBookingForm(prev => ({
-                                  ...prev,
-                                  farmerName: currentUser.name,
-                                  farmerPhone: currentUser.phone,
-                                  qtyAmount: '2',
-                                  qtyUnit: 'LAKHS',
-                                  packingDate: batch.availableDate || prev.packingDate,
-                                  packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
-                                  brokerMarginPaise: '',
-                                  upiRequestSent: false,
-                                  utrReference: ''
-                                }));
-                                setSelectedBatch(batch);
-                              }}
-                              className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                            >
-                              {isSoldOut ? t.soldOutBadge : t.bookSlotBtn} {!isSoldOut && <ChevronRight className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </>
@@ -2377,7 +2482,7 @@ function AquaMarkApp() {
                 {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
                   <p className="text-xs opacity-60">{t.noBookingsYet}</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="max-h-[68vh] overflow-y-auto pr-1 space-y-4">
                     {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
                       const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
                       const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
@@ -2569,7 +2674,7 @@ function AquaMarkApp() {
                   {farmerPonds.length === 0 ? (
                     <p className="text-xs opacity-60">No pond records added yet. Log your pond stocking and daily feed on the left.</p>
                   ) : (
-                    <div className="space-y-2.5">
+                    <div className="max-h-80 overflow-y-auto pr-1 space-y-2.5">
                       {farmerPonds.map((p) => {
                         const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(p.stockingDate).getTime()) / 86400000));
                         return (
@@ -2890,24 +2995,35 @@ function AquaMarkApp() {
               </div>
             ) : (
               <>
+                {/* TOP 3 CLICKABLE TABS: 1. UPCOMING RECEIVABLE | 2. PACKING ORDERS (MIDDLE) | 3. LIVE VIDEO REQUESTS */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
-                    <span className="text-xs text-emerald-500 font-bold flex items-center gap-1.5">
-                      <Wallet className="w-4 h-4" /> Total Packing Revenue Received
-                    </span>
-                    <div className="text-2xl font-black text-emerald-500 mt-1.5">₹{hatcheryClearedRevenue.toLocaleString('en-IN')}</div>
-                    <p className="text-[11px] opacity-60 mt-1">Completed & cleared seed packings</p>
-                  </div>
-
-                  <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
-                    <span className="text-xs text-amber-500 font-bold flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" /> Upcoming Packing Receivable
+                  {/* 1. FIRST TAB: UPCOMING PACKING RECEIVABLE */}
+                  <div
+                    onClick={() => setSellerTxModal({ title: 'Upcoming Packing Receivable Transactions', list: hatcheryUpcomingOrders })}
+                    className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> Upcoming Packing Receivable</span>
+                      <span className="underline text-[11px]">View All →</span>
                     </span>
                     <div className="text-2xl font-black mt-1.5">₹{hatcheryPendingRevenue.toLocaleString('en-IN')}</div>
-                    <p className="text-[11px] opacity-60 mt-1">Due from scheduled packing orders</p>
+                    <p className="text-[11px] opacity-60 mt-1">{hatcheryUpcomingOrders.length} upcoming packing orders</p>
                   </div>
 
-                  {/* CLICKABLE LIVE VIDEO REQUESTS CARD */}
+                  {/* 2. MIDDLE TAB: PACKING ORDERS / BOOKED REQUESTS */}
+                  <div
+                    onClick={() => setSellerTxModal({ title: 'Booked Packing Orders & Actions', list: hatcheryUpcomingOrders })}
+                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> Packing Orders</span>
+                      <span className="underline text-[11px]">Manage →</span>
+                    </span>
+                    <div className="text-2xl font-black mt-1.5">{hatcheryUpcomingOrders.length} Scheduled</div>
+                    <p className="text-[11px] opacity-60 mt-1">Click to view booked packings & mark complete</p>
+                  </div>
+
+                  {/* 3. THIRD TAB: LIVE VIDEO REQUESTS */}
                   <div
                     onClick={() => setShowSellerVideoModal(true)}
                     className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
@@ -2925,7 +3041,7 @@ function AquaMarkApp() {
                   </div>
                 </div>
 
-                {/* HATCHERY PROFILE, DESCRIPTION, MAPS & BANK BANNER (NO STATIC "SAVED" BADGE) */}
+                {/* HATCHERY PROFILE, DESCRIPTION, MAPS & BANK BANNER */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="space-y-1 flex-1 min-w-[240px]">
@@ -2972,7 +3088,7 @@ function AquaMarkApp() {
                           }}
                           className={`border text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
                         >
-                          <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editProfileBankBtn}
+                          <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
                         </button>
                       )}
                     </div>
@@ -3038,7 +3154,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* ADD NEW SEED BATCH (BATCH NUMBER + PCR IMAGES <=2MB + TANK VIDEOS <=10MB) */}
+                {/* ADD NEW SEED BATCH (WITH CAMERA OR FILES CHOICE FOR IMAGES & VIDEOS) */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="text-base font-bold flex items-center gap-2">
                     <PlusCircle className="w-5 h-5 text-teal-600" /> {t.addBatchTitle}
@@ -3138,86 +3254,90 @@ function AquaMarkApp() {
                       </div>
                     </div>
 
-                    {/* PCR IMAGES + TANK VIDEOS + GPS */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-                      <div className={`border rounded-xl p-3 flex flex-col justify-between gap-1.5 ${subCardBg}`}>
-                        <input
-                          ref={pcrInputRef}
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={(e) => handleMultiplePcrUpload(e.target.files, false)}
-                          className="hidden"
-                        />
+                    {/* PCR IMAGES + TANK VIDEOS (CAMERA OR FILES CHOICE) + GPS */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+                      <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
                         <button
                           type="button"
-                          disabled={isUploadingMedia}
-                          onClick={() => pcrInputRef.current?.click()}
+                          disabled={uploadProgress.active}
+                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_PCR' ? null : 'NEW_PCR')}
                           className={`w-full border border-teal-500/40 text-teal-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
                         >
-                          <Upload className="w-4 h-4" /> {isUploadingMedia ? 'Processing...' : t.pcrUploadBtnLabel}
+                          <Upload className="w-4 h-4" /> {t.pcrUploadBtnLabel}
                         </button>
+                        {mediaPickerTarget === 'NEW_PCR' && (
+                          <div className="grid grid-cols-2 gap-1.5 pt-1">
+                            <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 text-white text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer">
+                              <Camera className="w-3.5 h-3.5" /> Camera
+                            </button>
+                            <button type="button" onClick={() => pcrFileRef.current?.click()} className={`border text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer ${cardBg}`}>
+                              <FolderOpen className="w-3.5 h-3.5 text-teal-600" /> Files
+                            </button>
+                          </div>
+                        )}
                         {pcrImages.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {pcrImages.map((img, i) => (
-                              <span key={i} className="bg-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded">
+                              <span key={i} onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })} className="bg-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer">
                                 {img.label} ✓
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[10px] opacity-60 text-center">{t.pcrHintLabel}</span>
+                          <span className="text-[10px] opacity-60 block text-center">{t.pcrHintLabel}</span>
                         )}
                       </div>
 
-                      <div className={`border rounded-xl p-3 flex flex-col justify-between gap-1.5 ${subCardBg}`}>
-                        <input
-                          ref={videoInputRef}
-                          type="file"
-                          multiple
-                          accept="video/*"
-                          onChange={(e) => handleMultipleVideoUpload(e.target.files, false)}
-                          className="hidden"
-                        />
+                      <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
                         <button
                           type="button"
-                          disabled={isUploadingMedia}
-                          onClick={() => videoInputRef.current?.click()}
+                          disabled={uploadProgress.active}
+                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_VID' ? null : 'NEW_VID')}
                           className={`w-full border border-teal-500/40 text-teal-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
                         >
-                          <Video className="w-4 h-4" /> {isUploadingMedia ? 'Processing...' : t.videoUploadBtnLabel}
+                          <Video className="w-4 h-4" /> {t.videoUploadBtnLabel}
                         </button>
+                        {mediaPickerTarget === 'NEW_VID' && (
+                          <div className="grid grid-cols-2 gap-1.5 pt-1">
+                            <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 text-white text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer">
+                              <Camera className="w-3.5 h-3.5" /> Camera
+                            </button>
+                            <button type="button" onClick={() => vidFileRef.current?.click()} className={`border text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer ${cardBg}`}>
+                              <FolderOpen className="w-3.5 h-3.5 text-teal-600" /> Files
+                            </button>
+                          </div>
+                        )}
                         {tankVideos.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {tankVideos.map((vid, i) => (
-                              <span key={i} className="bg-teal-500/20 text-teal-500 text-[10px] font-bold px-2 py-0.5 rounded">
+                              <span key={i} onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })} className="bg-teal-500/20 text-teal-500 text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer">
                                 {vid.label} ✓
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[10px] opacity-60 text-center">Optional: Tank PL activity videos</span>
+                          <span className="text-[10px] opacity-60 block text-center">Optional: Tank PL activity videos</span>
                         )}
                       </div>
 
                       <div className={`border rounded-xl p-3 flex items-center justify-between gap-2 ${subCardBg}`}>
                         <div>
                           <span className="text-xs font-bold flex items-center gap-1"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
-                          <p className="text-[11px] opacity-60">{gpsLocation || 'Optional'}</p>
+                          <p className="text-[11px] opacity-60">{gpsLocation || 'Auto-captured on upload'}</p>
                         </div>
-                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer">
+                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0">
                           <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
                         </button>
                       </div>
                     </div>
 
-                    <button type="submit" disabled={isUploadingMedia} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
+                    <button type="submit" disabled={uploadProgress.active} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
                       {t.publishBtn}
                     </button>
                   </form>
                 </div>
 
-                {/* OWNER'S ACTIVE BATCHES WITH FULL EDIT (ALL DETAILS + IMAGES + VIDEOS) */}
+                {/* OWNER'S ACTIVE BATCHES (SCROLLABLE BOX) */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Layers className="w-5 h-5 text-teal-600" /> {t.myBatchesTitle}
@@ -3225,7 +3345,7 @@ function AquaMarkApp() {
                   {myOwnedBatches.length === 0 ? (
                     <p className="text-xs opacity-60">{t.noBatchesSeller}</p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
                       {myOwnedBatches.map((b) => {
                         const isEditing = editingBatchId === b.id;
                         return (
@@ -3321,24 +3441,25 @@ function AquaMarkApp() {
                                   </div>
                                 </div>
 
-                                {/* EDIT PCR IMAGES & TANK VIDEOS */}
+                                {/* EDIT PCR IMAGES & TANK VIDEOS (CAMERA OR FILES) */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-300/20">
                                   <div className="space-y-1.5">
                                     <div className="flex items-center justify-between">
                                       <span className="text-[11px] font-bold">PCR Images ({(editBatchValues.pcrImages || []).length})</span>
-                                      <input ref={editPcrInputRef} type="file" multiple accept="image/*" onChange={(e) => handleMultiplePcrUpload(e.target.files, true)} className="hidden" />
-                                      <button type="button" onClick={() => editPcrInputRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">
-                                        + Add Images
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                        <button type="button" onClick={() => editPcrCamRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Camera</button>
+                                        <button type="button" onClick={() => editPcrFileRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Files</button>
+                                      </div>
                                     </div>
                                     <div className="flex flex-wrap gap-1.5">
                                       {(editBatchValues.pcrImages || []).map((img, i) => (
                                         <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
-                                          {img.label}
+                                          <span onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })} className="cursor-pointer underline">{img.label}</span>
                                           <button
                                             type="button"
                                             onClick={() => setEditBatchValues(prev => ({
                                               ...prev,
+                                              removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
                                               pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
                                             }))}
                                             className="text-rose-500 ml-1 cursor-pointer"
@@ -3353,19 +3474,20 @@ function AquaMarkApp() {
                                   <div className="space-y-1.5">
                                     <div className="flex items-center justify-between">
                                       <span className="text-[11px] font-bold">Tank Videos ({(editBatchValues.tankVideos || []).length})</span>
-                                      <input ref={editVideoInputRef} type="file" multiple accept="video/*" onChange={(e) => handleMultipleVideoUpload(e.target.files, true)} className="hidden" />
-                                      <button type="button" onClick={() => editVideoInputRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">
-                                        + Add Videos
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                        <button type="button" onClick={() => editVidCamRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Camera</button>
+                                        <button type="button" onClick={() => editVidFileRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Files</button>
+                                      </div>
                                     </div>
                                     <div className="flex flex-wrap gap-1.5">
                                       {(editBatchValues.tankVideos || []).map((vid, i) => (
                                         <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
-                                          {vid.label}
+                                          <span onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })} className="cursor-pointer underline">{vid.label}</span>
                                           <button
                                             type="button"
                                             onClick={() => setEditBatchValues(prev => ({
                                               ...prev,
+                                              removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
                                               tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
                                             }))}
                                             className="text-rose-500 ml-1 cursor-pointer"
@@ -3394,83 +3516,32 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* SELLER ORDERS */}
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <h3 className="font-bold text-base flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-teal-600" /> {t.sellerOrdersTitle}
-                  </h3>
-                  {myHatcheryOrders.length === 0 ? (
-                    <p className="text-xs opacity-60">{t.noOrdersYet}</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {myHatcheryOrders.map((bk) => {
-                        const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
-                        const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
-                        return (
-                          <div
-                            key={bk.bookingId}
-                            onClick={() => setInspectedSellerOrder(bk)}
-                            className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 transition cursor-pointer ${subCardBg}`}
-                          >
-                            <div className="space-y-1 text-xs">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
-                                <span className="font-mono text-[11px] bg-slate-500/10 px-2 py-0.5 rounded">UTR: {bk.paymentId}</span>
-                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared
-                                  ? 'bg-emerald-500/15 text-emerald-500'
-                                  : isCancelled
-                                    ? 'bg-rose-500/15 text-rose-500'
-                                    : 'bg-amber-500/15 text-amber-500'
-                                  }`}>
-                                  {isCleared
-                                    ? `${t.creditedBadge}: ₹${(bk.hatcheryFixedTotal || 0).toLocaleString('en-IN')}`
-                                    : isCancelled
-                                      ? 'Cancelled by Farmer'
-                                      : `${t.onHoldBadge} (₹${(bk.hatcheryFixedTotal || 0).toLocaleString('en-IN')})`}
-                                </span>
-                              </div>
-                              <p className="font-semibold">
-                                Buyer: {bk.farmerName} (+91 {bk.farmerPhone}) • Batch: <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL
-                              </p>
-                              <p className="opacity-70">
-                                {t.pondSalinityLabel}: <b>{bk.pondSalinity} PPT</b> • {t.packingDateLabel}: <b>{bk.packingDate} ({bk.packingTimeSlot})</b>
-                              </p>
-                            </div>
-
-                            {!isCancelled && (
-                              <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                {bk.packingStatus === 'PACKING_PENDING' && (
-                                  <button type="button" onClick={() => handleSellerMarkPacked(bk.bookingId)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer">
-                                    {t.markPackedBtn}
-                                  </button>
-                                )}
-                                {!isCleared && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleHatcheryPaymentReceived(bk.bookingId)}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
-                                  >
-                                    <CheckSquare className="w-4 h-4" /> {t.paymentReceivedBtn}
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                {/* LONG FULL-WIDTH TOTAL REVENUE TAB BELOW BATCHES (CLICK FOR ALL CLEARED TRANSACTIONS) */}
+                <div
+                  onClick={() => setSellerTxModal({ title: 'Total Packing Revenue Received (All Cleared Transactions)', list: hatcheryClearedOrders })}
+                  className={`rounded-2xl p-6 border-2 border-emerald-500/40 hover:border-emerald-500 shadow-xs flex flex-wrap items-center justify-between gap-4 cursor-pointer transition ${cardBg}`}
+                >
+                  <div className="space-y-1">
+                    <span className="text-xs text-emerald-500 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                      <Wallet className="w-4 h-4" /> Total Packing Revenue Received (Lifetime Ledger)
+                    </span>
+                    <div className="text-3xl font-black text-emerald-500">₹{hatcheryClearedRevenue.toLocaleString('en-IN')}</div>
+                    <p className="text-xs opacity-65">Click here to inspect all {hatcheryClearedOrders.length} completed & settled transactions from start to end</p>
+                  </div>
+                  <span className="bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5">
+                    View All Transactions <ChevronRight className="w-4 h-4" />
+                  </span>
                 </div>
 
-                {/* FARMER FEEDBACK */}
+                {/* FARMER FEEDBACK (SCROLLABLE BOX) */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-teal-600" /> {t.sellerFeedbackTitle}
+                    <MessageSquare className="w-5 h-5 text-teal-600" /> {t.sellerFeedbackTitle} ({myPrivateReviews.length})
                   </h3>
                   {myPrivateReviews.length === 0 ? (
                     <p className="text-xs opacity-60">{t.noFeedbackYet}</p>
                   ) : (
-                    <div className="space-y-2.5">
+                    <div className="max-h-72 overflow-y-auto pr-1 space-y-2.5">
                       {myPrivateReviews.map((rev, idx) => (
                         <div key={idx} className={`border rounded-xl p-3.5 text-xs flex flex-wrap items-center justify-between gap-2 ${subCardBg}`}>
                           <div>
@@ -3532,18 +3603,27 @@ function AquaMarkApp() {
               </div>
             ) : (
               <>
+                {/* CLICKABLE BROKER UPCOMING & RECEIVED COMMISSION CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
-                    <span className="text-xs text-amber-500 font-bold flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" /> {t.brokerHoldCard}
+                  <div
+                    onClick={() => setBrokerTxListModal({ title: 'Upcoming 2% Commission Transactions (On Hold)', list: brokerHeldBookings })}
+                    className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {t.brokerHoldCard}</span>
+                      <span className="underline text-[11px]">View All ({brokerHeldBookings.length}) →</span>
                     </span>
                     <div className="text-3xl font-black mt-2">₹{brokerHeld2PctTotal.toLocaleString('en-IN')}</div>
                     <p className="text-xs opacity-60 mt-1.5">{t.brokerHoldSub}</p>
                   </div>
 
-                  <div className={`border rounded-2xl p-5 shadow-xs ${cardBg}`}>
-                    <span className="text-xs text-emerald-500 font-bold flex items-center gap-1.5">
-                      <Wallet className="w-4 h-4" /> {t.brokerReleasedCard}
+                  <div
+                    onClick={() => setBrokerTxListModal({ title: 'Received 2% Commission Transactions (Cleared)', list: brokerCreditedBookings })}
+                    className={`border hover:border-emerald-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-emerald-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Wallet className="w-4 h-4" /> {t.brokerReleasedCard}</span>
+                      <span className="underline text-[11px]">View All ({brokerCreditedBookings.length}) →</span>
                     </span>
                     <div className="text-3xl font-black text-emerald-500 mt-2">₹{brokerCredited2PctTotal.toLocaleString('en-IN')}</div>
                     <p className="text-xs opacity-60 mt-1.5">
@@ -3552,7 +3632,7 @@ function AquaMarkApp() {
                   </div>
                 </div>
 
-                {/* Broker Bank Card (NO STATIC "SAVED" BADGE) */}
+                {/* Broker Bank Card (NO MAPS TEXT) */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -3573,7 +3653,7 @@ function AquaMarkApp() {
                         }}
                         className={`border text-xs font-bold px-3 py-1 rounded-xl inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
                       >
-                        <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editProfileBankBtn}
+                        <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBrokerProfileBtn}
                       </button>
                     )}
                   </div>
@@ -3610,7 +3690,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* BROKER BOOKINGS */}
+                {/* BROKER BOOKINGS (SCROLLABLE BOX) */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
@@ -3618,7 +3698,7 @@ function AquaMarkApp() {
                   {myBrokerBookings.length === 0 ? (
                     <p className="text-xs opacity-60">{t.noBrokerBookings}</p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
                       {myBrokerBookings.map((bk) => {
                         const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
                         return (
@@ -3666,7 +3746,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* BROKER MARKETPLACE */}
+                {/* BROKER MARKETPLACE (SCROLLABLE BOX) */}
                 <div className="space-y-4">
                   <h2 className="text-base font-extrabold flex items-center gap-2">
                     <Building2 className="w-5 h-5 text-teal-600" /> {t.brokerMarketplaceTitle}
@@ -3681,7 +3761,7 @@ function AquaMarkApp() {
                       <p className="text-xs opacity-60">{t.emptyMarketSub}</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="max-h-[65vh] overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-5">
                       {filteredAndSortedBatches.map((batch) => {
                         const isSoldOut = (batch.availableStock || 0) <= 0;
                         return (
@@ -3699,7 +3779,7 @@ function AquaMarkApp() {
                                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0}
                                     </span>
                                   </div>
-                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode || batch.realName}</h3>
+                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode || 'Verified Hatchery'}</h3>
                                   <p className="text-xs opacity-65">{batch.species}</p>
                                 </div>
                                 <div className="text-right">
@@ -3774,7 +3854,7 @@ function AquaMarkApp() {
                     {brokerFarmers.length === 0 ? (
                       <p className="text-xs opacity-60">No farmers locked yet. Add your farmers on the left.</p>
                     ) : (
-                      <div className="overflow-x-auto">
+                      <div className="max-h-64 overflow-y-auto">
                         <table className="w-full text-left border-collapse text-sm">
                           <thead>
                             <tr className="border-b border-slate-300/30 text-[11px] uppercase opacity-60">
@@ -3804,8 +3884,133 @@ function AquaMarkApp() {
       </main>
 
       {/* =========================================================
-          BUYER LIVE VIDEO REQUEST MODAL (NAME + WHATSAPP + DETAILS)
+          SELLER TRANSACTIONS & PACKING ORDERS POPUP MODAL (SCROLLABLE)
          ========================================================= */}
+      {sellerTxModal && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] flex flex-col ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3 shrink-0">
+              <div>
+                <h3 className="font-extrabold text-base">{sellerTxModal.title}</h3>
+                <p className="text-xs opacity-60">Click any booking row for full UTR, Salinity & Buyer details</p>
+              </div>
+              <button type="button" onClick={() => setSellerTxModal(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+            <div className="overflow-y-auto space-y-3 pr-1 flex-1">
+              {sellerTxModal.list.length === 0 ? (
+                <p className="text-xs opacity-60 py-8 text-center">No transactions in this category yet.</p>
+              ) : (
+                sellerTxModal.list.map((bk) => {
+                  const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                  return (
+                    <div
+                      key={bk.bookingId}
+                      onClick={() => setInspectedSellerOrder(bk)}
+                      className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 transition cursor-pointer ${subCardBg}`}
+                    >
+                      <div className="space-y-1 text-xs">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
+                          <span className="font-mono text-[11px] bg-slate-500/10 px-2 py-0.5 rounded">UTR: {bk.paymentId}</span>
+                          <span className="font-bold text-emerald-500">₹{(bk.hatcheryFixedTotal || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <p className="font-bold">Buyer: {bk.farmerName} (+91 {bk.farmerPhone}) • Batch {bk.batch?.id}</p>
+                        <p className="opacity-70">{(bk.quantity || 0).toLocaleString('en-IN')} PL • Packing: {bk.packingDate} ({bk.packingTimeSlot})</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        {!isCleared && bk.packingStatus === 'PACKING_PENDING' && (
+                          <button type="button" onClick={() => handleSellerMarkPacked(bk.bookingId)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer">
+                            {t.markPackedBtn}
+                          </button>
+                        )}
+                        {!isCleared && (
+                          <button type="button" onClick={() => handleHatcheryPaymentReceived(bk.bookingId)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl inline-flex items-center gap-1 cursor-pointer">
+                            <CheckSquare className="w-3.5 h-3.5" /> {t.paymentReceivedBtn}
+                          </button>
+                        )}
+                        {isCleared && (
+                          <span className="bg-emerald-500/15 text-emerald-500 text-xs font-bold px-2.5 py-1 rounded-full">Cleared ✓</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          BROKER UPCOMING / RECEIVED TRANSACTIONS POPUP MODAL (SCROLLABLE)
+         ========================================================= */}
+      {brokerTxListModal && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] flex flex-col ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3 shrink-0">
+              <div>
+                <h3 className="font-extrabold text-base">{brokerTxListModal.title}</h3>
+                <p className="text-xs opacity-60">Click any transaction to view full UTR, Farmer, Hatchery & Margin details</p>
+              </div>
+              <button type="button" onClick={() => setBrokerTxListModal(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+            <div className="overflow-y-auto space-y-3 pr-1 flex-1">
+              {brokerTxListModal.list.length === 0 ? (
+                <p className="text-xs opacity-60 py-8 text-center">No transactions found in this category.</p>
+              ) : (
+                brokerTxListModal.list.map((bk) => (
+                  <div
+                    key={bk.bookingId}
+                    onClick={() => { setBrokerTxListModal(null); setSelectedBrokerTx(bk); }}
+                    className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 transition cursor-pointer ${subCardBg}`}
+                  >
+                    <div className="space-y-1 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
+                        <span className="font-mono text-[11px] opacity-70">UTR: {bk.paymentId}</span>
+                      </div>
+                      <p className="font-bold">Farmer: {bk.farmerName} → Hatchery: {bk.batch?.realName || bk.batch?.hatcheryCode}</p>
+                      <p className="opacity-70">{(bk.quantity || 0).toLocaleString('en-IN')} PL • Packing: {bk.packingDate}</p>
+                    </div>
+                    <div className="text-right text-xs">
+                      <span className="font-extrabold text-emerald-500 block">2% Comm: ₹{bk.settlement?.brokerBase2Pct || 0}</span>
+                      {bk.brokerExtraMarginTotal > 0 && (
+                        <span className="text-teal-500 font-bold block">+ Margin: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')}</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          FULL-SCREEN IMAGE & VIDEO VIEWER MODAL
+         ========================================================= */}
+      {fullScreenMedia && (
+        <div
+          onClick={() => setFullScreenMedia(null)}
+          className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4"
+        >
+          <div className="w-full max-w-5xl flex items-center justify-between text-white pb-3" onClick={(e) => e.stopPropagation()}>
+            <span className="text-sm font-extrabold text-teal-400">{fullScreenMedia.label}</span>
+            <button type="button" onClick={() => setFullScreenMedia(null)} className="bg-white/15 hover:bg-white/25 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer">
+              ✕ Close Full Screen
+            </button>
+          </div>
+          <div className="max-w-5xl max-h-[82vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {fullScreenMedia.type === 'video' ? (
+              <video src={fullScreenMedia.url} controls autoPlay className="max-w-full max-h-[82vh] rounded-xl shadow-2xl" />
+            ) : (
+              <img src={fullScreenMedia.url} alt={fullScreenMedia.label} className="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl" />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* BUYER LIVE VIDEO REQUEST MODAL */}
       {videoRequestTargetBatch && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
@@ -3857,9 +4062,7 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* =========================================================
-          SELLER LIVE VIDEO REQUESTS LIST MODAL (DIRECT WHATSAPP LINK)
-         ========================================================= */}
+      {/* SELLER LIVE VIDEO REQUESTS LIST MODAL */}
       {showSellerVideoModal && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-xl w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] overflow-y-auto ${cardBg}`}>
@@ -3941,7 +4144,7 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* SELLER ASSIGNED ORDER MODAL */}
+      {/* SELLER ASSIGNED ORDER FULL DETAILS MODAL */}
       {inspectedSellerOrder && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
@@ -4027,7 +4230,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          HATCHERY INSPECTION MODAL (DESCRIPTION + HISTORY + REVIEWS + VIDEOS + PCR)
+          HATCHERY INSPECTION MODAL (CLICKABLE FULL-SCREEN MEDIA + SCROLLABLE REVIEWS)
          ========================================================= */}
       {inspectedBatch && (() => {
         const ownerProf = hatcheryProfiles[inspectedBatch.ownerPhone] || {};
@@ -4060,7 +4263,6 @@ function AquaMarkApp() {
                 </div>
               )}
 
-              {/* HATCHERY TRACK RECORD / HISTORY */}
               <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
                 <div><span className="text-[10px] opacity-60 block">Registered Since</span><b>{inspectedBatch.registeredAt || ownerProf.registeredAt || '2026'}</b></div>
                 <div><span className="text-[10px] opacity-60 block">Orders Fulfilled</span><b>{ordersCount} Orders</b></div>
@@ -4068,37 +4270,50 @@ function AquaMarkApp() {
                 <div><span className="text-[10px] opacity-60 block">Salinity / Stage</span><b className="text-teal-500">{inspectedBatch.salinity} PPT • {inspectedBatch.plStage}</b></div>
               </div>
 
-              {/* TANK VIDEOS */}
+              {/* TANK VIDEOS (CLICKABLE FOR FULL SCREEN) */}
               {(inspectedBatch.tankVideos || []).length > 0 && (
                 <div className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
                   <span className="text-xs font-extrabold flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-teal-600" /> Tank PL Activity Videos ({inspectedBatch.tankVideos.length})
+                    <Video className="w-4 h-4 text-teal-600" /> Tank PL Activity Videos ({inspectedBatch.tankVideos.length}) — Click to Full Screen
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inspectedBatch.tankVideos.map((vid, idx) => (
                       <div key={idx} className={`border rounded-xl p-2 space-y-1.5 ${cardBg}`}>
-                        <span className="text-[11px] font-extrabold text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded inline-block">
-                          {vid.label}
-                        </span>
-                        <video src={vid.url} controls className="w-full h-44 rounded-lg bg-black" />
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-extrabold text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded">{vid.label}</span>
+                          <button type="button" onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })} className="text-[11px] font-bold text-teal-500 inline-flex items-center gap-1 cursor-pointer">
+                            <Maximize2 className="w-3 h-3" /> Full Screen
+                          </button>
+                        </div>
+                        <video
+                          src={vid.url}
+                          controls
+                          onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                          className="w-full h-44 rounded-lg bg-black cursor-pointer"
+                        />
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* PCR LAB IMAGES */}
+              {/* PCR LAB IMAGES (CLICKABLE FOR FULL SCREEN) */}
               <div className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
                 <span className="text-xs font-extrabold flex items-center gap-1.5">
-                  <FileCheck2 className="w-4 h-4 text-teal-600" /> Verified PCR Lab Images ({(inspectedBatch.pcrImages || []).length})
+                  <FileCheck2 className="w-4 h-4 text-teal-600" /> Verified PCR Lab Images ({(inspectedBatch.pcrImages || []).length}) — Click Image for Full Screen
                 </span>
                 {(inspectedBatch.pcrImages || []).length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inspectedBatch.pcrImages.map((img, idx) => (
-                      <div key={idx} className={`border rounded-xl p-2 space-y-1.5 ${cardBg}`}>
-                        <span className="text-[11px] font-extrabold text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded inline-block">
-                          {img.label}
-                        </span>
+                      <div
+                        key={idx}
+                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                        className={`border hover:border-teal-500 rounded-xl p-2 space-y-1.5 cursor-pointer transition ${cardBg}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-extrabold text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded">{img.label}</span>
+                          <Maximize2 className="w-3.5 h-3.5 text-teal-500" />
+                        </div>
                         <img src={img.url} alt={img.label} className="w-full h-48 object-contain rounded-lg bg-slate-100" />
                       </div>
                     ))}
@@ -4108,7 +4323,7 @@ function AquaMarkApp() {
                 )}
               </div>
 
-              {/* VERIFIED FARMER REVIEWS */}
+              {/* SCROLLABLE VERIFIED FARMER REVIEWS */}
               <div className={`border rounded-xl p-4 space-y-2.5 ${subCardBg}`}>
                 <span className="text-xs font-extrabold flex items-center gap-1.5">
                   <Star className="w-4 h-4 text-amber-500" /> Verified Farmer Reviews ({allHatcheryReviews.length})
@@ -4116,7 +4331,7 @@ function AquaMarkApp() {
                 {allHatcheryReviews.length === 0 ? (
                   <p className="text-xs opacity-60">No reviews yet for this hatchery.</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="max-h-52 overflow-y-auto pr-1 space-y-2">
                     {allHatcheryReviews.map((rev, i) => (
                       <div key={i} className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-2 ${cardBg}`}>
                         <div>
@@ -4373,7 +4588,7 @@ function AquaMarkApp() {
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => handleSendDirectUpiRequest(token)}
+                                  onClick={handleSendDirectUpiRequest}
                                   className="bg-teal-700 hover:bg-teal-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 cursor-pointer"
                                 >
                                   Request ₹{token.toLocaleString('en-IN')}
