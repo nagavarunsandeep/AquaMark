@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheck, Lock, Unlock, Calculator, CheckCircle2,
   MapPin, FileText, Wallet, Users, Send, Printer, Camera,
-  Globe, LogOut, Smartphone, UserCheck,
+  BadgeCheck, ArrowRight, Globe, LogOut, Smartphone, UserCheck,
   Landmark, Clock, CheckSquare, ShoppingBag, Building2, Star, Search,
   AlertTriangle, Package, Edit3, Check, ChevronRight, Layers,
   Trash2, ArrowUpDown, Scale, FileCheck2, Upload, PlusCircle,
@@ -10,30 +10,10 @@ import {
   MessageSquare, BarChart3, Calendar, Droplets,
   Receipt, Moon, Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink,
   FolderOpen, Maximize2, RefreshCw, Share2, PauseCircle, PlayCircle,
-  ShieldAlert, KeyRound, Activity, Navigation,
-  Bell, ScanLine, PiggyBank, ArrowDownLeft, Sparkles
+  Sparkles, ShieldAlert, KeyRound, Activity, Navigation, Split,
+  Thermometer, Award, Layers as LayersIcon, CheckCircle, Bell, Phone
 } from 'lucide-react';
-
-// ============================================================================
-// SAFE RESILIENT STORAGE / CLOUD ADAPTER (WORKS IMMEDIATELY IN PREVIEW & LIVE)
-// ============================================================================
-const safeStorage = {
-  get(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
-    }
-  },
-  set(key, val) {
-    try {
-      localStorage.setItem(key, JSON.stringify(val));
-    } catch {
-      // Ignore quota errors in sandboxed frames
-    }
-  }
-};
+import { supabase } from './supabaseClient';
 
 // ============================================================================
 // ERROR BOUNDARY FOR RESILIENCE
@@ -69,13 +49,14 @@ class ErrorBoundary extends React.Component {
 }
 
 // ============================================================================
-// DOMAIN CONSTANTS & INITIAL REALISTIC DEMO DATA
+// DOMAIN CONSTANTS
 // ============================================================================
 const ADMIN_WHATSAPP_NUMBER = '919876543210';
 
 const SHRIMP_SPECIES_OPTIONS = [
   'Litopenaeus vannamei (SyAqua Line)',
   'Litopenaeus vannamei (Hard Line / High Survival)',
+  'Litopenaeus vannamei (SPF)',
   'Litopenaeus vannamei (High Growth)',
   'Litopenaeus vannamei (Disease Resistant)',
   'Penaeus monodon (Black Tiger)',
@@ -87,9 +68,9 @@ const SHRIMP_SPECIES_OPTIONS = [
 const BROODSTOCK_ORIGINS = [
   'SyAqua USA / Thailand Certified',
   'Hard Line Coastal Resistant',
-  'Kona Bay (Hawaii)',
+  'Kona Bay (Hawaii SPF)',
   'SIS (Shrimp Improvement Systems)',
-  'CP Thailand Line',
+  'CPSPF Thailand Line',
   'RGCA Rajiv Gandhi Centre'
 ];
 
@@ -123,172 +104,92 @@ const DOC_SCHEDULE_TABLE = [
   { doc: 'DOC 81–110', abw: '22.0g – 33.0g', feedPerLakh: '35.0 – 42.0 kg/day', trayCheck: 'Check after 1.5 hrs (1.5%)', size: 'Finisher #4' }
 ];
 
-const INITIAL_DEMO_HATCHERIES = {
-  '9876543211': {
-    ownerPhone: '9876543211',
-    hatcheryCode: 'Verified Hatchery #H-412',
-    realName: 'Sri Sai Coastal Marine Hatcheries',
-    caaLicense: 'CAA/AP/2026/0841',
-    zone: 'Kakinada Zone',
-    realAddress: 'Uppada Beach Road, Kakinada, AP',
-    googleMapsLink: 'https://maps.google.com/?q=17.0812,82.3412',
-    description: 'ISO-certified marine shrimp hatchery with UV-ozone filtration and strict PCR batch screening.',
-    registeredAt: '12/02/2026',
-    depositPaid: true,
-    depositAmount: 10000,
-    depositUtr: 'UPI_492018472910',
-    depositSourceAccount: 'srisai.hatchery@okicici (ICICI Bank ••••4512)',
-    depositHistory: [
-      { id: 'DEP-1001', amount: 10000, ref: 'UPI_492018472910', source: 'srisai.hatchery@okicici', date: '12/02/2026', note: 'Mandatory Security Deposit' }
-    ],
-    bankDetails: {
-      accountName: 'Sri Sai Coastal Marine Hatcheries',
-      accountNo: '3892010004512',
-      ifsc: 'ICIC0001124',
-      upiId: 'srisai.hatchery@okicici'
+// ============================================================================
+// VIVO-STYLE CAMERA WATERMARK STAMP (LOCATION NAME + GPS + DATE & TIME)
+// ============================================================================
+async function getRichLocationDetails() {
+  return new Promise((resolve) => {
+    const fallback = {
+      placeName: 'Kakinada Coastal Belt, AP, India',
+      coords: '16.9891° N, 82.2475° E'
+    };
+    if (!navigator.geolocation) {
+      resolve(fallback);
+      return;
     }
-  }
-};
-
-const INITIAL_DEMO_BATCHES = [
-  {
-    id: 'BATCH-2026-01',
-    ownerPhone: '9876543211',
-    hatcheryCode: 'Verified Hatchery #H-412',
-    realName: 'Sri Sai Coastal Marine Hatcheries',
-    realAddress: 'Uppada Beach Road, Kakinada, AP',
-    googleMapsLink: 'https://maps.google.com/?q=17.0812,82.3412',
-    description: 'High-survival SyAqua line acclimatized to 16 PPT coastal salinity.',
-    realPhone: '9876543211',
-    caaLicense: 'CAA/AP/2026/0841',
-    registeredAt: '12/02/2026',
-    bankDetails: {
-      accountName: 'Sri Sai Coastal Marine Hatcheries',
-      accountNo: '3892010004512',
-      ifsc: 'ICIC0001124',
-      upiId: 'srisai.hatchery@okicici'
-    },
-    zone: 'Kakinada Zone',
-    rating: 4.9,
-    reviewCount: 14,
-    reviews: [
-      { bookingId: 'AQ-9012', farmerName: 'Ramu Naidu', stars: 5, comment: 'Excellent uniform PL12 size and zero transit mortality.', date: '08/11/2026' }
-    ],
-    species: 'Litopenaeus vannamei (SyAqua Line)',
-    broodstock: 'SyAqua USA / Thailand Certified',
-    plStage: 'PL12',
-    pricePer1000: 0.43,
-    availableStock: 2500000,
-    minPackingQty: 200000,
-    salinity: 16,
-    bonusPercent: 15,
-    availableDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    availableTimeSlot: 'Early Morning (04:00 AM – 08:00 AM)',
-    pcrImages: [],
-    tankVideos: [],
-    paused: false,
-    vigorScore: 98
-  },
-  {
-    id: 'BATCH-2026-02',
-    ownerPhone: '9876543211',
-    hatcheryCode: 'Verified Hatchery #H-412',
-    realName: 'Sri Sai Coastal Marine Hatcheries',
-    realAddress: 'Uppada Beach Road, Kakinada, AP',
-    googleMapsLink: 'https://maps.google.com/?q=17.0812,82.3412',
-    description: 'Hard-line coastal resistant PL15 ready for low-salinity ponds.',
-    realPhone: '9876543211',
-    caaLicense: 'CAA/AP/2026/0841',
-    registeredAt: '12/02/2026',
-    bankDetails: {
-      accountName: 'Sri Sai Coastal Marine Hatcheries',
-      accountNo: '3892010004512',
-      ifsc: 'ICIC0001124',
-      upiId: 'srisai.hatchery@okicici'
-    },
-    zone: 'Bhimavaram Zone',
-    rating: 4.8,
-    reviewCount: 9,
-    reviews: [],
-    species: 'Litopenaeus vannamei (Hard Line / High Survival)',
-    broodstock: 'Hard Line Coastal Resistant',
-    plStage: 'PL15',
-    pricePer1000: 0.46,
-    availableStock: 1800000,
-    minPackingQty: 300000,
-    salinity: 12,
-    bonusPercent: 20,
-    availableDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-    availableTimeSlot: 'All Day (24 Hours Flexible)',
-    pcrImages: [],
-    tankVideos: [],
-    paused: false,
-    vigorScore: 96
-  }
-];
-
-function formatSeedQuantityShort(qty) {
-  const num = Number(qty) || 0;
-  if (num >= 1000000 && num % 1000000 === 0) {
-    return `${num / 1000000} Million${num / 1000000 > 1 ? 's' : ''} (${num.toLocaleString('en-IN')} PL)`;
-  }
-  if (num >= 100000) {
-    const lakhs = +(num / 100000).toFixed(2);
-    return `${lakhs} Lakh${lakhs > 1 ? 's' : ''} (${num.toLocaleString('en-IN')} PL)`;
-  }
-  return `${num.toLocaleString('en-IN')} PL`;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const coordsStr = `${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E`;
+        try {
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`
+          );
+          if (resp.ok) {
+            const geo = await resp.json();
+            const addr = geo.address || {};
+            const town = addr.village || addr.town || addr.city || addr.suburb || addr.county || 'Coastal Zone';
+            const state = addr.state || 'Andhra Pradesh';
+            resolve({
+              placeName: `${town}, ${state}, India`,
+              coords: coordsStr
+            });
+            return;
+          }
+        } catch {
+          // Offline / CORS fallback
+        }
+        resolve({ placeName: 'Coastal Aquaculture Zone, AP', coords: coordsStr });
+      },
+      () => resolve(fallback),
+      { timeout: 4000 }
+    );
+  });
 }
 
-// ============================================================================
-// ENHANCED SECURITY WATERMARK STAMP (NO LOCATION/COORDS, STYLISH DATE/TIME,
-// HATCHERY CAA NUMBER + FULL-IMAGE DIAGONAL TRANSPARENT AQUAMARK WATERMARK)
-// ============================================================================
-function drawAquaMarkSecurityStampOnCanvas(ctx, width, height, meta) {
-  // 1. FULL-IMAGE DIAGONAL TRANSPARENT SECURITY WATERMARK ACROSS ENTIRE IMAGE
+function drawVivoWatermarkOnCanvas(ctx, width, height, meta) {
+  // Cross / Diagonal Transparent Security Watermark across entire image
   ctx.save();
-  const diagFontSize = Math.max(18, Math.round(Math.min(width, height) * 0.042));
-  ctx.font = `800 ${diagFontSize}px "Georgia", "Segoe UI", serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.17)';
-  ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
-  ctx.lineWidth = 1;
+  const diagFontSize = Math.max(14, Math.round(Math.min(width, height) * 0.032));
+  ctx.font = `800 ${diagFontSize}px "Inter", "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-
-  const watermarkText = `AQUAMARK  •  ${meta.dateStr}  ${meta.timeStr}`;
-  const stepX = Math.max(280, Math.round(width * 0.52));
-  const stepY = Math.max(150, Math.round(height * 0.28));
+  const wmText = `AQUA MARK • ${meta.dateTime}`;
+  const stepX = Math.max(260, Math.round(width * 0.42));
+  const stepY = Math.max(140, Math.round(height * 0.25));
 
   ctx.translate(width / 2, height / 2);
-  ctx.rotate((-28 * Math.PI) / 180);
-
-  for (let y = -height * 1.2; y <= height * 1.2; y += stepY) {
-    for (let x = -width * 1.2; x <= width * 1.2; x += stepX) {
-      ctx.strokeText(watermarkText, x, y);
-      ctx.fillText(watermarkText, x, y);
+  ctx.rotate(-Math.PI / 6); // -30 deg cross diagonal
+  for (let y = -height; y <= height; y += stepY) {
+    for (let x = -width; x <= width; x += stepX) {
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.14)';
+      ctx.fillText(wmText, x + 1.5, y + 1.5);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.20)';
+      ctx.fillText(wmText, x, y);
     }
   }
   ctx.restore();
 
-  // 2. BOTTOM SLEEK GLASS STAMP BAR (CAA NUMBER + STYLISH DATE & TIME ONLY — NO GPS/COORDS)
-  const barH = Math.max(60, Math.round(height * 0.095));
+  const barH = Math.max(54, Math.round(height * 0.085));
   const yStart = height - barH;
 
-  const grad = ctx.createLinearGradient(0, yStart - 10, 0, height);
-  grad.addColorStop(0, 'rgba(9, 14, 26, 0)');
-  grad.addColorStop(0.2, 'rgba(9, 14, 26, 0.86)');
-  grad.addColorStop(1, 'rgba(9, 14, 26, 0.96)');
+  // Sleek translucent dark glass bottom band
+  const grad = ctx.createLinearGradient(0, yStart - 12, 0, height);
+  grad.addColorStop(0, 'rgba(10, 15, 28, 0)');
+  grad.addColorStop(0.22, 'rgba(10, 15, 28, 0.86)');
+  grad.addColorStop(1, 'rgba(10, 15, 28, 0.95)');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, yStart - 10, width, barH + 10);
+  ctx.fillRect(0, yStart - 12, width, barH + 12);
 
-  const padX = Math.max(18, Math.round(width * 0.028));
-  const lensR = Math.max(14, Math.round(barH * 0.25));
+  const padX = Math.max(16, Math.round(width * 0.025));
+  const lensR = Math.max(13, Math.round(barH * 0.25));
   const lensCx = padX + lensR;
   const lensCy = yStart + Math.round(barH * 0.52);
 
-  // Camera Emblem
   ctx.beginPath();
   ctx.arc(lensCx, lensCy, lensR, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(20, 184, 166, 0.25)';
+  ctx.fillStyle = 'rgba(20, 184, 166, 0.22)';
   ctx.fill();
   ctx.lineWidth = 2;
   ctx.strokeStyle = '#2dd4bf';
@@ -299,34 +200,40 @@ function drawAquaMarkSecurityStampOnCanvas(ctx, width, height, meta) {
   ctx.fillStyle = '#2dd4bf';
   ctx.fill();
 
-  // Left: Brand + Hatchery CAA Number
-  const leftTextX = lensCx + lensR + 14;
-  const titleFont = Math.max(14, Math.round(barH * 0.28));
-  const caaFont = Math.max(11, Math.round(barH * 0.21));
+  // Left Brand Title + CAA Number
+  const leftTextX = lensCx + lensR + 12;
+  const titleFont = Math.max(13, Math.round(barH * 0.28));
+  const subFont = Math.max(10, Math.round(barH * 0.20));
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = `900 ${titleFont}px "Segoe UI", Roboto, sans-serif`;
-  ctx.fillText('AQUA MARK VERIFIED', leftTextX, yStart + Math.round(barH * 0.44));
+  ctx.font = `800 ${titleFont}px "Inter", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText('AQUA MARK', leftTextX, yStart + Math.round(barH * 0.44));
 
   ctx.fillStyle = '#5eead4';
-  ctx.font = `700 ${caaFont}px "Courier New", monospace`;
-  ctx.fillText(`CAA REG: ${meta.caaLicense || 'CAA/AP/VERIFIED'}`, leftTextX, yStart + Math.round(barH * 0.77));
+  ctx.font = `700 ${subFont}px "Inter", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText(`CAA NO: ${meta.caaNumber || 'CAA-VERIFIED'}`, leftTextX, yStart + Math.round(barH * 0.78));
 
-  // Right-Aligned Stylish Date & Time
-  const dateFont = Math.max(13, Math.round(barH * 0.26));
-  const timeFont = Math.max(12, Math.round(barH * 0.22));
-  ctx.save();
-  ctx.textAlign = 'right';
-  const rightPadX = width - padX;
+  // Vertical Divider
+  const divX = Math.round(width * 0.48);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(divX, yStart + Math.round(barH * 0.22));
+  ctx.lineTo(divX, height - Math.round(barH * 0.18));
+  ctx.stroke();
+
+  // Right Side: Clean Stylish Date & Time (No Location / Coordinates)
+  const rightX = divX + 14;
+  const dateFont = Math.max(12, Math.round(barH * 0.25));
+  const tagFont = Math.max(10, Math.round(barH * 0.18));
 
   ctx.fillStyle = '#f8fafc';
-  ctx.font = `italic 700 ${dateFont}px "Georgia", "Times New Roman", serif`;
-  ctx.fillText(meta.dateStr, rightPadX, yStart + Math.round(barH * 0.44));
+  ctx.font = `700 ${dateFont}px "Georgia", "Inter", serif`;
+  ctx.fillText(`${meta.dateTime}`, rightX, yStart + Math.round(barH * 0.46));
 
   ctx.fillStyle = '#34d399';
-  ctx.font = `700 ${timeFont}px "Georgia", "Segoe UI", serif`;
-  ctx.fillText(meta.timeStr, rightPadX, yStart + Math.round(barH * 0.77));
-  ctx.restore();
+  ctx.font = `700 ${tagFont}px "Inter", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText('VERIFIED TIMESTAMP • SECURITY SEAL', rightX, yStart + Math.round(barH * 0.78));
 }
 
 async function stampAndCompressImage(file, meta, maxBytes = 2 * 1024 * 1024) {
@@ -352,7 +259,7 @@ async function stampAndCompressImage(file, meta, maxBytes = 2 * 1024 * 1024) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      drawAquaMarkSecurityStampOnCanvas(ctx, width, height, meta);
+      drawVivoWatermarkOnCanvas(ctx, width, height, meta);
 
       let quality = 0.86;
       const attempt = () => {
@@ -419,7 +326,7 @@ async function stampAndCompressVideo(file, meta, maxBytes = 10 * 1024 * 1024) {
             return;
           }
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          drawAquaMarkSecurityStampOnCanvas(ctx, canvas.width, canvas.height, meta);
+          drawVivoWatermarkOnCanvas(ctx, canvas.width, canvas.height, meta);
           requestAnimationFrame(drawFrame);
         };
         drawFrame();
@@ -429,6 +336,14 @@ async function stampAndCompressVideo(file, meta, maxBytes = 10 * 1024 * 1024) {
       resolve(file);
     }
   });
+}
+
+function extractStoragePathFromUrl(publicUrl, bucketName) {
+  if (!publicUrl || typeof publicUrl !== 'string') return null;
+  const marker = `/object/public/${bucketName}/`;
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(publicUrl.slice(idx + marker.length));
 }
 
 // ============================================================================
@@ -482,7 +397,7 @@ const DICT = {
     caaVerified: 'CAA Certified',
     soldOutBadge: 'SOLD OUT',
     pausedBadge: 'PAUSED BY HATCHERY',
-    unlockHint: 'Hatchery name, contact & Google Maps link unlock after advance/full booking',
+    unlockHint: 'Hatchery name, contact & Google Maps link unlock after 4% advance booking',
     inspectBtn: 'View Hatchery Lineage, Reviews, Videos & PCR Images',
     perSeed: 'per seed',
     stage: 'Seed / PL Stage',
@@ -493,22 +408,22 @@ const DICT = {
     liveVideoBtn: 'Ask for Live Video',
     liveVideoSentBadge: 'Live Video Requested ✓',
     bookSlotBtn: 'Book Packing Slot',
-    myBookingsTitle: 'Your Bookings, Status & Gate-Passes',
+    myBookingsTitle: 'Your Bookings, Escrow Timeline & Gate-Passes',
     noBookingsYet: 'No bookings placed yet.',
-    paidLabel: 'Paid Amount',
-    balancePackingLabel: 'Remaining Balance (96%)',
-    packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete remaining payment or show Gate-Pass QR.',
+    paidLabel: 'Advance Paid (4%)',
+    balancePackingLabel: 'Balance at Packing (96%)',
+    packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete remaining payment at packing.',
     pendingSettlementBadge: '4% Advance Paid • 2% Refundable Hold Active',
-    clearedSettlementBadge: '✅ Packing Complete • 100% Settled & 2% Hold Refunded',
+    clearedSettlementBadge: '✅ Packing Complete • 2% Hold Refunded to You',
     cancelledRefundBadge: '❌ Cancelled • 2% Hold Refunded',
     cancelBookingBtn: 'Cancel Booking (2% Refund)',
     rateSeedLabel: 'Rate Hatchery (1-5★) & Feedback:',
     submitReviewBtn: 'Submit Feedback',
     ratedLabel: 'Feedback Sent',
     advanceReceiptBtn: 'Advance Receipt',
-    finalReceiptBtn: 'Full Paid Receipt',
+    finalReceiptBtn: 'Final Cleared Receipt',
     depositTitle: 'Mandatory ₹10,000 Hatchery Security Deposit',
-    depositSub: 'To protect farmers against fake listings and guarantee quality seed, every Hatchery Owner must complete a one-time ₹10,000 refundable security deposit before activating their Hatchery account.',
+    depositSub: 'To protect farmers against fake listings and guarantee SPF seed quality, every Hatchery Owner must complete a one-time ₹10,000 refundable security deposit before activating their Hatchery account.',
     depositPayBtn: 'Verify & Activate Hatchery Account (₹10,000)',
     unifiedRegTitle: 'Hatchery & Bank Registration (One-Time Setup)',
     unifiedRegSub: 'Your ₹10,000 security deposit is verified! Complete your hatchery & settlement bank profile.',
@@ -517,7 +432,7 @@ const DICT = {
     zoneLabel: 'Coastal Zone',
     addressLabel: 'Hatchery Facility Address',
     mapsLinkLabel: 'Google Maps Location Link (Optional)',
-    descriptionLabel: 'Hatchery Description & Tank Facilities (Optional)',
+    descriptionLabel: 'Hatchery Description & Biosecurity Info (Optional)',
     accHolderLabel: 'Bank Account Holder Name',
     accNoLabel: 'Bank Account Number',
     ifscLabel: 'IFSC Code',
@@ -527,7 +442,7 @@ const DICT = {
     editSellerProfileBtn: 'Edit Profile, Maps & Bank',
     editBrokerProfileBtn: 'Edit Profile & Bank',
     editBuyerProfileBtn: 'Edit Profile',
-    deleteAccountBtn: 'Delete Account to Withdraw Money',
+    deleteAccountBtn: 'Delete Account',
     editBatchBtn: 'Edit Batch',
     saveBtn: 'Save Changes',
     addBatchTitle: 'Publish New Seed Batch & Packing Schedule',
@@ -540,14 +455,15 @@ const DICT = {
     customZonePlaceholder: 'Enter custom zone / district...',
     ratePerSeedLabel: 'Rate (₹ / Seed)',
     stockLabel: 'Available Stock (1 - 100)',
-    minPackingLabel: 'Minimum Packing Qty (1 - 100)',
     availDateLabel: 'Available Packing Date',
     availTimeLabel: 'Available Time Slot',
     pcrUploadBtnLabel: 'Upload PCR Images (≤2MB)',
     videoUploadBtnLabel: 'Upload Tank Videos (≤10MB)',
     pcrHintLabel: 'Required: At least 1 PCR lab report image (Camera or Files)',
+    gpsLockedBtn: 'GPS Locked',
+    captureGpsBtn: 'Tag Tank GPS',
     publishBtn: 'Publish Batch Live',
-    myBatchesTitle: 'Your Active Seed Batches (Pause/Live, Min Packing, Edit All Details)',
+    myBatchesTitle: 'Your Active Seed Batches (Pause/Live, Edit All Details & Media)',
     noBatchesSeller: 'No active batches published yet.',
     saveChangesBtn: 'Save Batch',
     removeBtn: 'Remove',
@@ -585,15 +501,15 @@ const DICT = {
     packingTimeLabel: 'Packing Time Slot',
     brokerMarginLabel: 'Extra Margin (Paise / Seed)',
     transportAddonLabel: 'Include Oxygen Van Delivery (+₹1,500)',
-    paymentMethodLabel: 'Select Payment Method',
+    paymentMethodLabel: 'Select 4% Advance Payment Method',
     utrPlaceholder: 'Enter 12-Digit UPI / Bank UTR Reference Number',
     salinityWarn: 'Salinity variance exceeds 4 PPT. Hatchery will perform gradual acclimatization.',
-    totalSeedValue: 'Total Order Value',
-    advancePaidLabel: 'Advance Paid (4%)',
+    totalSeedValue: 'Total Hatchery Value',
+    advancePaidLabel: 'Advance Paid Now (4%)',
     balanceAtPacking: 'Balance Payable at Packing (96%)',
-    payNowBtn: 'Confirm & Complete Booking',
+    payNowBtn: 'Confirm & Pay 4% Advance',
     receiptTitle: 'OFFICIAL SEED BOOKING RECEIPT',
-    finalReceiptTitle: 'FULL PAID & BALANCE CLEARED RECEIPT',
+    finalReceiptTitle: 'FINAL BALANCE CLEARED RECEIPT',
     sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'Close',
@@ -606,20 +522,21 @@ const DICT = {
       notRegistered: 'No account found for this mobile in this role. Please Sign Up first.',
       alreadyRegistered: 'This mobile is already registered in this role! Please use Login.',
       depositComplete: '₹10,000 Security Deposit Verified! Complete your Hatchery setup.',
-      accountDeleted: 'Your account is deleted and full deposited money has been refunded to your original source account!',
+      accountDeleted: 'Your account and all associated database records have been permanently deleted.',
       regComplete: 'Hatchery & Bank details saved successfully!',
       brokerRegComplete: 'Broker Bank & UPI details saved! Broker Portal activated.',
       profileUpdated: 'Profile updated successfully!',
+      gpsLocked: 'Tank GPS coordinates locked.',
       uploadPcrFirst: 'Please upload at least 1 PCR Lab Report image.',
       batchPublished: 'Seed batch published live!',
       batchUpdated: 'Batch details & cloud files updated!',
-      batchRemoved: 'Seed batch deleted completely!',
+      batchRemoved: 'Seed batch & storage files deleted completely!',
       liveVideoRequested: 'Live tank video request sent to Hatchery!',
       packingMarked: 'Packing marked complete! Buyer notified.',
-      paymentReceivedDone: 'Payment Received confirmed! Full Paid Receipt generated.',
+      paymentReceivedDone: 'Payment Received confirmed! Final Cleared Receipt generated.',
       bookingCancelled: 'Booking cancelled! 2% refundable hold returned & stock restored.',
       farmerLocked: 'Farmer locked to your Broker ID for 365 days!',
-      paymentSuccess: 'Booking confirmed! Gate-Pass & Receipt ready.',
+      paymentSuccess: '4% Advance paid! Gate-Pass & Receipt ready.',
       enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.',
       calcUpdated: 'Harvest, Feed & Net Profit estimates recalculated!',
       cloudSynced: 'Live Cloud Database synced!'
@@ -672,7 +589,7 @@ const DICT = {
     caaVerified: 'CAA సర్టిఫైడ్',
     soldOutBadge: 'స్టాక్ పూర్తయింది (SOLD OUT)',
     pausedBadge: 'తాత్కాలికంగా నిలిపివేయబడింది',
-    unlockHint: 'బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు, ఫోన్ & Google Maps లింక్ అన్‌లాక్ అవుతాయి',
+    unlockHint: '4% అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు, ఫోన్ & Google Maps లింక్ అన్‌లాక్ అవుతాయి',
     inspectBtn: 'హేచరీ చరిత్ర, రివ్యూలు, వీడియోలు & PCR ఫోటోలు చూడండి',
     perSeed: 'ఒక్క సీడ్ ధర',
     stage: 'సీడ్ / PL దశ',
@@ -683,22 +600,22 @@ const DICT = {
     liveVideoBtn: 'Ask for Live Video',
     liveVideoSentBadge: 'లైవ్ వీడియో రిక్వెస్ట్ పంపబడింది ✓',
     bookSlotBtn: 'ప్యాకింగ్ స్లాట్ బుక్ చేయండి',
-    myBookingsTitle: 'మీ బుకింగ్స్, Status & Gate-Pass',
+    myBookingsTitle: 'మీ బుకింగ్స్, Gate-Pass & రసీదులు',
     noBookingsYet: 'మీరు ఇంకా ఎటువంటి సీడ్ బుకింగ్ చేయలేదు.',
-    paidLabel: 'చెల్లించిన మొత్తం',
-    balancePackingLabel: 'మిగిలిన బ్యాలెన్స్ (96%)',
-    packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! మిగిలిన బ్యాలెన్స్ చెల్లించండి లేదా Gate-Pass QR చూపించండి.',
+    paidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
+    balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (96%)',
+    packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! ప్యాకింగ్ వద్ద బ్యాలెన్స్ చెల్లించండి.',
     pendingSettlementBadge: '4% అడ్వాన్స్ చెల్లించబడింది • 2% హోల్డ్ సురక్షితం',
-    clearedSettlementBadge: '✅ ప్యాకింగ్ పూర్తయింది • పూర్తి పేమెంట్ & 2% వాపస్ వచ్చింది',
+    clearedSettlementBadge: '✅ ప్యాకింగ్ పూర్తయింది • 2% హోల్డ్ మీకు వాపస్ వచ్చింది',
     cancelledRefundBadge: '❌ క్యాన్సిల్ చేయబడింది • 2% వాపస్ వచ్చింది',
     cancelBookingBtn: 'బుకింగ్ క్యాన్సిల్ (2% వాపస్)',
     rateSeedLabel: 'రేటింగ్ (1-5★) & అభిప్రాయం రాయండి:',
     submitReviewBtn: 'ఫీడ్‌బ్యాక్ పంపండి',
     ratedLabel: 'ఫీడ్‌బ్యాక్ పంపబడింది',
     advanceReceiptBtn: 'అడ్వాన్స్ రసీదు (Receipt)',
-    finalReceiptBtn: 'పూర్తి పేమెంట్ రసీదు (Full Paid Receipt)',
+    finalReceiptBtn: 'ఫైనల్ క్లియర్డ్ రసీదు (Receipt)',
     depositTitle: '₹10,000 హేచరీ సెక్యూరిటీ డిపాజిట్ (తప్పనిసరి)',
-    depositSub: 'రైతులకు నాణ్యమైన సీడ్ హామీ కోసం ప్రతి హేచరీ యజమాని ఒకసారి ₹10,000 రిఫండబుల్ సెక్యూరిటీ డిపాజిట్ చెల్లించాలి.',
+    depositSub: 'రైతులకు నాణ్యమైన SPF సీడ్ హామీ కోసం ప్రతి హేచరీ యజమాని ఒకసారి ₹10,000 రిఫండబుల్ సెక్యూరిటీ డిపాజిట్ చెల్లించాలి.',
     depositPayBtn: '₹10,000 డిపాజిట్ నిర్ధారించి ఖాతా ప్రారంభించండి',
     unifiedRegTitle: 'హేచరీ & బ్యాంక్ రిజిస్ట్రేషన్ (ఒకే స్టెప్‌లో పూర్తి చేయండి)',
     unifiedRegSub: 'మీ ₹10,000 డిపాజిట్ పూర్తయింది! ఇప్పుడు మీ హేచరీ వివరాలు నమోదు చేయండి.',
@@ -717,7 +634,7 @@ const DICT = {
     editSellerProfileBtn: 'Edit Profile, Maps & Bank',
     editBrokerProfileBtn: 'Edit Profile & Bank',
     editBuyerProfileBtn: 'Edit Profile',
-    deleteAccountBtn: 'Delete Account to Withdraw Money',
+    deleteAccountBtn: 'Delete Account',
     editBatchBtn: 'Edit Batch',
     saveBtn: 'మార్పులు సేవ్ చేయండి',
     addBatchTitle: 'కొత్త సీడ్ బ్యాచ్ & ప్యాకింగ్ సమయం పబ్లిష్ చేయండి',
@@ -730,14 +647,15 @@ const DICT = {
     customZonePlaceholder: 'కొత్త ప్రాంతం / జిల్లా పేరు టైప్ చేయండి...',
     ratePerSeedLabel: 'Rate (₹ / Seed)',
     stockLabel: 'అందుబాటులో ఉన్న స్టాక్ (1 - 100)',
-    minPackingLabel: 'Minimum Packing Qty (1 - 100)',
     availDateLabel: 'ప్యాకింగ్ అందుబాటు తేదీ',
     availTimeLabel: 'ప్యాకింగ్ అందుబాటు సమయం',
     pcrUploadBtnLabel: 'PCR ఫోటోలు అప్‌లోడ్ (≤2MB)',
     videoUploadBtnLabel: 'ట్యాంక్ వీడియోలు అప్‌లోడ్ (≤10MB)',
     pcrHintLabel: 'కనీసం 1 PCR ల్యాబ్ ఫోటో తప్పనిసరి (Camera లేదా Files)',
+    gpsLockedBtn: 'GPS లాక్ అయింది',
+    captureGpsBtn: 'GPS ట్యాగ్ చేయండి',
     publishBtn: 'బ్యాచ్ లైవ్ చేయండి',
-    myBatchesTitle: 'మీ హేచరీ సీడ్ బ్యాచ్‌లు (Pause/Live, Min Packing & Edit)',
+    myBatchesTitle: 'మీ హేచరీ సీడ్ బ్యాచ్‌లు (Pause/Live & Edit)',
     noBatchesSeller: 'మీరు ఇంకా ఎటువంటి బ్యాచ్‌లు యాడ్ చేయలేదు.',
     saveChangesBtn: 'మార్పులు సేవ్ చేయండి',
     removeBtn: 'తొలగించు',
@@ -775,15 +693,15 @@ const DICT = {
     packingTimeLabel: 'ప్యాకింగ్ సమయం (Time Slot)',
     brokerMarginLabel: 'Extra Margin (Paise / Seed)',
     transportAddonLabel: 'ఆక్సిజన్ వ్యాన్ రవాణా జతచేయండి (+₹1,500)',
-    paymentMethodLabel: 'పేమెంట్ విధానం ఎంచుకోండి',
+    paymentMethodLabel: '4% అడ్వాన్స్ పేమెంట్ విధానం ఎంచుకోండి',
     utrPlaceholder: '12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి',
     salinityWarn: 'హేచరీ నీటికి మరియు చెరువు నీటికి మధ్య 4 PPT కంటే ఎక్కువ తేడా ఉంది.',
-    totalSeedValue: 'మొత్తం ఆర్డర్ విలువ',
+    totalSeedValue: 'హేచరీ ఆర్డర్ విలువ',
     advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
     balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (96%)',
-    payNowBtn: 'బుకింగ్ నిర్ధారించండి',
+    payNowBtn: '4% అడ్వాన్స్ చెల్లించి బుక్ చేయండి',
     receiptTitle: 'అధికారిక సీడ్ బుకింగ్ రసీదు (RECEIPT)',
-    finalReceiptTitle: 'పూర్తి పేమెంట్ క్లియర్డ్ రసీదు (FULL PAID RECEIPT)',
+    finalReceiptTitle: 'ఫైనల్ బ్యాలెన్స్ క్లియర్డ్ రసీదు (FINAL RECEIPT)',
     sellerDetailsHeading: 'Seller (Hatchery) Details',
     printBtn: 'Print',
     closeBtn: 'మూసివేయండి',
@@ -796,20 +714,21 @@ const DICT = {
       notRegistered: 'ఈ విభాగంలో ఈ నంబర్ రిజిస్టర్ కాలేదు. ముందుగా Sign Up అవ్వండి.',
       alreadyRegistered: 'ఈ విభాగంలో ఈ నంబర్ ఇప్పటికే రిజిస్టర్ అయింది! దయచేసి Login అవ్వండి.',
       depositComplete: '₹10,000 సెక్యూరిటీ డిపాజిట్ పూర్తయింది! ఇప్పుడు హేచరీ వివరాలు నమోదు చేయండి.',
-      accountDeleted: 'మీ అకౌంట్ తొలగించబడింది మరియు మీ డిపాజిట్ డబ్బు మీ అసలు అకౌంట్‌కు తిరిగి పంపబడింది!',
+      accountDeleted: 'మీ అకౌంట్ మరియు డేటాబేస్ వివరాలు శాశ్వతంగా తొలగించబడ్డాయి.',
       regComplete: 'హేచరీ & బ్యాంక్ వివరాలు సేవ్ అయ్యాయి!',
       brokerRegComplete: 'బ్రోకర్ బ్యాంక్ & UPI వివరాలు సేవ్ అయ్యాయి!',
       profileUpdated: 'ప్రొఫైల్ వివరాలు అప్‌డేట్ అయ్యాయి!',
+      gpsLocked: 'హేచరీ GPS లొకేషన్ లాక్ అయింది.',
       uploadPcrFirst: 'దయచేసి కనీసం 1 PCR ల్యాబ్ ఫోటో అప్‌లోడ్ చేయండి.',
       batchPublished: 'కొత్త సీడ్ బ్యాచ్ లైవ్ అయింది!',
       batchUpdated: 'బ్యాచ్ వివరాలు & ఫైల్స్ అప్‌డేట్ అయ్యాయి!',
-      batchRemoved: 'సీడ్ బ్యాచ్ తొలగించబడింది.',
+      batchRemoved: 'సీడ్ బ్యాచ్ & స్టోరేజ్ ఫైల్స్ తొలగించబడ్డాయి.',
       liveVideoRequested: 'లైవ్ ట్యాంక్ వీడియో రిక్వెస్ట్ హేచరీకి పంపబడింది!',
       packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతుకు పంపబడింది!',
-      paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! Full Paid Receipt సిద్ధం.',
+      paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! Final Receipt సిద్ధం.',
       bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! 2% వాపస్ వచ్చింది.',
       farmerLocked: 'రైతు 365 రోజుల పాటు మీ ID కి లాక్ చేయబడ్డారు!',
-      paymentSuccess: 'బుకింగ్ పూర్తయింది! Gate-Pass & రసీదు సిద్ధం.',
+      paymentSuccess: '4% అడ్వాన్స్ పేమెంట్ పూర్తయింది! Gate-Pass & రసీదు సిద్ధం.',
       enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి.',
       calcUpdated: 'దిగుబడి & లాభాల లెక్కలు అప్‌డేట్ అయ్యాయి!',
       cloudSynced: 'లైవ్ డేటాబేస్ సింక్ పూర్తయింది!'
@@ -817,9 +736,20 @@ const DICT = {
   }
 };
 
+function safeLoadStorage(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function AquaMarkApp() {
   const [lang, setLang] = useState('en');
-  const [darkMode, setDarkMode] = useState(() => safeStorage.get('aqm_v12_dark', false));
+  const [darkMode, setDarkMode] = useState(() => safeLoadStorage('aqm_v11_dark', false));
   const t = DICT[lang] || DICT.en;
 
   // Separate Camera & File Input Refs
@@ -832,69 +762,187 @@ function AquaMarkApp() {
   const editVidFileRef = useRef(null);
   const editVidCamRef = useRef(null);
 
-  const [currentUser, setCurrentUser] = useState(() => safeStorage.get('aqm_v12_user', null));
-  const [registeredUsers, setRegisteredUsers] = useState(() => safeStorage.get('aqm_v12_users_db', {}));
+  const [currentUser, setCurrentUser] = useState(() => safeLoadStorage('aqm_v11_user', null));
+  // Role-isolated user map keyed by `${phone}_${role}` so same mobile has separate Sign Up & Password per role
+  const [registeredUsers, setRegisteredUsers] = useState(() => safeLoadStorage('aqm_v11_users_db', {}));
 
-  // Core Application States
-  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeStorage.get('aqm_v12_hatcheries', INITIAL_DEMO_HATCHERIES));
-  const [brokerProfiles, setBrokerProfiles] = useState(() => safeStorage.get('aqm_v12_brokers', {}));
-  const [batches, setBatches] = useState(() => safeStorage.get('aqm_v12_batches', INITIAL_DEMO_BATCHES));
-  const [bookings, setBookings] = useState(() => safeStorage.get('aqm_v12_bookings', []));
-  const [brokerFarmers, setBrokerFarmers] = useState(() => safeStorage.get('aqm_v12_farmers', []));
-  const [savedBatchIds, setSavedBatchIds] = useState(() => safeStorage.get('aqm_v12_wishlist', []));
-  const [liveVideoRequests, setLiveVideoRequests] = useState(() => safeStorage.get('aqm_v12_videos', []));
-  const [farmerPonds, setFarmerPonds] = useState(() => safeStorage.get('aqm_v12_ponds', []));
+  // Live Supabase States
+  const [hatcheryProfiles, setHatcheryProfiles] = useState({});
+  const [brokerProfiles, setBrokerProfiles] = useState({});
+  const [batches, setBatches] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [brokerFarmers, setBrokerFarmers] = useState([]);
+  const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v11_wishlist', []));
+  const [liveVideoRequests, setLiveVideoRequests] = useState([]);
+  const [farmerPonds, setFarmerPonds] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [selectedNotifDetail, setSelectedNotifDetail] = useState(null);
+  const [showSellerDepositModal, setShowSellerDepositModal] = useState(false);
+  const [addDepositAmount, setAddDepositAmount] = useState('5000');
+  const [addDepositUtr, setAddDepositUtr] = useState('');
+  const [addDepositMethod, setAddDepositMethod] = useState('DIRECT_UPI');
+  const [addDepositQrRevealed, setAddDepositQrRevealed] = useState(false);
+  const [isWithdrawingOnDelete, setIsWithdrawingOnDelete] = useState(false);
+  const [showSellerScanQrModal, setShowSellerScanQrModal] = useState(false);
+  const [scanQrInput, setScanQrInput] = useState('');
+  const [scanQrError, setScanQrError] = useState('');
+  const [statusModalBooking, setStatusModalBooking] = useState(null);
+  const [statusAnimStep, setStatusAnimStep] = useState(0);
+  const [payRemainingBooking, setPayRemainingBooking] = useState(null);
+  const [payRemainingForm, setPayRemainingForm] = useState({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
 
-  // Role-Specific Notifications State
-  const [notifications, setNotifications] = useState(() => safeStorage.get('aqm_v12_notifications', [
-    {
-      id: 'NTF-WELCOME-1',
-      targetRole: 'ALL',
-      targetPhone: 'ALL',
-      title: 'Welcome to Aqua Mark Exchange',
-      message: 'All booking updates, cashback refunds, QR gate-pass settlements, and live video alerts appear here with full details.',
-      category: 'SYSTEM',
-      timestamp: new Date().toLocaleString('en-IN'),
-      read: false
+  useEffect(() => { try { localStorage.setItem('aqm_v11_dark', JSON.stringify(darkMode)); } catch { } }, [darkMode]);
+  useEffect(() => {
+    try {
+      if (currentUser) localStorage.setItem('aqm_v11_user', JSON.stringify(currentUser));
+      else localStorage.removeItem('aqm_v11_user');
+    } catch { }
+  }, [currentUser]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_users_db', JSON.stringify(registeredUsers)); } catch { } }, [registeredUsers]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_wishlist', JSON.stringify(savedBatchIds)); } catch { } }, [savedBatchIds]);
+
+  // =========================================================================
+  // LOAD & SYNC ALL DATA FROM SUPABASE
+  // =========================================================================
+  const syncAllFromSupabase = async () => {
+    try {
+      const [batchesRes, bookingsRes, kvRes, usersRes] = await Promise.all([
+        supabase.from('batches').select('*').order('created_at', { ascending: false }),
+        supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+        supabase.from('app_kv_store').select('*'),
+        supabase.from('app_users').select('*')
+      ]);
+
+      if (batchesRes.data) {
+        setBatches(batchesRes.data.map(r => (r.data && r.data.id ? r.data : {
+          id: r.id,
+          ownerPhone: r.owner_phone,
+          realName: r.real_name,
+          species: r.species,
+          plStage: r.pl_stage,
+          pricePer1000: Number(r.price_per_1000 || 0.43),
+          availableStock: Number(r.available_stock || 0),
+          salinity: Number(r.salinity || 16),
+          bonusPercent: Number(r.bonus_percent || 15),
+          zone: r.zone,
+          pcrImages: r.pcr_images || [],
+          tankVideos: []
+        })));
+      }
+
+      if (bookingsRes.data) {
+        setBookings(bookingsRes.data.map(r => (r.data && r.data.bookingId ? r.data : {
+          bookingId: r.booking_id,
+          farmerPhone: r.farmer_phone,
+          farmerName: r.farmer_name,
+          hatcheryOwnerPhone: r.hatchery_owner_phone,
+          quantity: Number(r.quantity || 0),
+          totalSeedCost: Number(r.total_seed_cost || 0),
+          packingStatus: r.packing_status,
+          settlement: r.settlement || {}
+        })));
+      }
+
+      if (kvRes.data) {
+        kvRes.data.forEach(item => {
+          if (item.key === 'hatcheries') setHatcheryProfiles(item.value || {});
+          if (item.key === 'brokers') setBrokerProfiles(item.value || {});
+          if (item.key === 'farmers') setBrokerFarmers(item.value || []);
+          if (item.key === 'ponds') setFarmerPonds(item.value || []);
+          if (item.key === 'live_videos') setLiveVideoRequests(item.value || []);
+          if (item.key === 'notifications') setNotifications(item.value || []);
+        });
+      }
+
+      if (usersRes.data) {
+        const dbMap = {};
+        usersRes.data.forEach(u => {
+          const compositeKey = u.phone.includes('_') ? u.phone : `${u.phone}_${u.role || 'buyer'}`;
+          dbMap[compositeKey] = {
+            ...u,
+            phone: u.phone.split('_')[0]
+          };
+        });
+        setRegisteredUsers(prev => ({ ...prev, ...dbMap }));
+      }
+    } catch (err) {
+      console.error('Supabase sync error:', err);
     }
-  ]));
-  const [showNotificationDrawer, setShowNotificationDrawer] = useState(false);
+  };
 
-  // Persist states automatically
-  useEffect(() => safeStorage.set('aqm_v12_dark', darkMode), [darkMode]);
-  useEffect(() => safeStorage.set('aqm_v12_user', currentUser), [currentUser]);
-  useEffect(() => safeStorage.set('aqm_v12_users_db', registeredUsers), [registeredUsers]);
-  useEffect(() => safeStorage.set('aqm_v12_hatcheries', hatcheryProfiles), [hatcheryProfiles]);
-  useEffect(() => safeStorage.set('aqm_v12_brokers', brokerProfiles), [brokerProfiles]);
-  useEffect(() => safeStorage.set('aqm_v12_batches', batches), [batches]);
-  useEffect(() => safeStorage.set('aqm_v12_bookings', bookings), [bookings]);
-  useEffect(() => safeStorage.set('aqm_v12_farmers', brokerFarmers), [brokerFarmers]);
-  useEffect(() => safeStorage.set('aqm_v12_wishlist', savedBatchIds), [savedBatchIds]);
-  useEffect(() => safeStorage.set('aqm_v12_videos', liveVideoRequests), [liveVideoRequests]);
-  useEffect(() => safeStorage.set('aqm_v12_ponds', farmerPonds), [farmerPonds]);
-  useEffect(() => safeStorage.set('aqm_v12_notifications', notifications), [notifications]);
+  useEffect(() => {
+    syncAllFromSupabase();
+  }, []);
 
-  // Helper to push role-isolated notifications with full details
-  const pushNotification = ({ targetRole, targetPhone, title, message, category = 'UPDATE', details = null }) => {
-    const newItem = {
-      id: `NTF-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
-      targetRole,
-      targetPhone: (targetPhone || '').replace(/\D/g, '').slice(-10),
+  const saveKvToSupabase = async (key, value) => {
+    await supabase.from('app_kv_store').upsert({ key, value, updated_at: new Date().toISOString() });
+  };
+
+  const pushAppNotification = async (targetPhone, targetRole, title, message, details = {}) => {
+    if (!targetPhone) return;
+    const now = new Date();
+    const notif = {
+      id: `NTF-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      targetPhone: String(targetPhone).slice(-10),
+      targetRole: targetRole || null,
       title,
       message,
-      category,
       details,
-      timestamp: `${new Date().toLocaleDateString('en-IN')} • ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`,
-      read: false
+      read: false,
+      createdAt: `${now.toLocaleDateString('en-IN')} • ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
     };
-    setNotifications(prev => [newItem, ...prev]);
+    setNotifications(prev => {
+      const next = [notif, ...prev].slice(0, 100);
+      saveKvToSupabase('notifications', next);
+      return next;
+    });
+  };
+
+  const saveBatchToSupabase = async (batchObj) => {
+    await supabase.from('batches').upsert({
+      id: batchObj.id,
+      owner_phone: batchObj.ownerPhone,
+      real_name: batchObj.realName,
+      species: batchObj.species,
+      pl_stage: batchObj.plStage,
+      price_per_1000: batchObj.pricePer1000,
+      available_stock: batchObj.availableStock,
+      salinity: batchObj.salinity,
+      bonus_percent: batchObj.bonusPercent,
+      zone: batchObj.zone,
+      pcr_images: batchObj.pcrImages || [],
+      data: batchObj
+    });
+  };
+
+  const saveBookingToSupabase = async (bkObj) => {
+    await supabase.from('bookings').upsert({
+      booking_id: bkObj.bookingId,
+      farmer_phone: bkObj.farmerPhone,
+      farmer_name: bkObj.farmerName,
+      hatchery_owner_phone: bkObj.hatcheryOwnerPhone,
+      quantity: bkObj.quantity,
+      total_seed_cost: bkObj.totalSeedCost,
+      packing_status: bkObj.packingStatus,
+      settlement: bkObj.settlement,
+      data: bkObj
+    });
+  };
+
+  const deleteStorageFilesByUrls = async (urls, bucketName) => {
+    if (!urls || urls.length === 0) return;
+    const paths = urls.map(u => extractStoragePathFromUrl(u, bucketName)).filter(Boolean);
+    if (paths.length > 0) {
+      await supabase.storage.from(bucketName).remove(paths);
+    }
   };
 
   // =========================================================================
-  // AUTHENTICATION STATES
+  // AUTHENTICATION STATES (ROLE-ISOLATED SIGN UP / LOGIN / FORGOT PASSWORD)
   // =========================================================================
   const [loginRole, setLoginRole] = useState('buyer');
-  const [authMode, setAuthMode] = useState('signup');
+  const [authMode, setAuthMode] = useState('signup'); // 'signup' | 'login' | 'forgot'
   const [loginName, setLoginName] = useState('');
   const [loginPhone, setLoginPhone] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -903,32 +951,10 @@ function AquaMarkApp() {
   const [waVerifiedDone, setWaVerifiedDone] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Hatchery ₹10,000 Security Deposit & Top-up Modal States
+  // Hatchery ₹10,000 Security Deposit States
   const [depositPayMethod, setDepositPayMethod] = useState('DIRECT_UPI');
   const [depositQrRevealed, setDepositQrRevealed] = useState(false);
   const [depositUtr, setDepositUtr] = useState('');
-  const [depositSourceInput, setDepositSourceInput] = useState('');
-  const [showHatcheryDepositModal, setShowHatcheryDepositModal] = useState(false);
-  const [addDepositAmount, setAddDepositAmount] = useState('5000');
-  const [addDepositUtr, setAddDepositUtr] = useState('');
-  const [addDepositSource, setAddDepositSource] = useState('');
-  const [showAddMoneyQr, setShowAddMoneyQr] = useState(false);
-
-  // Hatchery QR Scanner Modal States
-  const [showHatcheryQrScanner, setShowHatcheryQrScanner] = useState(false);
-  const [qrScanInput, setQrScanInput] = useState('');
-  const [cameraStreamActive, setCameraStreamActive] = useState(false);
-  const scannerVideoRef = useRef(null);
-
-  // Buyer Remaining Balance Payment Modal State
-  const [payRemainingBooking, setPayRemainingBooking] = useState(null);
-  const [remainingPayMethod, setRemainingPayMethod] = useState('DIRECT_UPI');
-  const [remainingQrRevealed, setRemainingQrRevealed] = useState(false);
-  const [remainingUtr, setRemainingUtr] = useState('');
-
-  // Buyer Animated Status Tracking Modal State
-  const [statusModalBooking, setStatusModalBooking] = useState(null);
-  const [animatedStepIndex, setAnimatedStepIndex] = useState(0);
 
   // Buyer & Broker Edit Profile Modal States
   const [showBasicEditProfileModal, setShowBasicEditProfileModal] = useState(false);
@@ -939,7 +965,7 @@ function AquaMarkApp() {
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
   const [showDeletePwd, setShowDeletePwd] = useState(false);
 
-  // Upload Progress & Media Lightbox
+  // Upload Progress & Media Lightbox (Top-Layer z-[9999])
   const [uploadProgress, setUploadProgress] = useState({ active: false, percent: 0, label: '' });
   const [mediaPickerTarget, setMediaPickerTarget] = useState(null);
   const [fullScreenMedia, setFullScreenMedia] = useState(null);
@@ -1000,13 +1026,14 @@ function AquaMarkApp() {
     pricePer1000: 0.42,
     stockAmount: 10,
     stockUnit: 'LAKHS',
-    minPackAmount: 2,
-    minPackUnit: 'LAKHS',
+    minPackingLakhs: 1,
     bonusPercent: 15,
     availableDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     availableTimeSlot: 'All Day (24 Hours Flexible)',
     pcrImages: [],
-    tankVideos: []
+    tankVideos: [],
+    removedPcrUrls: [],
+    removedVideoUrls: []
   });
 
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -1022,10 +1049,10 @@ function AquaMarkApp() {
     packingTimeSlot: 'All Day (24 Hours Flexible)',
     brokerMarginPaise: '',
     includeTransport: false,
-    paymentPlan: 'ADVANCE', // 'ADVANCE' (4%) | 'FULL' (100%)
     paymentMethod: 'RAZORPAY',
-    upiSubMode: 'QR',
-    qrRevealed: false,
+    paymentOption: 'ADVANCE', // 'ADVANCE' | 'FULL'
+    upiSubMode: 'QR', // 'QR' | 'APP'
+    qrRevealed: false, // Blurred until "Show QR" is clicked
     utrReference: ''
   });
 
@@ -1054,8 +1081,7 @@ function AquaMarkApp() {
     pricePer1000: 0.43,
     stockAmount: '10',
     stockUnit: 'LAKHS',
-    minPackAmount: '2',
-    minPackUnit: 'LAKHS',
+    minPackingLakhs: '1',
     salinity: 16,
     bonusPercent: 15,
     availableDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
@@ -1063,10 +1089,11 @@ function AquaMarkApp() {
   });
   const [pcrImages, setPcrImages] = useState([]);
   const [tankVideos, setTankVideos] = useState([]);
+  const [gpsLocation, setGpsLocation] = useState('');
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 4200);
+    setTimeout(() => setToast(null), 4000);
   };
 
   const computeSeedCount = (amountStr, unit) => {
@@ -1074,50 +1101,6 @@ function AquaMarkApp() {
     const multiplier = unit === 'MILLIONS' ? 1000000 : 100000;
     return num * multiplier;
   };
-
-  // Sequential animation trigger when Status modal opens
-  useEffect(() => {
-    if (!statusModalBooking) {
-      setAnimatedStepIndex(0);
-      return;
-    }
-    const isCleared = statusModalBooking.settlement?.status === 'BALANCE_CLEARED';
-    const isPacked = statusModalBooking.packingStatus === 'PACKING_DONE_BY_SELLER' || isCleared;
-    const maxStep = isCleared ? 4 : isPacked ? 3 : 2;
-
-    setAnimatedStepIndex(0);
-    let current = 0;
-    const timer = setInterval(() => {
-      current += 1;
-      setAnimatedStepIndex(current);
-      if (current >= maxStep) clearInterval(timer);
-    }, 340);
-    return () => clearInterval(timer);
-  }, [statusModalBooking]);
-
-  // Camera stream handler for Hatchery QR Scanner
-  useEffect(() => {
-    let stream = null;
-    if (showHatcheryQrScanner && navigator.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then((s) => {
-          stream = s;
-          setCameraStreamActive(true);
-          if (scannerVideoRef.current) {
-            scannerVideoRef.current.srcObject = s;
-          }
-        })
-        .catch(() => {
-          setCameraStreamActive(false);
-        });
-    }
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      setCameraStreamActive(false);
-    };
-  }, [showHatcheryQrScanner]);
 
   const pageBg = darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900';
   const cardBg = darkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900';
@@ -1151,6 +1134,7 @@ function AquaMarkApp() {
       return;
     }
 
+    // Open WhatsApp with pre-filled verification message and automatically return focus to portal
     setIsVerifyingWa(true);
     const verifyToken = `AQM-${loginRole.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
     const waText = `Aqua Mark Verified ${loginRole.toUpperCase()}\nMobile: +91 ${cleanPhone}\nToken: ${verifyToken}`;
@@ -1163,10 +1147,10 @@ function AquaMarkApp() {
       setIsVerifyingWa(false);
       setWaVerifiedDone(true);
       showToast(t.toasts.waVerified);
-    }, 1200);
+    }, 1800);
   };
 
-  const handleCompleteSignUpOrReset = (e) => {
+  const handleCompleteSignUpOrReset = async (e) => {
     e.preventDefault();
     const cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
     if (cleanPhone.length !== 10) {
@@ -1189,18 +1173,18 @@ function AquaMarkApp() {
       name: finalName,
       role: loginRole,
       password: loginPassword.trim(),
-      depositPaid: existing?.depositPaid || Boolean(hatcheryProfiles[cleanPhone]?.depositPaid),
-      depositUtr: existing?.depositUtr || hatcheryProfiles[cleanPhone]?.depositUtr || '',
+      depositPaid: existing?.depositPaid || false,
+      depositUtr: existing?.depositUtr || '',
       last_login: new Date().toISOString()
     };
 
     setRegisteredUsers(prev => ({ ...prev, [roleKey]: userRecord }));
-    pushNotification({
-      targetRole: loginRole,
-      targetPhone: cleanPhone,
-      title: authMode === 'forgot' ? 'Password Reset Successful' : 'Account Registered & Verified',
-      message: `Welcome ${finalName}! Your ${t.portalBadges[loginRole]} is active on +91 ${cleanPhone}.`,
-      category: 'ACCOUNT'
+    await supabase.from('app_users').upsert({
+      phone: roleKey,
+      name: finalName,
+      role: loginRole,
+      password: loginPassword.trim(),
+      last_login: new Date().toISOString()
     });
 
     completePortalLogin({
@@ -1211,7 +1195,7 @@ function AquaMarkApp() {
     });
   };
 
-  const handlePasswordLoginSubmit = (e) => {
+  const handlePasswordLoginSubmit = async (e) => {
     e.preventDefault();
     const cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
     if (cleanPhone.length !== 10) {
@@ -1228,6 +1212,10 @@ function AquaMarkApp() {
       showToast(t.toasts.wrongPassword);
       return;
     }
+
+    await supabase.from('app_users').update({
+      last_login: new Date().toISOString()
+    }).eq('phone', roleKey);
 
     completePortalLogin({
       role: loginRole,
@@ -1250,6 +1238,7 @@ function AquaMarkApp() {
     }
     setWaVerifiedDone(false);
     setLoginPassword('');
+    syncAllFromSupabase();
   };
 
   const handleLogout = () => {
@@ -1259,13 +1248,12 @@ function AquaMarkApp() {
     setLoginPassword('');
     setSelectedBatch(null);
     setModalError('');
-    setShowNotificationDrawer(false);
   };
 
   // =========================================================================
-  // HATCHERY ₹10,000 MANDATORY SECURITY DEPOSIT & ADD MONEY TOP-UP
+  // HATCHERY ₹10,000 MANDATORY SECURITY DEPOSIT CONFIRMATION
   // =========================================================================
-  const handleConfirmHatcheryDeposit = (e) => {
+  const handleConfirmHatcheryDeposit = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
     if ((depositPayMethod === 'DIRECT_UPI' || depositPayMethod === 'BANK_TO_BANK') && !depositUtr.trim()) {
@@ -1277,7 +1265,6 @@ function AquaMarkApp() {
       ? `RZP_DEP_${Math.floor(100000 + Math.random() * 900000)}`
       : `${depositPayMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${depositUtr.trim().toUpperCase()}`;
 
-    const sourceAcc = depositSourceInput.trim() || (depositPayMethod === 'DIRECT_UPI' ? `UPI (${utrRef})` : `Bank Account (${utrRef})`);
     const roleKey = getUserKey(currentUser.phone, 'seller');
     const existingUser = registeredUsers[roleKey] || {
       phone: currentUser.phone,
@@ -1285,101 +1272,41 @@ function AquaMarkApp() {
       role: 'seller',
       password: ''
     };
-    const updatedUserRecord = { ...existingUser, depositPaid: true, depositUtr: utrRef, depositSourceAccount: sourceAcc };
+    const updatedUserRecord = { ...existingUser, depositPaid: true, depositUtr: utrRef };
 
     setRegisteredUsers(prev => ({ ...prev, [roleKey]: updatedUserRecord }));
-    setCurrentUser(prev => ({ ...prev, depositPaid: true, depositUtr: utrRef, depositSourceAccount: sourceAcc }));
+    setCurrentUser(prev => ({ ...prev, depositPaid: true, depositUtr: utrRef }));
+
+    await supabase.from('app_users').upsert({
+      phone: roleKey,
+      name: currentUser.name,
+      role: 'seller',
+      password: existingUser.password,
+      last_login: new Date().toISOString()
+    });
 
     if (hatcheryProfiles[currentUser.phone]) {
-      const existingProf = hatcheryProfiles[currentUser.phone];
       const nextProfiles = {
         ...hatcheryProfiles,
         [currentUser.phone]: {
-          ...existingProf,
+          ...hatcheryProfiles[currentUser.phone],
           depositPaid: true,
-          depositAmount: (existingProf.depositAmount || 0) + 10000,
           depositUtr: utrRef,
-          depositSourceAccount: sourceAcc,
-          depositHistory: [
-            { id: `DEP-${Date.now()}`, amount: 10000, ref: utrRef, source: sourceAcc, date: new Date().toLocaleDateString('en-IN'), note: 'Initial Security Deposit' },
-            ...(existingProf.depositHistory || [])
-          ]
+          depositAmount: Number(hatcheryProfiles[currentUser.phone]?.depositAmount || 0) + 10000,
+          depositSourceAccount: utrRef
         }
       };
       setHatcheryProfiles(nextProfiles);
+      await saveKvToSupabase('hatcheries', nextProfiles);
     }
 
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: currentUser.phone,
-      title: '₹10,000 Security Deposit Verified',
-      message: `Your security deposit of ₹10,000 (Ref: ${utrRef}) from ${sourceAcc} is verified and locked safely.`,
-      category: 'DEPOSIT'
-    });
-
     setDepositUtr('');
-    setDepositSourceInput('');
     setDepositQrRevealed(false);
     showToast(t.toasts.depositComplete);
   };
 
-  const handleAddMoreDepositMoney = (e) => {
-    e.preventDefault();
-    if (!currentUser?.phone || !hatcheryProfiles[currentUser.phone]) return;
-    const addAmt = Math.max(1000, Number(addDepositAmount) || 0);
-    if (!addDepositUtr.trim()) {
-      showToast(t.toasts.enterUtr);
-      return;
-    }
-
-    const existingProf = hatcheryProfiles[currentUser.phone];
-    const cleanRef = `UPI_${addDepositUtr.trim().toUpperCase()}`;
-    const src = addDepositSource.trim() || existingProf.depositSourceAccount || existingProf.bankDetails?.upiId || 'Registered UPI/Bank';
-    const newTotal = (existingProf.depositAmount || 10000) + addAmt;
-
-    const updatedProf = {
-      ...existingProf,
-      depositAmount: newTotal,
-      depositSourceAccount: src,
-      depositHistory: [
-        {
-          id: `DEP-${Date.now()}`,
-          amount: addAmt,
-          ref: cleanRef,
-          source: src,
-          date: new Date().toLocaleDateString('en-IN'),
-          note: 'Additional Security Deposit Top-Up'
-        },
-        ...(existingProf.depositHistory || [
-          {
-            id: 'DEP-INIT',
-            amount: existingProf.depositAmount || 10000,
-            ref: existingProf.depositUtr || 'VERIFIED_10K',
-            source: existingProf.depositSourceAccount || existingProf.bankDetails?.upiId || 'Initial Deposit Account',
-            date: existingProf.registeredAt || new Date().toLocaleDateString('en-IN'),
-            note: 'Mandatory Security Deposit'
-          }
-        ])
-      ]
-    };
-
-    setHatcheryProfiles(prev => ({ ...prev, [currentUser.phone]: updatedProf }));
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: currentUser.phone,
-      title: `₹${addAmt.toLocaleString('en-IN')} Added to Security Deposit`,
-      message: `Total Hatchery Deposit balance is now ₹${newTotal.toLocaleString('en-IN')} (Ref: ${cleanRef}, Source: ${src}).`,
-      category: 'DEPOSIT'
-    });
-
-    setAddDepositUtr('');
-    setAddDepositSource('');
-    setShowAddMoneyQr(false);
-    showToast(`₹${addAmt.toLocaleString('en-IN')} added! Total Deposit: ₹${newTotal.toLocaleString('en-IN')}`);
-  };
-
   // =========================================================================
-  // BUYER & BROKER EDIT PROFILE
+  // BUYER & BROKER EDIT PROFILE (NAME + MOBILE WITH RE-VERIFICATION)
   // =========================================================================
   const openBasicEditProfile = () => {
     if (!currentUser) return;
@@ -1406,10 +1333,10 @@ function AquaMarkApp() {
       window.focus();
       setEditProfileDraft(prev => ({ ...prev, verifying: false, phoneVerified: true }));
       showToast('New mobile number verified via WhatsApp!');
-    }, 1200);
+    }, 1500);
   };
 
-  const handleSaveBasicProfile = (e) => {
+  const handleSaveBasicProfile = async (e) => {
     e.preventDefault();
     if (!currentUser) return;
     const cleanNewPhone = (editProfileDraft.phone || '').replace(/\D/g, '').slice(-10);
@@ -1440,12 +1367,24 @@ function AquaMarkApp() {
       return next;
     });
 
+    if (oldKey !== newKey) {
+      await supabase.from('app_users').delete().eq('phone', oldKey);
+    }
+    await supabase.from('app_users').upsert({
+      phone: newKey,
+      name: updatedRecord.name,
+      role: currentUser.role,
+      password: updatedRecord.password,
+      last_login: new Date().toISOString()
+    });
+
     if (currentUser.role === 'mediator' && brokerProfiles[currentUser.phone]) {
       const nextBrokers = { ...brokerProfiles };
       const bp = { ...nextBrokers[currentUser.phone], brokerPhone: cleanNewPhone, brokerName: updatedRecord.name };
       if (currentUser.phone !== cleanNewPhone) delete nextBrokers[currentUser.phone];
       nextBrokers[cleanNewPhone] = bp;
       setBrokerProfiles(nextBrokers);
+      await saveKvToSupabase('brokers', nextBrokers);
     }
 
     setCurrentUser({ ...currentUser, name: updatedRecord.name, phone: cleanNewPhone });
@@ -1454,9 +1393,9 @@ function AquaMarkApp() {
   };
 
   // =========================================================================
-  // PASSWORD-VERIFIED ACCOUNT DELETION + AUTOMATIC REFUND TO SOURCE ACCOUNT
+  // PASSWORD-VERIFIED ACCOUNT DELETION (REMOVES FROM SUPABASE & STATE)
   // =========================================================================
-  const handleConfirmDeleteAccount = (e) => {
+  const handleConfirmDeleteAccount = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
     const roleKey = getUserKey(currentUser.phone, currentUser.role);
@@ -1467,18 +1406,25 @@ function AquaMarkApp() {
     }
 
     const phone = currentUser.phone;
-    let refundAlertMsg = t.toasts.accountDeleted;
+    setRegisteredUsers(prev => {
+      const copy = { ...prev };
+      delete copy[roleKey];
+      return copy;
+    });
+    await supabase.from('app_users').delete().eq('phone', roleKey);
 
     if (currentUser.role === 'seller') {
-      const prof = hatcheryProfiles[phone];
-      const refundAmt = prof?.depositAmount || 10000;
-      const originAccount = prof?.depositSourceAccount || prof?.bankDetails?.upiId || prof?.depositUtr || 'Original Deposit Source Account';
-
-      refundAlertMsg = `Account Deleted! ₹${refundAmt.toLocaleString('en-IN')} Security Deposit has been automatically initiated for refund back to the exact origin account: ${originAccount}.`;
-
       const nextHatcheries = { ...hatcheryProfiles };
       delete nextHatcheries[phone];
       setHatcheryProfiles(nextHatcheries);
+      await saveKvToSupabase('hatcheries', nextHatcheries);
+
+      const owned = batches.filter(b => b.ownerPhone === phone);
+      for (const b of owned) {
+        await deleteStorageFilesByUrls((b.pcrImages || []).map(i => i.url), 'pcr-reports');
+        await deleteStorageFilesByUrls((b.tankVideos || []).map(v => v.url), 'tank-videos');
+        await supabase.from('batches').delete().eq('id', b.id);
+      }
       setBatches(prev => prev.filter(b => b.ownerPhone !== phone));
     }
 
@@ -1486,43 +1432,39 @@ function AquaMarkApp() {
       const nextBrokers = { ...brokerProfiles };
       delete nextBrokers[phone];
       setBrokerProfiles(nextBrokers);
+      await saveKvToSupabase('brokers', nextBrokers);
     }
 
-    setRegisteredUsers(prev => {
-      const copy = { ...prev };
-      delete copy[roleKey];
-      return copy;
-    });
-
+    const withdrawnAmt = currentUser.role === 'seller' ? (hatcheryProfiles[phone]?.depositAmount || 10000) : 0;
+    const refundSource = currentUser.role === 'seller' ? (hatcheryProfiles[phone]?.depositSourceAccount || hatcheryProfiles[phone]?.depositUtr || hatcheryProfiles[phone]?.bankDetails?.upiId || 'Original Source Account') : '';
     setShowDeleteAccountModal(false);
-    setShowHatcheryDepositModal(false);
+    setShowSellerDepositModal(false);
+    setIsWithdrawingOnDelete(false);
     setDeleteConfirmPassword('');
     setIsEditingSellerProfile(false);
     setIsEditingBrokerBank(false);
     setShowBasicEditProfileModal(false);
     handleLogout();
-    showToast(refundAlertMsg);
+    showToast(withdrawnAmt > 0 ? `Account deleted! ₹${withdrawnAmt.toLocaleString('en-IN')} deposit refunded to ${refundSource}.` : t.toasts.accountDeleted);
   };
 
-  const handleManualCloudSync = () => {
+  const handleManualCloudSync = async () => {
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-      showToast(t.toasts.cloudSynced);
-    }, 550);
+    await syncAllFromSupabase();
+    setIsSyncing(false);
+    showToast(t.toasts.cloudSynced);
   };
 
   // =========================================================================
   // SELLER & BROKER PROFILE HANDLERS
   // =========================================================================
-  const handleCompleteUnifiedSellerReg = (e) => {
+  const handleCompleteUnifiedSellerReg = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
     const finalZone = unifiedSellerForm.zone === 'OTHER_CUSTOM'
       ? (unifiedSellerForm.customZone.trim() || 'Coastal Zone')
       : unifiedSellerForm.zone;
 
-    const originAccount = currentUser.depositSourceAccount || unifiedSellerForm.upiId || currentUser.depositUtr || 'Verified Source Account';
     const profile = {
       ownerPhone: currentUser.phone,
       hatcheryCode: `Verified Hatchery #H-${Math.floor(300 + Math.random() * 600)}`,
@@ -1534,19 +1476,7 @@ function AquaMarkApp() {
       description: unifiedSellerForm.description.trim(),
       registeredAt: new Date().toLocaleDateString('en-IN'),
       depositPaid: true,
-      depositAmount: 10000,
       depositUtr: currentUser.depositUtr || 'VERIFIED_10K',
-      depositSourceAccount: originAccount,
-      depositHistory: [
-        {
-          id: `DEP-${Date.now()}`,
-          amount: 10000,
-          ref: currentUser.depositUtr || 'VERIFIED_10K',
-          source: originAccount,
-          date: new Date().toLocaleDateString('en-IN'),
-          note: 'Mandatory Security Deposit'
-        }
-      ],
       bankDetails: {
         accountName: unifiedSellerForm.accountName,
         accountNo: unifiedSellerForm.accountNo,
@@ -1554,18 +1484,13 @@ function AquaMarkApp() {
         upiId: unifiedSellerForm.upiId
       }
     };
-    setHatcheryProfiles(prev => ({ ...prev, [currentUser.phone]: profile }));
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: currentUser.phone,
-      title: 'Hatchery Profile Activated',
-      message: `${profile.realName} (${profile.caaLicense}) is now live and verified.`,
-      category: 'ACCOUNT'
-    });
+    const nextProfiles = { ...hatcheryProfiles, [currentUser.phone]: profile };
+    setHatcheryProfiles(nextProfiles);
+    await saveKvToSupabase('hatcheries', nextProfiles);
     showToast(t.toasts.regComplete);
   };
 
-  const handleCompleteBrokerReg = (e) => {
+  const handleCompleteBrokerReg = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone) return;
     const profile = {
@@ -1578,12 +1503,14 @@ function AquaMarkApp() {
         upiId: brokerBankForm.upiId
       }
     };
-    setBrokerProfiles(prev => ({ ...prev, [currentUser.phone]: profile }));
+    const nextBrokers = { ...brokerProfiles, [currentUser.phone]: profile };
+    setBrokerProfiles(nextBrokers);
     setIsEditingBrokerBank(false);
+    await saveKvToSupabase('brokers', nextBrokers);
     showToast(t.toasts.brokerRegComplete);
   };
 
-  const handleUpdateSellerProfileAndBank = (e) => {
+  const handleUpdateSellerProfileAndBank = async (e) => {
     e.preventDefault();
     if (!currentUser?.phone || !hatcheryProfiles[currentUser.phone]) return;
     const existing = hatcheryProfiles[currentUser.phone];
@@ -1605,9 +1532,11 @@ function AquaMarkApp() {
         upiId: unifiedSellerForm.upiId
       }
     };
-    setHatcheryProfiles(prev => ({ ...prev, [currentUser.phone]: updatedProfile }));
+    const nextProfiles = { ...hatcheryProfiles, [currentUser.phone]: updatedProfile };
+    setHatcheryProfiles(nextProfiles);
+    await saveKvToSupabase('hatcheries', nextProfiles);
 
-    setBatches(prev => prev.map(b =>
+    const updatedBatchesList = batches.map(b =>
       b.ownerPhone === currentUser.phone
         ? {
           ...b,
@@ -1619,15 +1548,18 @@ function AquaMarkApp() {
           bankDetails: updatedProfile.bankDetails
         }
         : b
-    ));
+    );
+    setBatches(updatedBatchesList);
+    for (const b of updatedBatchesList.filter(x => x.ownerPhone === currentUser.phone)) {
+      await saveBatchToSupabase(b);
+    }
 
     setIsEditingSellerProfile(false);
     showToast(t.toasts.profileUpdated);
   };
 
   // =========================================================================
-  // WATERMARK STAMP (NO LOCATION/COORDS, STYLISH DATE/TIME, CAA NUMBER +
-  // FULL-IMAGE TRANSPARENT AQUAMARK DIAGONAL WATERMARK)
+  // VIVO WATERMARK STAMP + COMPRESS & UPLOAD MEDIA TO SUPABASE STORAGE
   // =========================================================================
   const handleMultiplePcrUpload = async (fileList, isEditMode = false) => {
     if (!fileList || fileList.length === 0) return;
@@ -1635,28 +1567,38 @@ function AquaMarkApp() {
     const filesArray = Array.from(fileList);
     const uploadedResults = [];
     const baseCount = isEditMode ? (editBatchValues.pcrImages || []).length : pcrImages.length;
-    const myHatchery = hatcheryProfiles[currentUser?.phone] || {};
 
-    setUploadProgress({ active: true, percent: 25, label: 'Applying AquaMark Security Watermark...' });
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const stampMeta = { caaLicense: myHatchery.caaLicense || 'CAA/AP/VERIFIED', dateStr, timeStr };
+    setUploadProgress({ active: true, percent: 15, label: 'Generating Security Timestamp & CAA Watermark...' });
+    const myCaa = hatcheryProfiles[currentUser?.phone]?.caaLicense || 'CAA-VERIFIED';
+    const dateTimeStr = `${new Date().toLocaleDateString('en-IN')} • ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    const vivoMeta = { caaNumber: myCaa, dateTime: dateTimeStr };
 
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      setUploadProgress({ active: true, percent: 65, label: `Watermarking & Optimizing Image ${i + 1}/${filesArray.length}...` });
-      const readyFile = await stampAndCompressImage(rawFile, stampMeta, 2 * 1024 * 1024);
-      const previewUrl = URL.createObjectURL(readyFile);
-      uploadedResults.push({
-        label: `PCR-Report-${baseCount + i + 1}`,
-        url: previewUrl,
-        stamp: `CAA: ${stampMeta.caaLicense} | ${dateStr} ${timeStr}`
-      });
+      setUploadProgress({ active: true, percent: 45, label: `Applying Vivo GPS Stamp & Compressing ${i + 1}/${filesArray.length}...` });
+
+      const readyFile = await stampAndCompressImage(rawFile, vivoMeta, 2 * 1024 * 1024);
+      setUploadProgress({ active: true, percent: 80, label: `Uploading Image ${i + 1}/${filesArray.length} to Cloud...` });
+
+      const filePath = `pcr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
+      const { error } = await supabase.storage
+        .from('pcr-reports')
+        .upload(filePath, readyFile, { upsert: true });
+
+      if (!error) {
+        const { data: pub } = supabase.storage.from('pcr-reports').getPublicUrl(filePath);
+        uploadedResults.push({
+          label: `Image-${baseCount + i + 1}`,
+          url: pub.publicUrl,
+          stamp: `CAA: ${vivoMeta.caaNumber} | ${vivoMeta.dateTime}`
+        });
+      } else {
+        showToast(`Image Upload Error: ${error.message}`);
+      }
     }
 
-    setUploadProgress({ active: true, percent: 100, label: 'Watermark Applied!' });
-    setTimeout(() => setUploadProgress({ active: false, percent: 0, label: '' }), 600);
+    setUploadProgress({ active: true, percent: 100, label: 'Upload Complete!' });
+    setTimeout(() => setUploadProgress({ active: false, percent: 0, label: '' }), 850);
 
     if (uploadedResults.length > 0) {
       if (isEditMode) {
@@ -1664,7 +1606,7 @@ function AquaMarkApp() {
       } else {
         setPcrImages(prev => [...prev, ...uploadedResults]);
       }
-      showToast(`${uploadedResults.length} PCR image(s) stamped with AquaMark Security Watermark!`);
+      showToast(`${uploadedResults.length} PCR image(s) stamped & uploaded!`);
     }
   };
 
@@ -1674,28 +1616,40 @@ function AquaMarkApp() {
     const filesArray = Array.from(fileList);
     const uploadedVideos = [];
     const baseCount = isEditMode ? (editBatchValues.tankVideos || []).length : tankVideos.length;
-    const myHatchery = hatcheryProfiles[currentUser?.phone] || {};
 
-    setUploadProgress({ active: true, percent: 25, label: 'Applying AquaMark Video Stamp...' });
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const stampMeta = { caaLicense: myHatchery.caaLicense || 'CAA/AP/VERIFIED', dateStr, timeStr };
+    setUploadProgress({ active: true, percent: 15, label: 'Generating Security Timestamp & CAA Watermark...' });
+    const myCaa = hatcheryProfiles[currentUser?.phone]?.caaLicense || 'CAA-VERIFIED';
+    const dateTimeStr = `${new Date().toLocaleDateString('en-IN')} • ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    const vivoMeta = { caaNumber: myCaa, dateTime: dateTimeStr };
 
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      setUploadProgress({ active: true, percent: 65, label: `Watermarking Video ${i + 1}/${filesArray.length}...` });
-      const readyVideo = await stampAndCompressVideo(rawFile, stampMeta, 10 * 1024 * 1024);
-      const previewUrl = URL.createObjectURL(readyVideo);
-      uploadedVideos.push({
-        label: `Tank-Video-${baseCount + i + 1}`,
-        url: previewUrl,
-        stamp: `CAA: ${stampMeta.caaLicense} | ${dateStr} ${timeStr}`
-      });
+      setUploadProgress({ active: true, percent: 45, label: `Stamping & Compressing Video ${i + 1}/${filesArray.length} (≤10MB)...` });
+
+      const readyVideo = await stampAndCompressVideo(rawFile, vivoMeta, 10 * 1024 * 1024);
+      setUploadProgress({ active: true, percent: 80, label: `Uploading Video ${i + 1}/${filesArray.length} to Cloud...` });
+
+      const ext = readyVideo.name.split('.').pop() || 'webm';
+      const filePath = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from('tank-videos')
+        .upload(filePath, readyVideo, { upsert: true });
+
+      if (!error) {
+        const { data: pub } = supabase.storage.from('tank-videos').getPublicUrl(filePath);
+        uploadedVideos.push({
+          label: `Tank-Video-${baseCount + i + 1}`,
+          url: pub.publicUrl,
+          stamp: `CAA: ${vivoMeta.caaNumber} | ${vivoMeta.dateTime}`
+        });
+      } else {
+        showToast(`Video Upload Error: ${error.message}`);
+      }
     }
 
-    setUploadProgress({ active: true, percent: 100, label: 'Video Stamped!' });
-    setTimeout(() => setUploadProgress({ active: false, percent: 0, label: '' }), 600);
+    setUploadProgress({ active: true, percent: 100, label: 'Video Upload Complete!' });
+    setTimeout(() => setUploadProgress({ active: false, percent: 0, label: '' }), 850);
 
     if (uploadedVideos.length > 0) {
       if (isEditMode) {
@@ -1703,14 +1657,20 @@ function AquaMarkApp() {
       } else {
         setTankVideos(prev => [...prev, ...uploadedVideos]);
       }
-      showToast(`${uploadedVideos.length} Tank video(s) stamped & attached!`);
+      showToast(`${uploadedVideos.length} Tank video(s) stamped & uploaded!`);
     }
   };
 
+  const handleCaptureGps = async () => {
+    const loc = await getRichLocationDetails();
+    setGpsLocation(`${loc.placeName} (${loc.coords})`);
+    showToast(t.toasts.gpsLocked);
+  };
+
   // =========================================================================
-  // BATCH PUBLISH (WITH MINIMUM PACKING QTY), PAUSE/RESUME, FULL EDIT & DELETE
+  // BATCH PUBLISH, PAUSE/RESUME TOGGLE, FULL EDIT & DELETE
   // =========================================================================
-  const handlePublishBatch = (e) => {
+  const handlePublishBatch = async (e) => {
     e.preventDefault();
     const myHatchery = hatcheryProfiles[currentUser?.phone];
     if (!myHatchery) return;
@@ -1728,7 +1688,7 @@ function AquaMarkApp() {
       : newBatchForm.plStage;
 
     const exactStockCount = computeSeedCount(newBatchForm.stockAmount, newBatchForm.stockUnit);
-    const exactMinPacking = computeSeedCount(newBatchForm.minPackAmount, newBatchForm.minPackUnit);
+    const minPackingCount = Math.max(1, Number(newBatchForm.minPackingLakhs) || 1) * 100000;
     const customBatchNo = (newBatchForm.batchNumber || '').trim().toUpperCase() || `BATCH-${100 + batches.length + 1}`;
 
     const created = {
@@ -1752,25 +1712,20 @@ function AquaMarkApp() {
       plStage: finalStage,
       pricePer1000: Number(newBatchForm.pricePer1000) || 0.43,
       availableStock: exactStockCount,
-      minPackingQty: exactMinPacking,
+      minPacking: minPackingCount,
       salinity: Number(newBatchForm.salinity) || 16,
       bonusPercent: Number(newBatchForm.bonusPercent) || 15,
       availableDate: newBatchForm.availableDate,
       availableTimeSlot: newBatchForm.availableTimeSlot,
       pcrImages: [...pcrImages],
       tankVideos: [...tankVideos],
+      gpsCoords: gpsLocation || '17.0005° N, 82.2510° E',
       paused: false,
       vigorScore: 96
     };
 
-    setBatches(prev => [created, ...prev]);
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: currentUser.phone,
-      title: `Batch ${created.id} Published Live`,
-      message: `${created.plStage} (${created.species}) • Stock: ${formatSeedQuantityShort(exactStockCount)} • Min Packing: ${formatSeedQuantityShort(exactMinPacking)}.`,
-      category: 'BATCH'
-    });
+    setBatches([created, ...batches]);
+    await saveBatchToSupabase(created);
 
     setPcrImages([]);
     setTankVideos([]);
@@ -1778,13 +1733,18 @@ function AquaMarkApp() {
     showToast(t.toasts.batchPublished);
   };
 
-  const togglePauseBatch = (batchId) => {
-    setBatches(prev => prev.map(b => {
+  const togglePauseBatch = async (batchId) => {
+    let updatedObj = null;
+    const nextList = batches.map(b => {
       if (b.id !== batchId) return b;
-      const nextPaused = !b.paused;
-      showToast(nextPaused ? `Batch ${batchId} paused` : `Batch ${batchId} is now LIVE!`);
-      return { ...b, paused: nextPaused };
-    }));
+      updatedObj = { ...b, paused: !b.paused };
+      return updatedObj;
+    });
+    setBatches(nextList);
+    if (updatedObj) {
+      await saveBatchToSupabase(updatedObj);
+      showToast(updatedObj.paused ? `Batch ${batchId} paused` : `Batch ${batchId} is now LIVE!`);
+    }
   };
 
   const startEditingBatch = (batch) => {
@@ -1794,12 +1754,6 @@ function AquaMarkApp() {
       ? Math.max(1, Math.round(batch.availableStock / 1000000))
       : Math.max(1, Math.round((batch.availableStock || 100000) / 100000));
 
-    const minQty = batch.minPackingQty || 100000;
-    const isMinMillions = minQty >= 1000000 && (minQty % 1000000 === 0);
-    const minAmountVal = isMinMillions
-      ? Math.max(1, Math.round(minQty / 1000000))
-      : Math.max(1, Math.round(minQty / 100000));
-
     setEditBatchValues({
       species: batch.species || 'Litopenaeus vannamei (SyAqua Line)',
       broodstock: batch.broodstock || 'SyAqua USA / Thailand Certified',
@@ -1808,22 +1762,23 @@ function AquaMarkApp() {
       pricePer1000: batch.pricePer1000 || 0.43,
       stockAmount: amountVal,
       stockUnit: isMillions ? 'MILLIONS' : 'LAKHS',
-      minPackAmount: minAmountVal,
-      minPackUnit: isMinMillions ? 'MILLIONS' : 'LAKHS',
+      minPackingLakhs: Math.max(1, Math.round((batch.minPacking || 100000) / 100000)),
       bonusPercent: batch.bonusPercent || 15,
       availableDate: batch.availableDate || new Date().toISOString().split('T')[0],
       availableTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
       pcrImages: [...(batch.pcrImages || [])],
-      tankVideos: [...(batch.tankVideos || [])]
+      tankVideos: [...(batch.tankVideos || [])],
+      removedPcrUrls: [],
+      removedVideoUrls: []
     });
   };
 
-  const saveEditedBatch = (batchId) => {
+  const saveEditedBatch = async (batchId) => {
     const updatedStock = computeSeedCount(editBatchValues.stockAmount, editBatchValues.stockUnit);
-    const updatedMinPack = computeSeedCount(editBatchValues.minPackAmount, editBatchValues.minPackUnit);
-    setBatches(prev => prev.map(b => {
+    let updatedObj = null;
+    const updatedList = batches.map(b => {
       if (b.id !== batchId) return b;
-      return {
+      updatedObj = {
         ...b,
         species: editBatchValues.species,
         broodstock: editBatchValues.broodstock,
@@ -1831,27 +1786,40 @@ function AquaMarkApp() {
         salinity: Number(editBatchValues.salinity),
         pricePer1000: Number(editBatchValues.pricePer1000),
         availableStock: updatedStock,
-        minPackingQty: updatedMinPack,
+        minPacking: Math.max(1, Number(editBatchValues.minPackingLakhs) || 1) * 100000,
         bonusPercent: Number(editBatchValues.bonusPercent),
         availableDate: editBatchValues.availableDate,
         availableTimeSlot: editBatchValues.availableTimeSlot,
         pcrImages: [...(editBatchValues.pcrImages || [])],
         tankVideos: [...(editBatchValues.tankVideos || [])]
       };
-    }));
+      return updatedObj;
+    });
+
+    await deleteStorageFilesByUrls(editBatchValues.removedPcrUrls, 'pcr-reports');
+    await deleteStorageFilesByUrls(editBatchValues.removedVideoUrls, 'tank-videos');
+
+    setBatches(updatedList);
+    if (updatedObj) await saveBatchToSupabase(updatedObj);
     setEditingBatchId(null);
     showToast(t.toasts.batchUpdated);
   };
 
-  const removeBatch = (batchId) => {
-    setBatches(prev => prev.filter(b => b.id !== batchId));
+  const removeBatch = async (batchId) => {
+    const targetBatch = batches.find(b => b.id === batchId);
+    if (targetBatch) {
+      await deleteStorageFilesByUrls((targetBatch.pcrImages || []).map(i => i.url), 'pcr-reports');
+      await deleteStorageFilesByUrls((targetBatch.tankVideos || []).map(v => v.url), 'tank-videos');
+    }
+    setBatches(batches.filter(b => b.id !== batchId));
+    await supabase.from('batches').delete().eq('id', batchId);
     showToast(t.toasts.batchRemoved);
   };
 
   // =========================================================================
-  // BOOKING & PAYMENT FLOW (ADVANCE 4% OR FULL 100% PAYMENT + MIN PACKING)
+  // BOOKING & PAYMENT FLOW (WITH BLURRED-TO-REVEAL QR GENERATOR)
   // =========================================================================
-  const finalizeBookingRecord = (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPaymentNow) => {
+  const finalizeBookingRecord = async (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment = false) => {
     const bonusSeeds = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
     const matchedBrokerFarmer = brokerFarmers.find(
       (f) => (f.phone || '').slice(-10) === (bookingForm.farmerPhone || '').slice(-10)
@@ -1862,8 +1830,8 @@ function AquaMarkApp() {
     const hold2Pct = Math.max(0, advance4Pct - silentPlatform2Pct);
     const brokerExtraMarginTotal = isBrokerLinked ? Math.round(qty * (marginPaiseNum / 100)) : 0;
     const totalFarmerPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
-    const paidNowAmount = isFullPaymentNow ? totalFarmerPayable : advance4Pct;
-    const balanceAtPacking = isFullPaymentNow ? 0 : (totalFarmerPayable - advance4Pct);
+    const paidNow = isFullPayment ? totalFarmerPayable : advance4Pct;
+    const balanceAtPacking = isFullPayment ? 0 : (totalFarmerPayable - advance4Pct);
 
     const now = new Date();
     const issueDateStr = now.toLocaleDateString('en-IN');
@@ -1874,7 +1842,8 @@ function AquaMarkApp() {
       gatePassPin: `GP-${Math.floor(1000 + Math.random() * 9000)}`,
       paymentId: paymentRef,
       paymentMode: bookingForm.paymentMethod,
-      paymentPlan: isFullPaymentNow ? 'FULL' : 'ADVANCE',
+      paymentOption: isFullPayment ? 'FULL' : 'ADVANCE',
+      fullPaid: isFullPayment,
       date: issueDateStr,
       time: issueTimeStr,
       hatcheryOwnerPhone: selectedBatch.ownerPhone,
@@ -1896,16 +1865,17 @@ function AquaMarkApp() {
       brokerMarginPaise: marginPaiseNum,
       brokerExtraMarginTotal,
       totalSeedCost: totalFarmerPayable,
-      tokenAdvance: paidNowAmount,
+      tokenAdvance: paidNow,
       balanceAtPacking,
-      clearedAt: isFullPaymentNow ? `${issueDateStr} ${issueTimeStr}` : null,
+      clearedAt: isFullPayment ? `${issueDateStr} ${issueTimeStr}` : undefined,
       settlement: {
         hold2PctAmount: hold2Pct,
         brokerBase2Pct: isBrokerLinked ? hold2Pct : 0,
         farmerRefundable2Pct: !isBrokerLinked ? hold2Pct : 0,
-        status: isFullPaymentNow ? 'BALANCE_CLEARED' : 'ADVANCE_HOLD'
+        status: isFullPayment ? 'BALANCE_CLEARED' : 'ADVANCE_HOLD'
       },
       packingStatus: 'PACKING_PENDING',
+      gatePassCleared: false,
       rated: false
     };
 
@@ -1915,47 +1885,31 @@ function AquaMarkApp() {
     };
 
     setBatches(prev => prev.map(b => (b.id === selectedBatch.id ? updatedBatch : b)));
-    setBookings(prev => [newBooking, ...prev]);
+    setBookings([newBooking, ...bookings]);
 
-    // Notify Buyer
-    pushNotification({
-      targetRole: 'buyer',
-      targetPhone: newBooking.farmerPhone,
-      title: isFullPaymentNow
-        ? `100% Full Payment Booking Confirmed (${newBooking.bookingId})`
-        : `4% Advance Booking Confirmed (${newBooking.bookingId})`,
-      message: `${selectedBatch.realName} • Batch ${selectedBatch.id} (${qty.toLocaleString('en-IN')} PL). ${isFullPaymentNow ? `Full ₹${totalFarmerPayable.toLocaleString('en-IN')} paid & ₹${hold2Pct.toLocaleString('en-IN')} 2% cashback credited!` : `Paid ₹${paidNowAmount.toLocaleString('en-IN')}. Remaining ₹${balanceAtPacking.toLocaleString('en-IN')} can be paid anytime in My Bookings.`}`,
-      category: 'BOOKING',
-      details: newBooking
-    });
+    await saveBookingToSupabase(newBooking);
+    await saveBatchToSupabase(updatedBatch);
 
-    // Notify Hatchery Owner
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: selectedBatch.ownerPhone,
-      title: `New Packing Slot Booked (${newBooking.bookingId})`,
-      message: `Farmer ${newBooking.farmerName} (+91 ${newBooking.farmerPhone}) booked ${qty.toLocaleString('en-IN')} PL of ${selectedBatch.id} for ${newBooking.packingDate}. Payment: ${isFullPaymentNow ? '100% Full Paid' : '4% Advance Paid'} (Ref: ${paymentRef}).`,
-      category: 'ORDER',
-      details: newBooking
-    });
-
-    // Notify Broker if linked
-    if (isBrokerLinked && newBooking.bookedByRole === 'mediator') {
-      pushNotification({
-        targetRole: 'mediator',
-        targetPhone: newBooking.bookedByPhone,
-        title: `Broker Deal Confirmed (${newBooking.bookingId})`,
-        message: `Booked ${qty.toLocaleString('en-IN')} PL for ${newBooking.farmerName} at ${selectedBatch.realName}. 2% Commission: ₹${hold2Pct.toLocaleString('en-IN')}.`,
-        category: 'COMMISSION',
-        details: newBooking
-      });
-    }
+    await pushAppNotification(
+      selectedBatch.ownerPhone,
+      'seller',
+      `New Seed Booking (${newBooking.bookingId})`,
+      `${bookingForm.farmerName} booked ${qty.toLocaleString('en-IN')} PL (${isFullPayment ? '100% Full Paid' : '4% Advance Paid'}).`,
+      { bookingId: newBooking.bookingId, batchId: selectedBatch.id, farmerName: bookingForm.farmerName, farmerPhone: bookingForm.farmerPhone, amount: paidNow, packingDate: bookingForm.packingDate }
+    );
+    await pushAppNotification(
+      bookingForm.farmerPhone,
+      'buyer',
+      isFullPayment ? `Full Payment Confirmed (${newBooking.bookingId})` : `Booking Confirmed (${newBooking.bookingId})`,
+      `Your slot at ${selectedBatch.realName} for ${qty.toLocaleString('en-IN')} PL is confirmed. Gate-Pass PIN: ${newBooking.gatePassPin}.`,
+      { bookingId: newBooking.bookingId, batchId: selectedBatch.id, hatcheryName: selectedBatch.realName, amount: paidNow, balance: balanceAtPacking }
+    );
 
     setSelectedBatch(null);
     setModalError('');
-    setBookingForm(prev => ({ ...prev, utrReference: '', qrRevealed: false }));
-    setActiveInvoice({ booking: newBooking, receiptType: isFullPaymentNow ? 'FINAL' : 'ADVANCE' });
-    showToast(t.toasts.paymentSuccess);
+    setBookingForm(prev => ({ ...prev, utrReference: '', qrRevealed: false, paymentOption: 'ADVANCE' }));
+    setActiveInvoice({ booking: newBooking, receiptType: isFullPayment ? 'FINAL' : 'ADVANCE' });
+    showToast(isFullPayment ? '100% Full Payment confirmed! Final Receipt & Gate-Pass ready.' : t.toasts.paymentSuccess);
   };
 
   const handleConfirmBookingSubmit = (e) => {
@@ -1969,13 +1923,11 @@ function AquaMarkApp() {
     }
 
     const requestedQty = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
-    const minReqQty = selectedBatch.minPackingQty || 100000;
-
-    if (requestedQty < minReqQty) {
-      setModalError(`Minimum Packing required by hatchery is ${formatSeedQuantityShort(minReqQty)}.`);
+    const minPackingQty = selectedBatch.minPacking || 100000;
+    if (requestedQty < minPackingQty) {
+      setModalError(`Minimum Packing required is ${(minPackingQty / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL (${minPackingQty.toLocaleString('en-IN')} PL).`);
       return;
     }
-
     if (requestedQty > (selectedBatch.availableStock || 0)) {
       setModalError(`Requested quantity (${requestedQty.toLocaleString('en-IN')} PL) exceeds available hatchery stock (${(selectedBatch.availableStock || 0).toLocaleString('en-IN')} PL).`);
       return;
@@ -1984,8 +1936,11 @@ function AquaMarkApp() {
     const marginPaiseNum = Math.min(99, Math.max(0, Number(bookingForm.brokerMarginPaise) || 0));
     const hatcheryFixedCost = Math.round(requestedQty * (selectedBatch.pricePer1000 || 0.42));
     const transportCost = bookingForm.includeTransport ? 1500 : 0;
+    const brokerExtraMarginTotal = currentUser?.role === 'mediator' ? Math.round(requestedQty * (marginPaiseNum / 100)) : 0;
+    const totalPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
     const advance4Pct = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
-    const isFullPaymentNow = bookingForm.paymentPlan === 'FULL';
+    const isFullPayment = bookingForm.paymentOption === 'FULL';
+    const chargeNow = isFullPayment ? totalPayable : advance4Pct;
 
     if (bookingForm.paymentMethod === 'DIRECT_UPI' || bookingForm.paymentMethod === 'BANK_TO_BANK') {
       if (!bookingForm.utrReference.trim()) {
@@ -2000,204 +1955,48 @@ function AquaMarkApp() {
         marginPaiseNum,
         transportCost,
         advance4Pct,
-        isFullPaymentNow
+        isFullPayment
       );
       return;
     }
 
-    finalizeBookingRecord(
-      `RZP_${Math.floor(100000 + Math.random() * 900000)}`,
-      requestedQty,
-      hatcheryFixedCost,
-      marginPaiseNum,
-      transportCost,
-      advance4Pct,
-      isFullPaymentNow
-    );
-  };
-
-  // =========================================================================
-  // BUYER PAY REMAINING 96% BALANCE FROM SITE
-  // =========================================================================
-  const handleCompleteRemainingBalancePayment = (e) => {
-    e.preventDefault();
-    if (!payRemainingBooking) return;
-    if ((remainingPayMethod === 'DIRECT_UPI' || remainingPayMethod === 'BANK_TO_BANK') && !remainingUtr.trim()) {
-      showToast(t.toasts.enterUtr);
-      return;
-    }
-
-    const balRef = remainingPayMethod === 'RAZORPAY'
-      ? `RZP_BAL_${Math.floor(100000 + Math.random() * 900000)}`
-      : `${remainingPayMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${remainingUtr.trim().toUpperCase()}`;
-
-    const now = new Date();
-    const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
-    let updatedRecord = null;
-
-    setBookings(prev => prev.map(bk => {
-      if (bk.bookingId !== payRemainingBooking.bookingId) return bk;
-      updatedRecord = {
-        ...bk,
-        balancePaymentId: balRef,
-        tokenAdvance: bk.totalSeedCost,
-        balanceAtPacking: 0,
-        clearedAt: clearedStamp,
-        settlement: { ...bk.settlement, status: 'BALANCE_CLEARED' }
+    const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (rzpKey && window.Razorpay) {
+      const options = {
+        key: rzpKey,
+        amount: chargeNow * 100,
+        currency: 'INR',
+        name: 'Aqua Mark',
+        description: `${selectedBatch.plStage} Seed ${isFullPayment ? '100% Full Payment' : '4% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
+        prefill: { name: bookingForm.farmerName || 'Farmer', contact: bookingForm.farmerPhone, method: 'upi' },
+        theme: { color: '#0d9488' },
+        handler: function (response) {
+          finalizeBookingRecord(response.razorpay_payment_id, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment);
+        }
       };
-      return updatedRecord;
-    }));
-
-    if (updatedRecord) {
-      pushNotification({
-        targetRole: 'buyer',
-        targetPhone: updatedRecord.farmerPhone,
-        title: `Remaining Balance Paid & 2% Cashback Refunded (${updatedRecord.bookingId})`,
-        message: `Remaining ₹${(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} settled (Ref: ${balRef}). Your ₹${(updatedRecord.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')} 2% refundable hold has been credited back!`,
-        category: 'PAYMENT',
-        details: updatedRecord
-      });
-
-      pushNotification({
-        targetRole: 'seller',
-        targetPhone: updatedRecord.hatcheryOwnerPhone,
-        title: `Full Remaining Balance Settled (${updatedRecord.bookingId})`,
-        message: `Buyer ${updatedRecord.farmerName} settled the remaining ₹${(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} online (Ref: ${balRef}).`,
-        category: 'PAYMENT',
-        details: updatedRecord
-      });
-
-      if (updatedRecord.isBrokerLinked) {
-        pushNotification({
-          targetRole: 'mediator',
-          targetPhone: updatedRecord.bookedByPhone,
-          title: `2% Commission Credited (${updatedRecord.bookingId})`,
-          message: `Balance settled for ${updatedRecord.farmerName}. Your 2% commission of ₹${(updatedRecord.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')} is now credited.`,
-          category: 'COMMISSION',
-          details: updatedRecord
-        });
-      }
-
-      setActiveInvoice({ booking: updatedRecord, receiptType: 'FINAL' });
-    }
-
-    setPayRemainingBooking(null);
-    setRemainingUtr('');
-    setRemainingQrRevealed(false);
-    showToast('Remaining balance settled! Full Paid Receipt generated.');
-  };
-
-  // =========================================================================
-  // HATCHERY SCAN QR -> AUTO PACKING COMPLETED + PAYMENT SETTLED + FULL RECEIPT
-  // =========================================================================
-  const processScannedBuyerGatePass = (rawInput) => {
-    const query = (rawInput || '').trim().toUpperCase();
-    if (!query) {
-      showToast('Please enter or select a Buyer Gate-Pass PIN or Booking ID.');
-      return;
-    }
-
-    const matched = bookings.find(bk =>
-      bk.hatcheryOwnerPhone === currentUser?.phone &&
-      bk.packingStatus !== 'CANCELLED' &&
-      (
-        query.includes((bk.gatePassPin || '').toUpperCase()) ||
-        query.includes((bk.bookingId || '').toUpperCase())
-      )
-    );
-
-    if (!matched) {
-      showToast('No matching active Gate-Pass found for your Hatchery.');
-      return;
-    }
-
-    const now = new Date();
-    const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
-    let updatedBooking = null;
-
-    setBookings(prev => prev.map(bk => {
-      if (bk.bookingId !== matched.bookingId) return bk;
-      updatedBooking = {
-        ...bk,
-        packingStatus: 'FINAL_CLEARED',
-        gatePassCleared: true,
-        tokenAdvance: bk.totalSeedCost,
-        balanceAtPacking: 0,
-        clearedAt: clearedStamp,
-        settlement: { ...bk.settlement, status: 'BALANCE_CLEARED' }
-      };
-      return updatedBooking;
-    }));
-
-    if (updatedBooking) {
-      // Push instant notification to Buyer
-      pushNotification({
-        targetRole: 'buyer',
-        targetPhone: updatedBooking.farmerPhone,
-        title: `Gate-Pass Scanned: Packing Completed & Payment Settled (${updatedBooking.bookingId})`,
-        message: `${updatedBooking.batch?.realName} scanned Gate-Pass ${updatedBooking.gatePassPin}. Packing is completed, full payment is settled, Full Paid Receipt is generated, and ₹${(updatedBooking.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')} 2% hold is refunded!`,
-        category: 'QR_SETTLEMENT',
-        details: updatedBooking
-      });
-
-      // Push instant notification to Hatchery
-      pushNotification({
-        targetRole: 'seller',
-        targetPhone: currentUser.phone,
-        title: `QR Verified & Settled (${updatedBooking.bookingId})`,
-        message: `Scanned ${updatedBooking.gatePassPin} for ${updatedBooking.farmerName}. Packing completed & ₹${(updatedBooking.hatcheryFixedTotal || 0).toLocaleString('en-IN')} settled.`,
-        category: 'QR_SETTLEMENT',
-        details: updatedBooking
-      });
-
-      if (updatedBooking.isBrokerLinked) {
-        pushNotification({
-          targetRole: 'mediator',
-          targetPhone: updatedBooking.bookedByPhone,
-          title: `Gate-Pass Scanned & Commission Released (${updatedBooking.bookingId})`,
-          message: `Packing verified for ${updatedBooking.farmerName}. 2% Commission ₹${(updatedBooking.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')} credited.`,
-          category: 'COMMISSION',
-          details: updatedBooking
-        });
-      }
-
-      setShowHatcheryQrScanner(false);
-      setQrScanInput('');
-      setActiveInvoice({ booking: updatedBooking, receiptType: 'FINAL' });
-      showToast(`Gate-Pass ${updatedBooking.gatePassPin} Verified! Packing Completed, Payment Settled & Full Paid Receipt Generated.`);
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (resp) => setModalError(`Payment Failed: ${resp.error?.description || 'Cancelled'}`));
+      rzp.open();
+    } else {
+      finalizeBookingRecord(`RZP_${Math.floor(100000 + Math.random() * 900000)}`, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment);
     }
   };
 
-  const handleBuyerCancelBooking = (bk) => {
+  const handleBuyerCancelBooking = async (bk) => {
     const updatedBk = {
       ...bk,
       packingStatus: 'CANCELLED',
       settlement: { ...bk.settlement, status: 'CANCELLED_REFUNDED' }
     };
     setBookings(prev => prev.map(item => (item.bookingId === bk.bookingId ? updatedBk : item)));
+    await saveBookingToSupabase(updatedBk);
 
     const targetBatch = batches.find(b => b.id === bk.batch?.id);
     if (targetBatch) {
       const restoredBatch = { ...targetBatch, availableStock: (targetBatch.availableStock || 0) + (bk.quantity || 0) };
       setBatches(prev => prev.map(b => (b.id === restoredBatch.id ? restoredBatch : b)));
+      await saveBatchToSupabase(restoredBatch);
     }
-
-    pushNotification({
-      targetRole: 'buyer',
-      targetPhone: bk.farmerPhone,
-      title: `Booking Cancelled & 2% Refunded (${bk.bookingId})`,
-      message: `Your booking for ${bk.batch?.realName} was cancelled. ₹${(bk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')} 2% refundable hold has been returned.`,
-      category: 'REFUND'
-    });
-
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: bk.hatcheryOwnerPhone,
-      title: `Booking Cancelled by Buyer (${bk.bookingId})`,
-      message: `Farmer ${bk.farmerName} cancelled ${(bk.quantity || 0).toLocaleString('en-IN')} PL of ${bk.batch?.id}. Stock has been automatically restored.`,
-      category: 'ORDER'
-    });
-
     showToast(t.toasts.bookingCancelled);
   };
 
@@ -2210,7 +2009,7 @@ function AquaMarkApp() {
     setVideoRequestTargetBatch(batch);
   };
 
-  const handleConfirmLiveVideoRequest = (e) => {
+  const handleConfirmLiveVideoRequest = async (e) => {
     e.preventDefault();
     if (!videoRequestTargetBatch) return;
     if ((videoRequestForm.whatsapp || '').replace(/\D/g, '').length !== 10) {
@@ -2229,99 +2028,251 @@ function AquaMarkApp() {
       note: videoRequestForm.note.trim(),
       requestedAt: `${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
     };
-    setLiveVideoRequests(prev => [reqObj, ...prev]);
-
-    pushNotification({
-      targetRole: 'seller',
-      targetPhone: videoRequestTargetBatch.ownerPhone,
-      title: `New Live Tank Video Request (${videoRequestTargetBatch.id})`,
-      message: `Farmer ${reqObj.farmerName} (+91 ${reqObj.farmerWhatsapp}) requested a live video for ${videoRequestTargetBatch.plStage}: "${reqObj.note}"`,
-      category: 'VIDEO_REQ'
-    });
-
-    pushNotification({
-      targetRole: 'buyer',
-      targetPhone: currentUser.phone,
-      title: `Live Video Request Sent (${videoRequestTargetBatch.id})`,
-      message: `Your request for live tank video of Batch ${videoRequestTargetBatch.id} (${videoRequestTargetBatch.plStage}) was sent to the hatchery.`,
-      category: 'VIDEO_REQ'
-    });
-
+    const nextReqs = [reqObj, ...liveVideoRequests];
+    setLiveVideoRequests(nextReqs);
+    await saveKvToSupabase('live_videos', nextReqs);
     setVideoRequestTargetBatch(null);
     showToast(t.toasts.liveVideoRequested);
   };
 
-  const handleSellerMarkPacked = (bookingId) => {
+  const handleSellerMarkPacked = async (bookingId) => {
     let targetBk = null;
-    setBookings(prev => prev.map(bk => {
+    const nextList = bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
       targetBk = { ...bk, packingStatus: 'PACKING_DONE_BY_SELLER' };
       return targetBk;
-    }));
-    if (sellerTxModal && targetBk) {
+    });
+    setBookings(nextList);
+    if (sellerTxModal) {
       setSellerTxModal(prev => ({
         ...prev,
         list: prev.list.map(item => (item.bookingId === bookingId ? targetBk : item))
       }));
     }
     if (targetBk) {
-      pushNotification({
-        targetRole: 'buyer',
-        targetPhone: targetBk.farmerPhone,
-        title: `Packing Completed by Hatchery (${targetBk.bookingId})`,
-        message: `${targetBk.batch?.realName} marked packing complete for ${(targetBk.quantity || 0).toLocaleString('en-IN')} PL. You can pay remaining balance in My Bookings or show Gate-Pass QR (${targetBk.gatePassPin}).`,
-        category: 'PACKING',
-        details: targetBk
-      });
+      await saveBookingToSupabase(targetBk);
+      await pushAppNotification(
+        targetBk.farmerPhone,
+        'buyer',
+        `Packing Ready (${targetBk.bookingId})`,
+        `${targetBk.batch?.realName} marked packing complete for Batch ${targetBk.batch?.id}. Present Gate-Pass QR at gate.`,
+        { bookingId: targetBk.bookingId, batchId: targetBk.batch?.id, hatcheryName: targetBk.batch?.realName, balance: targetBk.balanceAtPacking }
+      );
     }
     showToast(t.toasts.packingMarked);
   };
 
-  const handleHatcheryPaymentReceived = (bookingId) => {
+  const handleHatcheryPaymentReceived = async (bookingId) => {
     const now = new Date();
     const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
     let targetBk = null;
 
-    setBookings(prev => prev.map(bk => {
+    const nextList = bookings.map(bk => {
       if (bk.bookingId !== bookingId) return bk;
       targetBk = {
         ...bk,
         packingStatus: 'FINAL_CLEARED',
-        gatePassCleared: true,
-        tokenAdvance: bk.totalSeedCost,
+        fullPaid: true,
         balanceAtPacking: 0,
         clearedAt: clearedStamp,
         settlement: { ...bk.settlement, status: 'BALANCE_CLEARED' }
       };
       return targetBk;
-    }));
-    if (sellerTxModal && targetBk) {
+    });
+    setBookings(nextList);
+    if (sellerTxModal) {
       setSellerTxModal(prev => ({
         ...prev,
         list: prev.list.map(item => (item.bookingId === bookingId ? targetBk : item))
       }));
     }
     if (targetBk) {
-      pushNotification({
-        targetRole: 'buyer',
-        targetPhone: targetBk.farmerPhone,
-        title: `Payment Settled & Full Paid Receipt Ready (${targetBk.bookingId})`,
-        message: `${targetBk.batch?.realName} confirmed payment receipt. Your Full Paid Receipt is generated and ₹${(targetBk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')} 2% hold is refunded!`,
-        category: 'PAYMENT',
-        details: targetBk
-      });
+      await saveBookingToSupabase(targetBk);
+      await pushAppNotification(
+        targetBk.farmerPhone,
+        'buyer',
+        `Payment Settled & 2% Cashback Refunded (${targetBk.bookingId})`,
+        `Full balance settled for ${targetBk.batch?.realName}. 2% Cashback Hold (₹${(targetBk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')}) refunded to your account.`,
+        { bookingId: targetBk.bookingId, cashback: targetBk.settlement?.farmerRefundable2Pct || 0, totalPaid: targetBk.totalSeedCost }
+      );
     }
     showToast(t.toasts.paymentReceivedDone);
   };
 
-  const handleSubmitRatingAndFeedback = (bookingId, batchId) => {
+  const handleAddHatcheryDepositMoney = async (e) => {
+    e.preventDefault();
+    const amt = Number(addDepositAmount) || 0;
+    if (amt < 500) {
+      showToast('Minimum deposit top-up is ₹500.');
+      return;
+    }
+    if ((addDepositMethod === 'DIRECT_UPI' || addDepositMethod === 'BANK_TO_BANK') && !addDepositUtr.trim()) {
+      showToast(t.toasts.enterUtr);
+      return;
+    }
+    const ref = addDepositMethod === 'RAZORPAY'
+      ? `RZP_DEP_${Math.floor(100000 + Math.random() * 900000)}`
+      : `${addDepositMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${addDepositUtr.trim().toUpperCase()}`;
+
+    const prevAmt = Number(hatcheryProfiles[currentUser.phone]?.depositAmount || 10000);
+    const nextAmt = prevAmt + amt;
+    const nextHatcheries = {
+      ...hatcheryProfiles,
+      [currentUser.phone]: {
+        ...hatcheryProfiles[currentUser.phone],
+        depositPaid: true,
+        depositAmount: nextAmt,
+        depositSourceAccount: ref
+      }
+    };
+    setHatcheryProfiles(nextHatcheries);
+    await saveKvToSupabase('hatcheries', nextHatcheries);
+    await pushAppNotification(
+      currentUser.phone,
+      'seller',
+      `₹${amt.toLocaleString('en-IN')} Deposit Added`,
+      `Your Hatchery Security Deposit balance is now ₹${nextAmt.toLocaleString('en-IN')} (Ref: ${ref}).`,
+      { amountAdded: amt, newBalance: nextAmt, ref }
+    );
+    setAddDepositUtr('');
+    setAddDepositQrRevealed(false);
+    showToast(`₹${amt.toLocaleString('en-IN')} added! Total Deposit: ₹${nextAmt.toLocaleString('en-IN')}`);
+  };
+
+  const handleSellerScanQrComplete = async (rawInput) => {
+    setScanQrError('');
+    const cleaned = (rawInput || '').trim();
+    if (!cleaned) {
+      setScanQrError('Please enter or scan a Booking ID / Gate-Pass QR code.');
+      return;
+    }
+    let matchedId = cleaned;
+    if (cleaned.includes('AQUAMARK-GATEPASS:')) {
+      const part = cleaned.split('AQUAMARK-GATEPASS:')[1] || '';
+      matchedId = part.split('|')[0].trim();
+    }
+    const targetBk = bookings.find(
+      bk => bk.hatcheryOwnerPhone === currentUser?.phone &&
+        (bk.bookingId.toUpperCase() === matchedId.toUpperCase() || (bk.gatePassPin || '').toUpperCase() === matchedId.toUpperCase())
+    );
+    if (!targetBk) {
+      setScanQrError('No matching active booking found for this Hatchery Gate-Pass QR / Booking ID.');
+      return;
+    }
+    if (targetBk.settlement?.status === 'CANCELLED_REFUNDED') {
+      setScanQrError('This booking was cancelled and cannot be scanned.');
+      return;
+    }
+
+    const now = new Date();
+    const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    const updatedBk = {
+      ...targetBk,
+      packingStatus: 'FINAL_CLEARED',
+      gatePassCleared: true,
+      fullPaid: true,
+      balanceAtPacking: 0,
+      clearedAt: clearedStamp,
+      settlement: { ...targetBk.settlement, status: 'BALANCE_CLEARED' }
+    };
+
+    setBookings(prev => prev.map(b => (b.bookingId === updatedBk.bookingId ? updatedBk : b)));
+    await saveBookingToSupabase(updatedBk);
+
+    await pushAppNotification(
+      updatedBk.farmerPhone,
+      'buyer',
+      `Packing Completed & Payment Settled (${updatedBk.bookingId})`,
+      `Your Gate-Pass QR was scanned by ${updatedBk.batch?.realName}. Packing is complete, payment is settled, 2% Cashback (₹${(updatedBk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')}) refunded, and your Full Paid Receipt is ready!`,
+      { bookingId: updatedBk.bookingId, batchId: updatedBk.batch?.id, hatcheryName: updatedBk.batch?.realName, clearedAt: clearedStamp, totalPaid: updatedBk.totalSeedCost }
+    );
+    await pushAppNotification(
+      currentUser.phone,
+      'seller',
+      `Gate-Pass Scanned (${updatedBk.bookingId})`,
+      `Packing marked complete & payment settled for ${updatedBk.farmerName} (${(updatedBk.quantity || 0).toLocaleString('en-IN')} PL).`,
+      { bookingId: updatedBk.bookingId, farmerName: updatedBk.farmerName, amount: updatedBk.totalSeedCost }
+    );
+
+    setShowSellerScanQrModal(false);
+    setScanQrInput('');
+    setActiveInvoice({ booking: updatedBk, receiptType: 'FINAL' });
+    showToast(`QR Verified! ${updatedBk.bookingId} marked Packing Completed & Payment Settled.`);
+  };
+
+  const handleBuyerPayRemainingSubmit = async (e) => {
+    e.preventDefault();
+    if (!payRemainingBooking) return;
+    const bk = payRemainingBooking;
+    if ((payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && !payRemainingForm.utrReference.trim()) {
+      showToast(t.toasts.enterUtr);
+      return;
+    }
+    const prefix = payRemainingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : payRemainingForm.paymentMethod === 'BANK_TO_BANK' ? 'NEFT' : 'RZP';
+    const ref = payRemainingForm.paymentMethod === 'RAZORPAY'
+      ? `RZP_BAL_${Math.floor(100000 + Math.random() * 900000)}`
+      : `${prefix}_${payRemainingForm.utrReference.trim().toUpperCase()}`;
+
+    const now = new Date();
+    const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    const updatedBk = {
+      ...bk,
+      fullPaid: true,
+      balancePaymentRef: ref,
+      tokenAdvance: bk.totalSeedCost,
+      balanceAtPacking: 0,
+      clearedAt: clearedStamp,
+      settlement: { ...bk.settlement, status: 'BALANCE_CLEARED' }
+    };
+
+    setBookings(prev => prev.map(item => (item.bookingId === bk.bookingId ? updatedBk : item)));
+    await saveBookingToSupabase(updatedBk);
+
+    await pushAppNotification(
+      bk.hatcheryOwnerPhone,
+      'seller',
+      `Full Remaining Payment Received (${bk.bookingId})`,
+      `${bk.farmerName} paid remaining ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} (Ref: ${ref}).`,
+      { bookingId: bk.bookingId, farmerName: bk.farmerName, amount: bk.balanceAtPacking, ref }
+    );
+    await pushAppNotification(
+      bk.farmerPhone,
+      'buyer',
+      `Full Payment Completed (${bk.bookingId})`,
+      `Remaining balance of ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} paid. Your Final Cleared Receipt is ready.`,
+      { bookingId: bk.bookingId, amount: bk.balanceAtPacking, ref }
+    );
+
+    setPayRemainingBooking(null);
+    setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+    setActiveInvoice({ booking: updatedBk, receiptType: 'FINAL' });
+    showToast('Remaining balance paid! Final Cleared Receipt generated.');
+  };
+
+  const openAnimatedStatusModal = (bk) => {
+    setStatusModalBooking(bk);
+    setStatusAnimStep(0);
+    setTimeout(() => setStatusAnimStep(1), 180);
+    setTimeout(() => setStatusAnimStep(2), 480);
+    setTimeout(() => setStatusAnimStep(3), 780);
+    setTimeout(() => setStatusAnimStep(4), 1080);
+  };
+
+  const handleSubmitRatingAndFeedback = async (bookingId, batchId) => {
     const draft = ratingDrafts[bookingId] || { stars: 5, comment: '' };
     const stars = Number(draft.stars) || 5;
     const comment = (draft.comment || '').trim();
 
-    setBookings(prev => prev.map(bk => (bk.bookingId === bookingId ? { ...bk, rated: true, userRating: stars, userFeedback: comment } : bk)));
+    let updatedBk = null;
+    setBookings(bookings.map(bk => {
+      if (bk.bookingId !== bookingId) return bk;
+      updatedBk = { ...bk, rated: true, userRating: stars, userFeedback: comment };
+      return updatedBk;
+    }));
+    if (updatedBk) await saveBookingToSupabase(updatedBk);
 
-    setBatches(prev => prev.map(b => {
+    let updatedBatch = null;
+    setBatches(batches.map(b => {
       if (b.id !== batchId) return b;
       const prevCount = b.reviewCount || 0;
       const newCount = prevCount + 1;
@@ -2333,26 +2284,28 @@ function AquaMarkApp() {
         comment: comment || 'Verified Packing & Seed Quality',
         date: new Date().toLocaleDateString('en-IN')
       };
-      return {
+      updatedBatch = {
         ...b,
         rating: newAvg,
         reviewCount: newCount,
         reviews: [newReviewObj, ...(b.reviews || [])]
       };
+      return updatedBatch;
     }));
+    if (updatedBatch) await saveBatchToSupabase(updatedBatch);
     showToast(`${t.ratedLabel} (${stars}★)`);
   };
 
   const handleShareBatchFlyer = (batch) => {
-    const flyer = `🦐 *Aqua Mark Verified Seed Batch*\n• Batch: ${batch.id} (${batch.plStage})\n• Species: ${batch.species}\n• Rate: ₹${(batch.pricePer1000 || 0).toFixed(2)}/seed (+${batch.bonusPercent}% Bonus)\n• Min Packing: ${formatSeedQuantityShort(batch.minPackingQty || 100000)}\n• Salinity: ${batch.salinity} PPT | Zone: ${batch.zone}\nBook direct on Aqua Mark!`;
+    const flyer = `🦐 *Aqua Mark Verified Seed Batch*\n• Batch: ${batch.id} (${batch.plStage})\n• Species: ${batch.species}\n• Rate: ₹${(batch.pricePer1000 || 0).toFixed(2)}/seed (+${batch.bonusPercent}% Bonus)\n• Salinity: ${batch.salinity} PPT | Zone: ${batch.zone}\nBook direct on Aqua Mark!`;
     if (navigator.clipboard) navigator.clipboard.writeText(flyer).catch(() => { });
     window.open(`https://wa.me/?text=${encodeURIComponent(flyer)}`, '_blank');
   };
 
   const handleSendBilingualBookingSummary = (bk) => {
     const msg = lang === 'te'
-      ? `🦐 *Aqua Mark అధికారిక సీడ్ బుకింగ్ సారాంశం*\n• Booking ID: ${bk.bookingId} (Gate-Pass: ${bk.gatePassPin || 'GP-1024'})\n• హేచరీ: ${bk.batch?.realName}\n• బ్యాచ్: ${bk.batch?.id} (${bk.batch?.plStage})\n• పరిమాణం: ${(bk.quantity || 0).toLocaleString('en-IN')} + ${(bk.bonusSeeds || 0).toLocaleString('en-IN')} బోనస్ PL\n• ప్యాకింగ్ తేదీ: ${bk.packingDate} (${bk.packingTimeSlot})\n• చెల్లించిన మొత్తం: ₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}\n• మిగిలిన బ్యాలెన్స్: ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}`
-      : `🦐 *Aqua Mark Official Seed Booking Summary*\n• Booking ID: ${bk.bookingId} (Gate-Pass: ${bk.gatePassPin || 'GP-1024'})\n• Hatchery: ${bk.batch?.realName}\n• Batch: ${bk.batch?.id} (${bk.batch?.plStage})\n• Qty: ${(bk.quantity || 0).toLocaleString('en-IN')} + ${(bk.bonusSeeds || 0).toLocaleString('en-IN')} Bonus PL\n• Packing: ${bk.packingDate} (${bk.packingTimeSlot})\n• Paid Amount: ₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}\n• Remaining Balance: ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}`;
+      ? `🦐 *Aqua Mark అధికారిక సీడ్ బుకింగ్ సారాంశం*\n• Booking ID: ${bk.bookingId} (Gate-Pass: ${bk.gatePassPin || 'GP-1024'})\n• హేచరీ: ${bk.batch?.realName}\n• బ్యాచ్: ${bk.batch?.id} (${bk.batch?.plStage})\n• పరిమాణం: ${(bk.quantity || 0).toLocaleString('en-IN')} + ${(bk.bonusSeeds || 0).toLocaleString('en-IN')} బోనస్ PL\n• ప్యాకింగ్ తేదీ: ${bk.packingDate} (${bk.packingTimeSlot})\n• చెల్లించిన అడ్వాన్స్: ₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}\n• ప్యాకింగ్ వద్ద బ్యాలెన్స్: ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}`
+      : `🦐 *Aqua Mark Official Seed Booking Summary*\n• Booking ID: ${bk.bookingId} (Gate-Pass: ${bk.gatePassPin || 'GP-1024'})\n• Hatchery: ${bk.batch?.realName}\n• Batch: ${bk.batch?.id} (${bk.batch?.plStage})\n• Qty: ${(bk.quantity || 0).toLocaleString('en-IN')} + ${(bk.bonusSeeds || 0).toLocaleString('en-IN')} Bonus PL\n• Packing: ${bk.packingDate} (${bk.packingTimeSlot})\n• Advance Paid: ₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}\n• Balance at Packing: ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}`;
     openWhatsAppMessage(bk.batch?.realPhone, msg);
   };
 
@@ -2385,66 +2338,159 @@ function AquaMarkApp() {
     const printWin = window.open('', '_blank', 'width=860,height=1050');
     if (!printWin) return;
 
-    const verifyHash = `AQM-${bk.bookingId.replace('AQ-', '')}-${bk.paymentId.slice(-6).toUpperCase()}`;
+    const verifyHash = `AQM-${bk.bookingId.replace('AQ-', '')}-${(bk.paymentId || '000000').slice(-6).toUpperCase()}`;
     const totalWithBonus = (bk.quantity || 0) + (bk.bonusSeeds || 0);
-    const issueTime = bk.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    const pcrLabels = (bk.batch?.pcrImages || []).map(img => img.label).join(', ') || 'PCR-Report-1';
-    const docHeading = isFinalCleared ? 'FULL PAID & BALANCE CLEARED RECEIPT' : 'OFFICIAL SEED BOOKING RECEIPT';
+    const issueTime = bk.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const pcrLabels = (bk.batch?.pcrImages || []).map(img => img.label).join(', ') || 'Image-1';
+    const srcPpt = Number(bk.batch?.salinity || 16);
+    const dstPpt = Number(bk.pondSalinity || 15);
+    const pptVariance = Math.abs(srcPpt - dstPpt);
+    const transportLabel = bk.includeTransport ? 'Oxygen Van Delivery' : 'Self Pickup at Hatchery Gate';
+    const bonusPct = bk.batch?.bonusPercent || 15;
+    const isPaidFull = isFinalCleared || bk.fullPaid || bk.balanceAtPacking === 0;
 
     printWin.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>AquaMark_Receipt_${bk.bookingId}</title>
+        <title>AquaMark_Certificate_${bk.bookingId}</title>
         <style>
           @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
           body { margin: 0; padding: 0; color: #0f172a; background: #fff; }
-          .sheet { border: 2px solid #0f766e; border-radius: 12px; padding: 22px 24px; min-height: 274mm; display: flex; flex-direction: column; justify-content: space-between; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; }
-          .brand-title { font-size: 22px; font-weight: 900; color: #0f766e; margin: 0; }
-          .verified-stamp { background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; padding: 7px 12px; border-radius: 10px; text-align: right; font-size: 11px; }
-          .meta-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; margin-top: 14px; font-size: 11px; }
+          .sheet { position: relative; border: 2px solid #0f766e; border-radius: 16px; padding: 20px 22px; min-height: 274mm; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+          .bg-wm { position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%) rotate(-18deg); font-size: 46px; font-weight: 900; color: rgba(15, 118, 110, 0.06); white-space: nowrap; pointer-events: none; letter-spacing: 3px; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 14px; }
+          .brand-wrap { display: flex; align-items: center; gap: 12px; }
+          .logo-box { width: 42px; height: 42px; border: 1.5px solid #99f6e4; background: #f0fdfa; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 4px; }
+          .brand-title { font-size: 22px; font-weight: 900; color: #0f766e; margin: 0; letter-spacing: -0.3px; }
+          .brand-sub { font-size: 11px; color: #475569; margin: 2px 0 0; }
+          .verified-stamp { background: #ecfdf5; border: 1.5px solid #6ee7b7; color: #065f46; padding: 8px 14px; border-radius: 10px; text-align: right; font-size: 10.5px; line-height: 1.45; }
+          .verified-stamp strong { font-size: 11.5px; letter-spacing: 0.3px; }
+          .meta-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; margin-top: 14px; font-size: 11px; line-height: 1.45; }
+          .meta-bar strong { color: #334155; font-size: 10.5px; }
           .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-          .box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 14px; font-size: 11.5px; }
-          .box-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #0f766e; margin-bottom: 5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 11.5px; }
-          th { background: #0f766e; color: #fff; text-align: left; padding: 8px 10px; font-size: 10.5px; text-transform: uppercase; }
-          td { padding: 8px 10px; border: 1px solid #e2e8f0; }
-          .totals { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; background: #f8fafc; font-size: 11.5px; margin-top: 14px; }
+          .box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 14px; font-size: 11.5px; line-height: 1.55; background: rgba(255,255,255,0.92); }
+          .box p { margin: 2px 0; }
+          .box-title { font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #0f766e; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.3px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 11.5px; background: rgba(255,255,255,0.92); }
+          th { background: #0f766e; color: #fff; text-align: left; padding: 9px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+          td { padding: 10px; border: 1px solid #cbd5e1; vertical-align: top; }
+          .totals-box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 14px; background: #f8fafc; font-size: 11.5px; }
           .totals-row { display: flex; justify-content: space-between; padding: 3.5px 0; }
-          .totals-highlight { border-top: 1.5px solid #cbd5e1; margin-top: 5px; padding-top: 6px; font-weight: 800; font-size: 13px; color: #065f46; }
-          .footer { margin-top: 18px; padding-top: 12px; border-top: 1.5px dashed #cbd5e1; display: flex; justify-content: space-between; font-size: 10.5px; color: #475569; }
+          .totals-highlight { border-top: 1.5px solid #cbd5e1; margin-top: 5px; padding-top: 6px; font-weight: 800; color: #065f46; }
+          .terms-box { border: 1px solid #a7f3d0; background: #f0fdf4; border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 10.8px; line-height: 1.55; color: #064e3b; }
+          .terms-box strong { display: block; margin-bottom: 4px; color: #0f766e; font-size: 11px; }
+          .checklist-box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 10.5px; color: #334155; background: #fff; }
+          .footer { margin-top: 18px; padding-top: 12px; border-top: 1.5px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10.5px; color: #475569; text-align: center; }
+          .sig-line { border-top: 1px solid #94a3b8; width: 150px; padding-top: 4px; }
         </style>
       </head>
       <body>
         <div class="sheet">
+          <div class="bg-wm">AQUA MARK VERIFIED</div>
           <div>
             <div class="header">
-              <div><h1 class="brand-title">AQUA MARK</h1><p style="font-size:11px;margin:2px 0 0;">${docHeading}</p></div>
-              <div class="verified-stamp"><strong>${isFinalCleared ? '100% FULL PAID & CLEARED' : 'VERIFIED RECEIPT'}</strong><br/><span>Gate-Pass: ${bk.gatePassPin || 'GP-1024'} • Hash: ${verifyHash}</span></div>
+              <div class="brand-wrap">
+                <div class="logo-box">
+                  <img src="/favicon.svg" alt="Aqua Mark" style="width:100%;height:100%;object-fit:contain;" />
+                </div>
+                <div>
+                  <h1 class="brand-title">AQUA MARK</h1>
+                  <p class="brand-sub">Official Aquaculture Seed Booking & Quality Certificate</p>
+                </div>
+              </div>
+              <div class="verified-stamp">
+                <strong>${isPaidFull ? '100% PAID & VERIFIED CERTIFICATE' : '100% VERIFIED CERTIFICATE'}</strong><br/>
+                <span>Date: ${bk.date} • Time: ${issueTime}</span><br/>
+                <span>Hash: ${verifyHash}</span>
+              </div>
             </div>
+
             <div class="meta-bar">
-              <div><strong>Receipt ID:</strong><br/>${bk.bookingId}</div>
-              <div><strong>UTR / Payment Ref:</strong><br/>${bk.balancePaymentId || bk.paymentId}</div>
+              <div><strong>Booking ID:</strong><br/>${bk.bookingId}</div>
+              <div><strong>Payment Ref:</strong><br/>${bk.paymentId}</div>
               <div><strong>Generated At:</strong><br/>${bk.date} (${issueTime})</div>
-              <div><strong>Packing Schedule:</strong><br/>${bk.packingDate} (${bk.packingTimeSlot || 'All Day'})</div>
+              <div><strong>Scheduled Packing:</strong><br/>${bk.packingDate}</div>
             </div>
+
             <div class="grid-2">
-              <div class="box"><div class="box-title">Buyer / Farmer Details</div><p><strong>Farmer Name:</strong> ${bk.farmerName}</p><p><strong>Mobile:</strong> +91 ${bk.farmerPhone}</p><p><strong>Pond Salinity:</strong> ${bk.pondSalinity} PPT</p></div>
-              <div class="box"><div class="box-title">Seller (Hatchery) Details</div><p><strong>Hatchery:</strong> ${bk.batch?.realName}</p><p><strong>CAA Reg:</strong> ${bk.batch?.caaLicense}</p><p><strong>Phone:</strong> +91 ${bk.batch?.realPhone}</p><p><strong>Address:</strong> ${bk.batch?.realAddress}</p></div>
+              <div class="box">
+                <div class="box-title">Buyer / Farmer Details</div>
+                <p><strong>Farmer Name:</strong> ${bk.farmerName}</p>
+                <p><strong>WhatsApp / Mobile:</strong> +91 ${bk.farmerPhone}</p>
+                <p><strong>Target Pond Salinity:</strong> ${dstPpt} PPT</p>
+                <p><strong>Transport Mode:</strong> ${transportLabel}</p>
+              </div>
+              <div class="box">
+                <div class="box-title">Hatchery (Seller) Details</div>
+                <p><strong>Hatchery Name:</strong> ${bk.batch?.realName}</p>
+                <p><strong>CAA Reg. Number:</strong> ${bk.batch?.caaLicense}</p>
+                <p><strong>Hatchery Phone:</strong> +91 ${bk.batch?.realPhone}</p>
+                <p><strong>Facility Address:</strong> ${bk.batch?.realAddress} (${bk.batch?.zone || 'Coastal Zone'})</p>
+              </div>
             </div>
+
             <table>
-              <thead><tr><th>Batch & Species</th><th>Stage</th><th>Salinity</th><th>Booked Qty</th><th>Bonus</th><th>Total Packing Qty</th></tr></thead>
-              <tbody><tr><td><strong>${bk.batch?.id} — ${bk.batch?.species}</strong><br/><small>PCR: ${pcrLabels}</small></td><td>${bk.batch?.plStage}</td><td>${bk.batch?.salinity} PPT</td><td>${(bk.quantity || 0).toLocaleString('en-IN')} PL</td><td>+${(bk.bonusSeeds || 0).toLocaleString('en-IN')} PL</td><td><strong>${totalWithBonus.toLocaleString('en-IN')} PL</strong></td></tr></tbody>
+              <thead>
+                <tr>
+                  <th>Batch & Species</th>
+                  <th>Stage</th>
+                  <th>Hatchery PPT</th>
+                  <th>Booked Qty</th>
+                  <th>Bonus (+${bonusPct}%)</th>
+                  <th>Total Packing Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>${bk.batch?.id} — ${bk.batch?.species}</strong><br/><small style="color:#475569;">PCR Lab Attachments: ${pcrLabels}</small></td>
+                  <td>${bk.batch?.plStage}</td>
+                  <td>${srcPpt} PPT</td>
+                  <td>${(bk.quantity || 0).toLocaleString('en-IN')} PL</td>
+                  <td style="color:#059669;font-weight:700;">+${(bk.bonusSeeds || 0).toLocaleString('en-IN')} PL</td>
+                  <td><strong>${totalWithBonus.toLocaleString('en-IN')} PL</strong></td>
+                </tr>
+              </tbody>
             </table>
-            <div class="totals">
-              <div class="totals-row"><span>Total Order Value:</span><span>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</span></div>
-              <div class="totals-row"><span>Total Paid Amount:</span><span>₹${(bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
-              <div class="totals-row totals-highlight"><span>${isFinalCleared ? 'Settlement Status: 100% FULL PAID' : 'Balance Payable at Packing (96%):'}</span><span>₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</span></div>
+
+            <div class="grid-2">
+              <div class="box">
+                <div class="box-title">Salinity Acclimatization & Packing Schedule</div>
+                <p><strong>Source Tank Salinity:</strong> ${srcPpt} PPT</p>
+                <p><strong>Destination Pond Salinity:</strong> ${dstPpt} PPT</p>
+                <p><strong>Variance:</strong> ${pptVariance} PPT (Adjust 1 PPT / 4 hrs)</p>
+                <p><strong>Packing Slot:</strong> ${bk.packingTimeSlot || 'All Day'}</p>
+              </div>
+              <div class="totals-box">
+                <div class="totals-row"><span>Unit Seed Rate:</span><span>₹${(bk.hatcheryFixedRate || bk.batch?.pricePer1000 || 0.43).toFixed(2)} / seed</span></div>
+                <div class="totals-row"><span>Total Order Value:</span><span><b>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</b></span></div>
+                <div class="totals-row totals-highlight"><span>${isPaidFull ? 'Total Paid (100% Settled):' : '4% Advance Paid:'}</span><span>₹${(isPaidFull ? bk.totalSeedCost : bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
+                <div class="totals-row"><span>${isPaidFull ? 'Remaining Balance:' : '96% Balance at Gate:'}</span><span><b>₹${(isPaidFull ? 0 : bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span></div>
+              </div>
+            </div>
+
+            <div class="terms-box">
+              <strong>Mandatory Hatchery Quality & Bio-Security Terms:</strong>
+              1. Hatchery certifies that the above batch is quality-tested for WSSV, EHP, IHHNV, and TSV as per attached PCR reports (${pcrLabels}).<br/>
+              2. Oxygen packing density must not exceed 1,000 PL per liter for transit durations exceeding 4 hours.<br/>
+              3. Farmer must inspect active swimming behavior and sample count at the hatchery gate before confirming final release.
+            </div>
+
+            <div class="checklist-box">
+              <strong>Gate Dispatch Verification Checklist:</strong> &nbsp;&nbsp;
+              [ ✓ ] CAA License Verified &nbsp;&nbsp;&nbsp;
+              [ ✓ ] PCR Lab Images Attached (${pcrLabels}) &nbsp;&nbsp;&nbsp;
+              [ ✓ ] ${isPaidFull ? '100% Payment Settled' : '4% Advance Confirmed'} &nbsp;&nbsp;&nbsp;
+              [ ${bk.gatePassCleared ? '✓' : '&nbsp;'} ] Oxygen Packing Count Checked at Gate
             </div>
           </div>
-          <div class="footer"><span>Farmer Signature</span><span>Digitally Verified by Aqua Mark • ${bk.date}</span><span>Authorized Hatchery Seal</span></div>
+
+          <div class="footer">
+            <div class="sig-line">Farmer / Buyer Signature</div>
+            <div><strong>Digitally Verified by Aqua Mark</strong><br/>Timestamp: ${bk.date} ${issueTime}</div>
+            <div class="sig-line">Authorized Hatchery Seal & Sign</div>
+          </div>
         </div>
         <script>window.onload = function() { setTimeout(function() { window.print(); }, 250); };</script>
       </body>
@@ -2459,7 +2505,7 @@ function AquaMarkApp() {
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const handleAddBrokerFarmer = (e) => {
+  const handleAddBrokerFarmer = async (e) => {
     e.preventDefault();
     if ((newFarmer.phone || '').replace(/\D/g, '').length !== 10) {
       showToast(t.toasts.invalidPhone);
@@ -2475,19 +2521,23 @@ function AquaMarkApp() {
       acres: Number(newFarmer.acres) || 1,
       lockedUntil: lockDate.toISOString().split('T')[0]
     };
-    setBrokerFarmers(prev => [entry, ...prev]);
+    const nextFarmers = [entry, ...brokerFarmers];
+    setBrokerFarmers(nextFarmers);
+    await saveKvToSupabase('farmers', nextFarmers);
     setNewFarmer({ name: '', phone: '', village: '', acres: '' });
     showToast(t.toasts.farmerLocked);
   };
 
-  const handleAddPondLog = (e) => {
+  const handleAddPondLog = async (e) => {
     e.preventDefault();
     const entry = {
       id: `PND-${farmerPonds.length + 1}`,
       ...newPondForm,
       loggedAt: new Date().toLocaleDateString('en-IN')
     };
-    setFarmerPonds(prev => [entry, ...prev]);
+    const nextPonds = [entry, ...farmerPonds];
+    setFarmerPonds(nextPonds);
+    await saveKvToSupabase('ponds', nextPonds);
     showToast(lang === 'te' ? 'చెరువు ఫీడ్ & స్టాకింగ్ వివరాలు సేవ్ అయ్యాయి!' : 'Pond Stocking & Daily Feed Log saved!');
   };
 
@@ -2600,8 +2650,8 @@ function AquaMarkApp() {
 
         <header className={`border-b px-6 py-4 flex items-center justify-between ${cardBg}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-black text-base shadow-xs">
-              AM
+            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
+              <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <span className="text-lg font-extrabold tracking-tight block leading-none">Aqua Mark</span>
@@ -2635,6 +2685,7 @@ function AquaMarkApp() {
               <p className="text-xs opacity-60 mt-1">{t.selectRoleSub}</p>
             </div>
 
+            {/* ROLE TABS (BUYER / SELLER / MEDIATOR — COMPLETELY SEPARATE REGISTRATIONS) */}
             <div className="grid grid-cols-3 gap-3">
               {[
                 { id: 'buyer', icon: ShoppingBag },
@@ -2666,6 +2717,7 @@ function AquaMarkApp() {
               })}
             </div>
 
+            {/* SIGN UP & LOGIN TABS UNDERNEATH */}
             <div className={`grid grid-cols-2 p-1 rounded-2xl border ${subCardBg}`}>
               <button
                 type="button"
@@ -2683,6 +2735,7 @@ function AquaMarkApp() {
               </button>
             </div>
 
+            {/* MODE A: SIGN UP */}
             {authMode === 'signup' && (
               <form onSubmit={handleCompleteSignUpOrReset} className="space-y-4">
                 <div>
@@ -2775,6 +2828,7 @@ function AquaMarkApp() {
               </form>
             )}
 
+            {/* MODE B: LOGIN */}
             {authMode === 'login' && (
               <form onSubmit={handlePasswordLoginSubmit} className="space-y-4">
                 <div>
@@ -2834,12 +2888,13 @@ function AquaMarkApp() {
               </form>
             )}
 
+            {/* MODE C: FORGOT PASSWORD */}
             {authMode === 'forgot' && (
               <form onSubmit={handleCompleteSignUpOrReset} className="space-y-4">
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs font-bold text-amber-500 flex items-center justify-between">
                   <span>{t.resetPasswordTitle}</span>
                   <button type="button" onClick={() => setAuthMode('login')} className="underline text-[11px] cursor-pointer">
-                    Back
+                    {t.back}
                   </button>
                 </div>
 
@@ -2919,30 +2974,15 @@ function AquaMarkApp() {
         </div>
 
         <footer className="text-center py-4 text-[11px] opacity-50">
-          Aqua Mark © 2026 • Direct B2B Aquaculture Seed & Settlement Exchange
+          Aqua Mark © 2026 • Live Cloud Database Connected
         </footer>
       </div>
     );
   }
 
   // =========================================================================
-  // ROLE-SPECIFIC COMPUTED DATA & NOTIFICATIONS FILTER
+  // ROLE-SPECIFIC COMPUTED DATA
   // =========================================================================
-  const myNotifications = notifications.filter(n =>
-    (n.targetRole === 'ALL') ||
-    (n.targetRole === currentUser.role && (!n.targetPhone || n.targetPhone === currentUser.phone))
-  );
-  const unreadNotificationCount = myNotifications.filter(n => !n.read).length;
-
-  const handleOpenNotificationDrawer = () => {
-    setShowNotificationDrawer(true);
-    setNotifications(prev => prev.map(n =>
-      ((n.targetRole === 'ALL') || (n.targetRole === currentUser.role && (!n.targetPhone || n.targetPhone === currentUser.phone)))
-        ? { ...n, read: true }
-        : n
-    ));
-  };
-
   const myFixedHatchery = currentUser.role === 'seller' ? hatcheryProfiles[currentUser.phone] : null;
   const sellerRoleRecord = currentUser.role === 'seller' ? registeredUsers[getUserKey(currentUser.phone, 'seller')] : null;
   const isSellerDepositPaid = Boolean(
@@ -2969,6 +3009,12 @@ function AquaMarkApp() {
   const myBrokerBookings = currentUser.role === 'mediator'
     ? bookings.filter(bk => bk.bookedByPhone === currentUser.phone && bk.bookedByRole === 'mediator')
     : [];
+
+  const buyerRefundedTotal = currentUser.role === 'buyer'
+    ? bookings
+      .filter(b => b.farmerPhone === currentUser.phone && !b.isBrokerLinked && (b.settlement?.status === 'BALANCE_CLEARED' || b.settlement?.status === 'CANCELLED_REFUNDED'))
+      .reduce((sum, b) => sum + (b.settlement?.farmerRefundable2Pct || 0), 0)
+    : 0;
 
   return (
     <div className={`min-h-screen font-sans select-none transition-colors ${pageBg}`}>
@@ -3009,8 +3055,8 @@ function AquaMarkApp() {
       <header className={`border-b sticky top-0 z-40 ${cardBg}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-black text-base shadow-xs">
-              AM
+            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
+              <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -3035,14 +3081,15 @@ function AquaMarkApp() {
               </button>
             )}
 
-            {/* HATCHERY SCAN QR BUTTON RIGHT NEXT TO REFRESH BUTTON */}
-            {currentUser.role === 'seller' && myFixedHatchery && (
+            {/* HATCHERY SCAN QR BUTTON NEXT TO REFRESH */}
+            {currentUser.role === 'seller' && isSellerDepositPaid && myFixedHatchery && (
               <button
                 type="button"
-                onClick={() => { setQrScanInput(''); setShowHatcheryQrScanner(true); }}
-                className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                onClick={() => { setScanQrInput(''); setScanQrError(''); setShowSellerScanQrModal(true); }}
+                className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer"
+                title="Scan Buyer Gate-Pass QR"
               >
-                <ScanLine className="w-4 h-4" /> Scan QR
+                <QrCode className="w-3.5 h-3.5" /> Scan QR
               </button>
             )}
 
@@ -3051,25 +3098,32 @@ function AquaMarkApp() {
               type="button"
               onClick={handleManualCloudSync}
               className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-              title="Sync Live Data"
+              title="Sync Live Cloud Data"
             >
               <RefreshCw className={`w-4 h-4 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`} />
             </button>
 
-            {/* ROLE-SPECIFIC NOTIFICATION BELL BUTTON IN TOP HEADER (ALL PORTALS) */}
-            <button
-              type="button"
-              onClick={handleOpenNotificationDrawer}
-              className={`relative p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4 text-teal-600" />
-              {unreadNotificationCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-xs">
-                  {unreadNotificationCount}
-                </span>
-              )}
-            </button>
+            {/* NOTIFICATION BELL BUTTON FOR ALL USERS */}
+            {(() => {
+              const myUnreadCount = notifications.filter(
+                n => n.targetPhone === currentUser.phone && (!n.targetRole || n.targetRole === currentUser.role) && !n.read
+              ).length;
+              return (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedNotifDetail(null); setShowNotifPanel(true); }}
+                  className={`relative p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                  title="Notifications"
+                >
+                  <Bell className="w-4 h-4 text-teal-600" />
+                  {myUnreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                      {myUnreadCount > 9 ? '9+' : myUnreadCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })()}
 
             <button
               type="button"
@@ -3090,9 +3144,9 @@ function AquaMarkApp() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 px-[13px] py-[5px] rounded-xl text-[11px] font-bold text-white cursor-pointer"
             >
-              <LogOut className="w-3.5 h-3.5" /> {t.logout}
+              <LogOut className="w-3 h-3" /> {t.logout}
             </button>
           </div>
         </div>
@@ -3152,6 +3206,7 @@ function AquaMarkApp() {
                     <p className="text-xs opacity-60 max-w-md mx-auto">{t.emptyMarketSub}</p>
                   </div>
                 ) : (
+                  /* INTERNAL SCROLLABLE HATCHERIES CONTAINER */
                   <div className="max-h-[72vh] overflow-y-auto pr-1.5 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {filteredAndSortedBatches.map((batch) => {
@@ -3165,7 +3220,6 @@ function AquaMarkApp() {
                         const videoRequested = liveVideoRequests.some(r => r.batchId === batch.id && r.farmerPhone === currentUser.phone);
                         const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
                         const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
-                        const minPackingQty = batch.minPackingQty || 100000;
 
                         return (
                           <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
@@ -3179,8 +3233,9 @@ function AquaMarkApp() {
                                     <span className="bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                                       <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
                                     </span>
-                                    <span className="bg-amber-500/15 text-amber-600 border border-amber-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                      <Package className="w-3 h-3" /> Min Packing: {formatSeedQuantityShort(minPackingQty).split(' (')[0]}
+                                    {/* FEATURE 1: PL VIGOR & STRESS-TEST LAB SCORECARD BADGE */}
+                                    <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
                                     </span>
                                     <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
                                     <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
@@ -3200,7 +3255,7 @@ function AquaMarkApp() {
                                       <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
                                     )}
                                   </h3>
-                                  <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'Certified Line'}</span></p>
+                                  <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
                                   {isUnlocked ? (
                                     <div className="mt-1 space-y-1">
                                       <p className="text-xs opacity-80">{batch.realAddress} • +91 {batch.realPhone}</p>
@@ -3221,6 +3276,7 @@ function AquaMarkApp() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
+                                  {/* FEATURE 2: TRANSIT MORTALITY & ROUTE PREDICTOR BUTTON */}
                                   <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
@@ -3229,6 +3285,7 @@ function AquaMarkApp() {
                                   >
                                     <Navigation className="w-4 h-4 text-indigo-500" />
                                   </button>
+                                  {/* FEATURE 9: WHATSAPP FLYER SHARE BUTTON */}
                                   <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
@@ -3258,6 +3315,7 @@ function AquaMarkApp() {
                                 <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
                               </div>
 
+                              {/* POND COVERAGE QUICK-ESTIMATOR ON CARD */}
                               <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
                                 <span className="font-bold opacity-80">Pond Coverage Estimator:</span>
                                 <div className="flex items-center gap-1.5">
@@ -3277,7 +3335,7 @@ function AquaMarkApp() {
 
                               <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
                                 <span className="font-semibold">
-                                  📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> • Min Packing: <b className="text-amber-500">{formatSeedQuantityShort(minPackingQty).split(' (')[0]}</b>
+                                  📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'}) • <span className="text-amber-500 font-bold">Min Packing: {((batch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL</span>
                                 </span>
                                 <span className="inline-flex items-center gap-1 font-bold text-teal-500">
                                   <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
@@ -3305,18 +3363,16 @@ function AquaMarkApp() {
                                 disabled={isSoldOut || isPaused}
                                 onClick={() => {
                                   setModalError('');
-                                  const defaultLakhs = Math.max(1, Math.ceil((batch.minPackingQty || 100000) / 100000));
                                   setBookingForm(prev => ({
                                     ...prev,
                                     farmerName: currentUser.name,
                                     farmerPhone: currentUser.phone,
-                                    qtyAmount: String(Math.min(100, defaultLakhs)),
+                                    qtyAmount: '2',
                                     qtyUnit: 'LAKHS',
                                     pondSplitCount: '1',
                                     packingDate: batch.availableDate || prev.packingDate,
                                     packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
                                     brokerMarginPaise: '',
-                                    paymentPlan: 'ADVANCE',
                                     upiSubMode: 'QR',
                                     qrRevealed: false,
                                     utrReference: ''
@@ -3337,38 +3393,39 @@ function AquaMarkApp() {
               </>
             )}
 
-            {/* TAB 2: BUYER MY BOOKINGS — CLEAN COMPACT LAYOUT (HATCHERY DETAILS + STATUS & GATE-PASS QR BUTTONS; CLICK HATCHERY FOR ALL OTHER DETAILS & BUTTONS) */}
+            {/* TAB 2: BUYER BOOKINGS, DIGITAL ESCROW TIMELINE & GATE-PASSES */}
             {buyerTab === 'bookings' && (
               <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-base font-bold flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-teal-600" /> {t.myBookingsTitle}
-                  </h3>
-                  <span className="text-[11px] opacity-65">Click any hatchery card to view full details, pay remaining balance, print receipts & rate</span>
-                </div>
-
+                <h3 className="text-base font-bold flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-teal-600" /> {t.myBookingsTitle}
+                </h3>
                 {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
                   <p className="text-xs opacity-60">{t.noBookingsYet}</p>
                 ) : (
-                  <div className="max-h-[68vh] overflow-y-auto pr-1 space-y-3.5">
+                  <div className="max-h-[68vh] overflow-y-auto pr-1 space-y-4">
                     {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
+                      const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
                       const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
                       const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
-                      const isGatePassCleared = Boolean(bk.gatePassCleared || isFinalCleared);
+                      const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
+                      const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
 
                       return (
                         <div
                           key={bk.bookingId}
                           onClick={() => setInspectedBuyerBooking(bk)}
-                          className={`border hover:border-teal-500 rounded-2xl p-4 sm:p-5 transition cursor-pointer ${subCardBg}`}
+                          className={`border hover:border-teal-500 rounded-2xl p-4 space-y-3 transition cursor-pointer ${subCardBg}`}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-4">
-                            {/* Left: Clean Hatchery & Booking Summary */}
-                            <div className="space-y-1.5 flex-1 min-w-[230px]">
+                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
+                            <div className="bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                              {t.packingReadyAlert}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="space-y-1 flex-1 min-w-[230px]">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2.5 py-0.5 rounded border border-teal-500/30">
-                                  {bk.bookingId}
-                                </span>
+                                <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/30">{bk.bookingId}</span>
                                 <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
                                   ? 'bg-emerald-500/15 text-emerald-500'
                                   : isCancelled
@@ -3382,55 +3439,106 @@ function AquaMarkApp() {
                                       : t.pendingSettlementBadge}
                                 </span>
                               </div>
-
-                              <h4 className="text-base font-extrabold text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
-                                {bk.batch?.realName}
-                                <span className="text-[11px] font-semibold opacity-65">(Tap for full details & actions →)</span>
-                              </h4>
-
-                              <p className="text-xs opacity-80">
-                                Batch <b>{bk.batch?.id}</b> • <b>{(bk.quantity || 0).toLocaleString('en-IN')} PL</b> ({bk.batch?.plStage}) • Packing: <b>{bk.packingDate}</b>
+                              <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400">
+                                {bk.batch?.realName} • +91 {bk.batch?.realPhone}
                               </p>
-
-                              <p className="text-xs">
-                                <span>{t.paidLabel}: <b className="text-emerald-500">₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b></span>
-                                {!isFinalCleared && !isCancelled && (
-                                  <span className="ml-3 text-amber-500 font-bold">
-                                    • {t.balancePackingLabel}: ₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}
-                                  </span>
-                                )}
+                              <p className="text-xs opacity-75">
+                                Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
+                              </p>
+                              <p className="text-[11px] opacity-65">
+                                {isFinalCleared
+                                  ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
+                                  : isCancelled
+                                    ? <span className="text-rose-500 font-bold">Cancelled • 2% Refunded ✓</span>
+                                    : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
+                                {' '}• <span className="text-teal-500 underline font-semibold">Click Hatchery for all details & receipts</span>
                               </p>
                             </div>
 
-                            {/* Right: Only Two Neat, Compact Primary Buttons ("Status" & "Gate-Pass QR") */}
-                            <div className="flex items-center gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-wrap items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              {/* STATUS ANIMATION BUTTON */}
                               {!isCancelled && (
                                 <button
                                   type="button"
-                                  onClick={() => setStatusModalBooking(bk)}
-                                  className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
+                                  onClick={() => openAnimatedStatusModal(bk)}
+                                  className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
                                 >
                                   <Activity className="w-3.5 h-3.5" /> Status
                                 </button>
                               )}
 
-                              {!isCancelled && !isGatePassCleared && (
+                              {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
+                              {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
                                 <button
                                   type="button"
-                                  onClick={() => setGatePassBooking(bk)}
-                                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
+                                  onClick={() => {
+                                    setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                                    setPayRemainingBooking(bk);
+                                  }}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
                                 >
-                                  <QrCode className="w-3.5 h-3.5" /> Gate-Pass QR
+                                  <CreditCard className="w-3.5 h-3.5" /> Full Payment
                                 </button>
                               )}
 
-                              {isGatePassCleared && !isCancelled && (
-                                <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-extrabold px-3.5 py-2 rounded-xl inline-flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" /> Gate-Pass Cleared
-                                </span>
+                              {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
+                              {!isCancelled && (
+                                bk.gatePassCleared ? (
+                                  <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Gate-Pass Cleared
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setGatePassBooking(bk)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <QrCode className="w-3.5 h-3.5" /> Gate-Pass QR
+                                  </button>
+                                )
                               )}
                             </div>
                           </div>
+
+                          {isFinalCleared && (
+                            <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
+                              {!bk.rated ? (
+                                <div className={`flex flex-wrap items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
+                                  <span className="text-xs font-bold">{t.rateSeedLabel}</span>
+                                  <div className="flex items-center gap-1">
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                      <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
+                                        className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
+                                      >
+                                        {star}★
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
+                                    value={draft.comment}
+                                    onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
+                                    className={`flex-1 min-w-[180px] border rounded-xl px-3 py-1.5 text-xs select-text ${inputCls}`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
+                                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl cursor-pointer"
+                                  >
+                                    {t.submitReviewBtn}
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="text-xs text-emerald-500 font-bold">
+                                  ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -3516,7 +3624,7 @@ function AquaMarkApp() {
               </div>
             )}
 
-            {/* TAB 4: HARVEST & PROFIT ESTIMATOR */}
+            {/* TAB 4: HARVEST & PROFIT ESTIMATOR + FEATURE 8 SENSITIVITY MATRIX */}
             {buyerTab === 'analytics' && (
               <div className={`rounded-2xl p-6 shadow-xs border space-y-6 ${cardBg}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -3615,10 +3723,35 @@ function AquaMarkApp() {
                     <span className="text-lg font-black">₹{calcResult.netProfit.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
+
+                {/* FEATURE 8: HARVEST COUNT & MARKET RATE SENSITIVITY MATRIX */}
+                <div className={`p-4 rounded-2xl border space-y-2 ${subCardBg}`}>
+                  <h4 className="text-xs font-extrabold uppercase text-teal-500">Count-Wise Profit Sensitivity Matrix (At {calcInputs.survival}% Survival)</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    {[
+                      { count: 30, rate: 395 },
+                      { count: 40, rate: 340 },
+                      { count: 50, rate: 305 }
+                    ].map(sc => {
+                      const surv = Math.round(calcResult.totalSeedsNeeded * (calcInputs.survival / 100));
+                      const kg = Math.round(surv / sc.count);
+                      const prof = (kg * sc.rate) - calcResult.totalExpenses;
+                      return (
+                        <div key={sc.count} className={`p-3 rounded-xl border ${cardBg}`}>
+                          <div className="font-extrabold">{sc.count} Count @ ₹{sc.rate}/kg</div>
+                          <div className="text-[11px] opacity-70">Harvest: {kg.toLocaleString('en-IN')} kg</div>
+                          <div className={`font-black mt-1 ${prof >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                            Net Profit: ₹{prof.toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* TAB 5: POND WATER LAB */}
+            {/* TAB 5: POND WATER, VIBRIO DISEASE EARLY-WARNING & OXYGEN CALCULATOR */}
             {buyerTab === 'waterlab' && (
               <div className="space-y-6">
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
@@ -3649,11 +3782,21 @@ function AquaMarkApp() {
                   </div>
                   {(() => {
                     const isSafe = waterTest.ph >= 7.5 && waterTest.ph <= 8.4 && waterTest.doLevel >= 4.5 && waterTest.ammonia <= 0.1;
+                    const vibrioRisk = waterTest.ph > 8.4 && waterTest.salinity > 20 ? 'HIGH' : waterTest.ammonia > 0.08 ? 'MODERATE' : 'LOW';
                     return (
-                      <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
-                        {isSafe
-                          ? '✅ Pond water parameters are OPTIMAL for immediate PL stocking!'
-                          : '⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.'}
+                      <div className="space-y-2">
+                        <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
+                          {isSafe
+                            ? '✅ Pond water parameters are OPTIMAL for immediate PL stocking!'
+                            : '⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.'}
+                        </div>
+                        {/* FEATURE 7: VIBRIO / PATHOGEN RISK BADGE */}
+                        <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-between ${subCardBg}`}>
+                          <span>Luminescent Vibrio & EHP Susceptibility Risk:</span>
+                          <span className={vibrioRisk === 'LOW' ? 'text-emerald-500' : vibrioRisk === 'MODERATE' ? 'text-amber-500' : 'text-rose-500'}>
+                            {vibrioRisk} RISK ({vibrioRisk === 'LOW' ? 'Safe Bio-floc Balance' : 'Apply Gut Probiotics & Minerals'})
+                          </span>
+                        </div>
                       </div>
                     );
                   })()}
@@ -3738,10 +3881,11 @@ function AquaMarkApp() {
         )}
 
         {/* =========================================================
-            2. SELLER (HATCHERY) PORTAL
+            2. SELLER (HATCHERY) PORTAL — ₹10K DEPOSIT GATE -> PROMINENT HATCHERY CARD -> 3 TABS
            ========================================================= */}
         {currentUser.role === 'seller' && (
           <div className="max-w-4xl mx-auto space-y-6">
+            {/* STEP A: MANDATORY ₹10,000 SECURITY DEPOSIT GATE IF NOT YET PAID */}
             {!isSellerDepositPaid ? (
               <div className={`rounded-2xl p-6 sm:p-8 border-2 border-amber-500/40 shadow-sm space-y-5 ${cardBg}`}>
                 <div className="flex items-start gap-3">
@@ -3778,20 +3922,6 @@ function AquaMarkApp() {
                         </button>
                       );
                     })}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold opacity-80 block mb-1">
-                      Origin UPI ID / Bank Account Paying From (For Automatic Refund on Account Deletion)
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      placeholder="e.g., owner@okicici or ICICI A/C 3892010004512"
-                      value={depositSourceInput}
-                      onChange={(e) => setDepositSourceInput(e.target.value)}
-                      className={`w-full border rounded-xl px-3.5 py-2 text-xs font-mono select-text ${inputCls}`}
-                    />
                   </div>
 
                   {depositPayMethod === 'DIRECT_UPI' && (() => {
@@ -3863,6 +3993,7 @@ function AquaMarkApp() {
                 </form>
               </div>
             ) : !myFixedHatchery ? (
+              /* STEP B: ONE-STEP HATCHERY & BANK REGISTRATION AFTER DEPOSIT */
               <div className={`rounded-2xl p-6 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
                 <div>
                   <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
@@ -3903,7 +4034,7 @@ function AquaMarkApp() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-xs font-bold block mb-1">{t.descriptionLabel}</label>
-                      <textarea rows={2} placeholder="Write about your hatchery tanks, broodstock & water filtration..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
+                      <textarea rows={2} placeholder="Write about your hatchery tanks, SPF broodstock, water filtration & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
                     </div>
                   </div>
 
@@ -3937,7 +4068,7 @@ function AquaMarkApp() {
                 </form>
               </div>
             ) : (
-              /* ACTIVE HATCHERY DASHBOARD */
+              /* STEP C: ACTIVE HATCHERY DASHBOARD — PROMINENT HATCHERY DETAILS AT TOP, 3 TABS BELOW */
               <>
                 <div className={`rounded-2xl p-6 sm:p-7 border-2 border-teal-500/30 shadow-xs space-y-4 ${cardBg}`}>
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -3947,7 +4078,7 @@ function AquaMarkApp() {
                           <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
                         </span>
                         <span className="inline-flex items-center gap-1 bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                          <ShieldCheck className="w-3.5 h-3.5" /> ₹{(myFixedHatchery.depositAmount || 10000).toLocaleString('en-IN')} Deposit Active
+                          <ShieldCheck className="w-3.5 h-3.5" /> ₹10,000 Security Deposit Active
                         </span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-teal-600 dark:text-teal-400">
@@ -3970,42 +4101,40 @@ function AquaMarkApp() {
                         </a>
                       )}
                     </div>
-
-                    {/* RIGHT ACTION COLUMN: EDIT PROFILE + DEPOSIT BUTTON DIRECTLY BELOW IT */}
-                    <div className="flex flex-col items-stretch gap-2 shrink-0">
+                    <div className="flex flex-col items-end gap-2">
                       {!isEditingSellerProfile && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUnifiedSellerForm({
-                              realName: myFixedHatchery.realName || '',
-                              caaLicense: myFixedHatchery.caaLicense || '',
-                              zone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? myFixedHatchery.zone : 'OTHER_CUSTOM',
-                              customZone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? '' : myFixedHatchery.zone,
-                              realAddress: myFixedHatchery.realAddress || '',
-                              googleMapsLink: myFixedHatchery.googleMapsLink || '',
-                              description: myFixedHatchery.description || '',
-                              accountName: myFixedHatchery.bankDetails?.accountName || '',
-                              accountNo: myFixedHatchery.bankDetails?.accountNo || '',
-                              ifsc: myFixedHatchery.bankDetails?.ifsc || '',
-                              upiId: myFixedHatchery.bankDetails?.upiId || ''
-                            });
-                            setIsEditingSellerProfile(true);
-                          }}
-                          className={`border text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${subCardBg}`}
-                        >
-                          <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUnifiedSellerForm({
+                                realName: myFixedHatchery.realName || '',
+                                caaLicense: myFixedHatchery.caaLicense || '',
+                                zone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? myFixedHatchery.zone : 'OTHER_CUSTOM',
+                                customZone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? '' : myFixedHatchery.zone,
+                                realAddress: myFixedHatchery.realAddress || '',
+                                googleMapsLink: myFixedHatchery.googleMapsLink || '',
+                                description: myFixedHatchery.description || '',
+                                accountName: myFixedHatchery.bankDetails?.accountName || '',
+                                accountNo: myFixedHatchery.bankDetails?.accountNo || '',
+                                ifsc: myFixedHatchery.bankDetails?.ifsc || '',
+                                upiId: myFixedHatchery.bankDetails?.upiId || ''
+                              });
+                              setIsEditingSellerProfile(true);
+                            }}
+                            className={`border text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setAddDepositQrRevealed(false); setAddDepositUtr(''); setShowSellerDepositModal(true); }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Wallet className="w-3.5 h-3.5" /> Deposit (₹{(myFixedHatchery?.depositAmount || 10000).toLocaleString('en-IN')})
+                          </button>
+                        </>
                       )}
-
-                      {/* DEPOSIT BUTTON DIRECTLY BELOW EDIT PROFILE */}
-                      <button
-                        type="button"
-                        onClick={() => setShowHatcheryDepositModal(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                      >
-                        <PiggyBank className="w-4 h-4" /> Deposit (₹{(myFixedHatchery.depositAmount || 10000).toLocaleString('en-IN')})
-                      </button>
                     </div>
                   </div>
 
@@ -4034,7 +4163,7 @@ function AquaMarkApp() {
                         </div>
                         <div>
                           <label className="text-xs font-bold opacity-75 block mb-1">{t.descriptionLabel}</label>
-                          <input type="text" placeholder="Describe hatchery facilities, broodstock & tanks..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                          <input type="text" placeholder="Describe hatchery facilities, broodstock & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -4055,13 +4184,22 @@ function AquaMarkApp() {
                           <input required type="text" placeholder="UPI ID (name@bank)" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
-                        <button type="button" onClick={() => setIsEditingSellerProfile(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
-                          Cancel
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
+                          className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
                         </button>
-                        <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                          {t.saveBtn}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={() => setIsEditingSellerProfile(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
+                            Cancel
+                          </button>
+                          <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                            {t.saveBtn}
+                          </button>
+                        </div>
                       </div>
                     </form>
                   ) : (
@@ -4117,7 +4255,7 @@ function AquaMarkApp() {
                   </div>
                 </div>
 
-                {/* ADD NEW SEED BATCH (WITH MINIMUM PACKING QUANTITY) */}
+                {/* ADD NEW SEED BATCH */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="text-base font-bold flex items-center gap-2">
                     <PlusCircle className="w-5 h-5 text-teal-600" /> {t.addBatchTitle}
@@ -4173,6 +4311,10 @@ function AquaMarkApp() {
 
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                       <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">Min. Packing (Lakhs)</label>
+                        <input required type="number" min="1" max="100" value={newBatchForm.minPackingLakhs} onChange={(e) => setNewBatchForm({ ...newBatchForm, minPackingLakhs: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                      <div>
                         <label className="text-xs font-bold opacity-75 block mb-1">{t.bonus} (%)</label>
                         <input type="number" value={newBatchForm.bonusPercent} onChange={(e) => setNewBatchForm({ ...newBatchForm, bonusPercent: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
@@ -4192,12 +4334,12 @@ function AquaMarkApp() {
                               const num = clean === '' ? '' : String(Math.min(100, Number(clean)));
                               setNewBatchForm({ ...newBatchForm, stockAmount: num });
                             }}
-                            className={`w-20 border rounded-xl px-2.5 py-2 text-xs font-bold text-center select-text ${inputCls}`}
+                            className={`w-24 border rounded-xl px-3 py-2 text-xs font-bold text-center select-text ${inputCls}`}
                           />
                           <select
                             value={newBatchForm.stockUnit}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, stockUnit: e.target.value })}
-                            className={`flex-1 border rounded-xl px-2 py-2 text-xs font-bold ${inputCls}`}
+                            className={`flex-1 border rounded-xl px-2.5 py-2 text-xs font-bold ${inputCls}`}
                           >
                             <option value="LAKHS">Lakhs (× 1,00,000)</option>
                             <option value="MILLIONS">Millions (× 10,00,000)</option>
@@ -4205,42 +4347,19 @@ function AquaMarkApp() {
                         </div>
                       </div>
 
-                      {/* MINIMUM PACKING OPTION FOR OWNER */}
-                      <div className="md:col-span-2">
-                        <label className="text-xs font-bold text-amber-500 block mb-1">{t.minPackingLabel}</label>
-                        <div className="flex gap-1.5">
-                          <input
-                            required
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={3}
-                            placeholder="1-100"
-                            value={newBatchForm.minPackAmount}
-                            onChange={(e) => {
-                              const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                              const num = clean === '' ? '' : String(Math.min(100, Number(clean)));
-                              setNewBatchForm({ ...newBatchForm, minPackAmount: num });
-                            }}
-                            className={`w-20 border border-amber-500/40 rounded-xl px-2.5 py-2 text-xs font-bold text-center select-text ${inputCls}`}
-                          />
-                          <select
-                            value={newBatchForm.minPackUnit}
-                            onChange={(e) => setNewBatchForm({ ...newBatchForm, minPackUnit: e.target.value })}
-                            className={`flex-1 border border-amber-500/40 rounded-xl px-2 py-2 text-xs font-bold ${inputCls}`}
-                          >
-                            <option value="LAKHS">Lakhs (Min Order)</option>
-                            <option value="MILLIONS">Millions (Min Order)</option>
-                          </select>
-                        </div>
-                      </div>
-
                       <div>
                         <label className="text-xs font-bold opacity-75 block mb-1">{t.availDateLabel}</label>
-                        <input required type="date" value={newBatchForm.availableDate} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableDate: e.target.value })} className={`w-full border rounded-xl px-2.5 py-2 text-xs font-bold select-text ${inputCls}`} />
+                        <input required type="date" value={newBatchForm.availableDate} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold opacity-75 block mb-1">{t.availTimeLabel}</label>
+                        <select value={newBatchForm.availableTimeSlot} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableTimeSlot: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                          {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                        </select>
                       </div>
                     </div>
 
-                    {/* PCR IMAGES + TANK VIDEOS + TIME SLOT */}
+                    {/* PCR IMAGES + TANK VIDEOS (CAMERA OR FILES WITH VIVO GPS STAMP) */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
                       <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
                         <button
@@ -4306,11 +4425,14 @@ function AquaMarkApp() {
                         )}
                       </div>
 
-                      <div className={`border rounded-xl p-3 space-y-1 ${subCardBg}`}>
-                        <label className="text-[11px] font-bold opacity-75 block">{t.availTimeLabel}</label>
-                        <select value={newBatchForm.availableTimeSlot} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableTimeSlot: e.target.value })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold ${inputCls}`}>
-                          {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                        </select>
+                      <div className={`border rounded-xl p-3 flex items-center justify-between gap-2 ${subCardBg}`}>
+                        <div>
+                          <span className="text-xs font-bold flex items-center gap-1"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
+                          <p className="text-[11px] opacity-60 truncate max-w-[140px]">{gpsLocation || 'Auto Vivo Stamp'}</p>
+                        </div>
+                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0">
+                          <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
+                        </button>
                       </div>
                     </div>
 
@@ -4335,14 +4457,11 @@ function AquaMarkApp() {
                           <div key={b.id} className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center gap-2">
                                   <span className="font-mono text-xs font-bold text-teal-500">{b.id}</span>
                                   <span className="font-bold text-sm">{b.species}</span>
                                   <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.paused ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
                                     {b.paused ? 'PAUSED' : 'LIVE'}
-                                  </span>
-                                  <span className="bg-amber-500/15 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    Min Packing: {formatSeedQuantityShort(b.minPackingQty || 100000).split(' (')[0]}
                                   </span>
                                 </div>
                                 <span className="block text-[11px] opacity-65 mt-0.5">
@@ -4407,6 +4526,10 @@ function AquaMarkApp() {
                                     <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                                   </div>
                                   <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">Min. Packing (Lakhs)</label>
+                                    <input type="number" min="1" max="100" value={editBatchValues.minPackingLakhs} onChange={(e) => setEditBatchValues({ ...editBatchValues, minPackingLakhs: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
                                     <label className="text-[10px] font-bold opacity-60 block">{t.bonus} (%)</label>
                                     <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                                   </div>
@@ -4430,27 +4553,72 @@ function AquaMarkApp() {
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="text-[10px] font-bold text-amber-500 block">Min Packing</label>
-                                    <div className="flex gap-1">
-                                      <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={editBatchValues.minPackAmount}
-                                        onChange={(e) => {
-                                          const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                                          setEditBatchValues({ ...editBatchValues, minPackAmount: clean === '' ? '' : Math.min(100, Number(clean)) });
-                                        }}
-                                        className={`w-11 border border-amber-500/40 rounded-lg px-1 py-1.5 text-xs font-bold text-center select-text ${inputCls}`}
-                                      />
-                                      <select value={editBatchValues.minPackUnit} onChange={(e) => setEditBatchValues({ ...editBatchValues, minPackUnit: e.target.value })} className={`flex-1 border border-amber-500/40 rounded-lg px-1 py-1.5 text-[10px] font-bold ${inputCls}`}>
-                                        <option value="LAKHS">Lakhs</option>
-                                        <option value="MILLIONS">Millions</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div>
                                     <label className="text-[10px] font-bold opacity-60 block">{t.availDateLabel}</label>
                                     <input type="date" value={editBatchValues.availableDate} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableDate: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold opacity-60 block">{t.availTimeLabel}</label>
+                                    <select value={editBatchValues.availableTimeSlot} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableTimeSlot: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-[10px] font-bold ${inputCls}`}>
+                                      {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-300/20">
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[11px] font-bold">PCR Images ({(editBatchValues.pcrImages || []).length})</span>
+                                      <div className="flex items-center gap-2">
+                                        <button type="button" onClick={() => editPcrCamRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Camera</button>
+                                        <button type="button" onClick={() => editPcrFileRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Files</button>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(editBatchValues.pcrImages || []).map((img, i) => (
+                                        <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
+                                          <span onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })} className="cursor-pointer underline">{img.label}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditBatchValues(prev => ({
+                                              ...prev,
+                                              removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
+                                              pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
+                                            }))}
+                                            className="text-rose-500 ml-1 cursor-pointer"
+                                          >
+                                            ✕
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[11px] font-bold">Tank Videos ({(editBatchValues.tankVideos || []).length})</span>
+                                      <div className="flex items-center gap-2">
+                                        <button type="button" onClick={() => editVidCamRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Camera</button>
+                                        <button type="button" onClick={() => editVidFileRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Files</button>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(editBatchValues.tankVideos || []).map((vid, i) => (
+                                        <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
+                                          <span onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })} className="cursor-pointer underline">{vid.label}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditBatchValues(prev => ({
+                                              ...prev,
+                                              removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
+                                              tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
+                                            }))}
+                                            className="text-rose-500 ml-1 cursor-pointer"
+                                          >
+                                            ✕
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -4459,7 +4627,7 @@ function AquaMarkApp() {
                                 <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
-                                <div><span className="text-[10px] opacity-55 block">Min Pack</span><b className="text-amber-500">{formatSeedQuantityShort(b.minPackingQty || 100000).split(' (')[0]}</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
                               </div>
                             )}
@@ -4470,7 +4638,7 @@ function AquaMarkApp() {
                   )}
                 </div>
 
-                {/* TOTAL REVENUE LEDGER */}
+                {/* LONG FULL-WIDTH TOTAL REVENUE TAB BELOW BATCHES */}
                 <div
                   onClick={() => setSellerTxModal({ title: 'Total Packing Revenue Received (All Cleared Transactions)', list: hatcheryClearedOrders })}
                   className={`rounded-2xl p-6 border-2 border-emerald-500/40 hover:border-emerald-500 shadow-xs flex flex-wrap items-center justify-between gap-4 cursor-pointer transition ${cardBg}`}
@@ -4480,7 +4648,7 @@ function AquaMarkApp() {
                       <Wallet className="w-4 h-4" /> Total Packing Revenue Received (Lifetime Ledger)
                     </span>
                     <div className="text-3xl font-black text-emerald-500">₹{hatcheryClearedRevenue.toLocaleString('en-IN')}</div>
-                    <p className="text-xs opacity-65">Click here to inspect all {hatcheryClearedOrders.length} completed & settled transactions</p>
+                    <p className="text-xs opacity-65">Click here to inspect all {hatcheryClearedOrders.length} completed & settled transactions from start to end</p>
                   </div>
                   <span className="bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5">
                     View All Transactions <ChevronRight className="w-4 h-4" />
@@ -4637,7 +4805,7 @@ function AquaMarkApp() {
                           onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
                           className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete Account
+                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
                         </button>
                         <div className="flex items-center gap-2">
                           <button type="button" onClick={() => setIsEditingBrokerBank(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
@@ -4685,6 +4853,11 @@ function AquaMarkApp() {
                                     ? `2% Commission Credited: ₹${bk.settlement?.brokerBase2Pct || 0}`
                                     : `2% Commission Hold: ₹${bk.settlement?.brokerBase2Pct || 0}`}
                                 </span>
+                                {bk.brokerExtraMarginTotal > 0 && (
+                                  <span className="bg-teal-500/15 text-teal-500 font-bold px-2.5 py-0.5 rounded-full">
+                                    + Extra Margin: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')} ({bk.brokerMarginPaise}p/seed)
+                                  </span>
+                                )}
                               </div>
                               <p className="font-bold">
                                 Farmer: {bk.farmerName} (+91 {bk.farmerPhone}) → Hatchery: {bk.batch?.realName || bk.batch?.hatcheryCode} (Batch {bk.batch?.id})
@@ -4717,74 +4890,83 @@ function AquaMarkApp() {
 
                   {renderFilterSortBar(false)}
 
-                  <div className="max-h-[65vh] overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {filteredAndSortedBatches.map((batch) => {
-                      const isSoldOut = (batch.availableStock || 0) <= 0;
-                      const isPaused = Boolean(batch.paused);
-                      const minPackingQty = batch.minPackingQty || 100000;
-                      return (
-                        <div key={batch.id} className={`rounded-2xl border p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-teal-500 transition ${cardBg}`}>
-                          <div onClick={() => setInspectedBatch(batch)} className="space-y-3 cursor-pointer">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">{batch.id}</span>
-                                  <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                                    {t.caaVerified}
-                                  </span>
-                                  <span className="bg-amber-500/15 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    Min Packing: {formatSeedQuantityShort(minPackingQty).split(' (')[0]}
-                                  </span>
-                                  <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
+                  {filteredAndSortedBatches.length === 0 ? (
+                    <div className={`rounded-2xl border p-10 text-center space-y-2 ${cardBg}`}>
+                      <Building2 className="w-9 h-9 opacity-30 mx-auto" />
+                      <h3 className="text-sm font-extrabold">{t.emptyMarketTitle}</h3>
+                      <p className="text-xs opacity-60">{t.emptyMarketSub}</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[65vh] overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {filteredAndSortedBatches.map((batch) => {
+                        const isSoldOut = (batch.availableStock || 0) <= 0;
+                        const isPaused = Boolean(batch.paused);
+                        return (
+                          <div key={batch.id} className={`rounded-2xl border p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-teal-500 transition ${cardBg}`}>
+                            <div onClick={() => setInspectedBatch(batch)} className="space-y-3 cursor-pointer">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">{batch.id}</span>
+                                    <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                      {t.caaVerified}
+                                    </span>
+                                    <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
+                                    <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0}
+                                    </span>
+                                  </div>
+                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode || 'Verified Hatchery'}</h3>
+                                  <p className="text-xs opacity-65">{batch.species}</p>
                                 </div>
-                                <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode || 'Verified Hatchery'}</h3>
-                                <p className="text-xs opacity-65">{batch.species}</p>
+                                <div className="text-right">
+                                  <div className="text-xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
+                                  <span className="text-[11px] opacity-55">{t.perSeed}</span>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
-                                <span className="text-[11px] opacity-55">{t.perSeed}</span>
+
+                              <div className={`grid grid-cols-4 gap-2 p-2.5 rounded-xl border text-center text-xs ${subCardBg}`}>
+                                <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{batch.plStage}</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{batch.salinity} PPT</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{batch.bonusPercent}%</b></div>
+                                <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(batch.availableStock || 0).toLocaleString('en-IN')}</b></div>
+                              </div>
+
+                              <div className="text-xs text-teal-500 font-bold flex items-center gap-1.5">
+                                <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
                               </div>
                             </div>
 
-                            <div className={`grid grid-cols-4 gap-2 p-2.5 rounded-xl border text-center text-xs ${subCardBg}`}>
-                              <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{batch.plStage}</b></div>
-                              <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{batch.salinity} PPT</b></div>
-                              <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{batch.bonusPercent}%</b></div>
-                              <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(batch.availableStock || 0).toLocaleString('en-IN')}</b></div>
-                            </div>
+                            <button
+                              type="button"
+                              disabled={isSoldOut || isPaused}
+                              onClick={() => {
+                                setModalError('');
+                                setSelectedBatch(batch);
+                                setBookingForm(prev => ({
+                                  ...prev,
+                                  farmerName: brokerFarmers[0]?.name || '',
+                                  farmerPhone: brokerFarmers[0]?.phone || '',
+                                  qtyAmount: '2',
+                                  qtyUnit: 'LAKHS',
+                                  pondSplitCount: '1',
+                                  packingDate: batch.availableDate || prev.packingDate,
+                                  packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                  brokerMarginPaise: '2',
+                                  upiSubMode: 'QR',
+                                  qrRevealed: false,
+                                  utrReference: ''
+                                }));
+                              }}
+                              className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
+                            >
+                              {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
+                            </button>
                           </div>
-
-                          <button
-                            type="button"
-                            disabled={isSoldOut || isPaused}
-                            onClick={() => {
-                              setModalError('');
-                              setSelectedBatch(batch);
-                              const defaultLakhs = Math.max(1, Math.ceil(minPackingQty / 100000));
-                              setBookingForm(prev => ({
-                                ...prev,
-                                farmerName: brokerFarmers[0]?.name || '',
-                                farmerPhone: brokerFarmers[0]?.phone || '',
-                                qtyAmount: String(Math.min(100, defaultLakhs)),
-                                qtyUnit: 'LAKHS',
-                                pondSplitCount: '1',
-                                packingDate: batch.availableDate || prev.packingDate,
-                                packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
-                                brokerMarginPaise: '2',
-                                paymentPlan: 'ADVANCE',
-                                upiSubMode: 'QR',
-                                qrRevealed: false,
-                                utrReference: ''
-                              }));
-                            }}
-                            className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
-                          >
-                            {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Broker Locked Farmers CRM */}
@@ -4841,496 +5023,7 @@ function AquaMarkApp() {
       </main>
 
       {/* =========================================================
-          HATCHERY DEPOSIT MODAL (VIEW DEPOSITED MONEY, ADD MONEY, DELETE ACCOUNT TO WITHDRAW MONEY TO SOURCE ACCOUNT)
-         ========================================================= */}
-      {showHatcheryDepositModal && myFixedHatchery && (() => {
-        const totalDeposit = myFixedHatchery.depositAmount || 10000;
-        const sourceAccount = myFixedHatchery.depositSourceAccount || myFixedHatchery.bankDetails?.upiId || myFixedHatchery.depositUtr || 'Original Deposit Source Account';
-        const history = myFixedHatchery.depositHistory || [
-          {
-            id: 'DEP-INIT',
-            amount: totalDeposit,
-            ref: myFixedHatchery.depositUtr || 'VERIFIED_10K',
-            source: sourceAccount,
-            date: myFixedHatchery.registeredAt || new Date().toLocaleDateString('en-IN'),
-            note: 'Mandatory Hatchery Security Deposit'
-          }
-        ];
-        const addAmtNum = Math.max(1000, Number(addDepositAmount) || 5000);
-        const addUpiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMarkDeposit&am=${addAmtNum}&cu=INR&tn=AddHatcheryDeposit`;
-        const addQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(addUpiUri)}`;
-
-        return (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl max-w-xl w-full p-6 shadow-2xl border-2 border-emerald-500/40 space-y-5 max-h-[90vh] overflow-y-auto ${cardBg}`}>
-              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-                <div className="flex items-center gap-2">
-                  <PiggyBank className="w-5 h-5 text-emerald-500" />
-                  <h3 className="font-extrabold text-base">Hatchery Security Deposit & Ledger</h3>
-                </div>
-                <button type="button" onClick={() => setShowHatcheryDepositModal(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
-              </div>
-
-              {/* Current Deposited Balance Card */}
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 space-y-1.5">
-                <span className="text-[11px] font-extrabold text-emerald-500 uppercase tracking-wider">Total Deposited Money Held Safely</span>
-                <div className="text-3xl font-black text-emerald-500">₹{totalDeposit.toLocaleString('en-IN')}</div>
-                <p className="text-xs opacity-80">
-                  <b>Origin / Return Account:</b> <span className="font-mono text-teal-500">{sourceAccount}</span>
-                </p>
-                <p className="text-[11px] opacity-65">
-                  If you delete your hatchery account, 100% of ₹{totalDeposit.toLocaleString('en-IN')} is automatically returned to the exact account from which it was deposited.
-                </p>
-              </div>
-
-              {/* Add Money Section */}
-              <form onSubmit={handleAddMoreDepositMoney} className={`border rounded-2xl p-4 space-y-3 text-xs ${subCardBg}`}>
-                <h4 className="font-extrabold text-sm flex items-center gap-1.5 text-teal-500">
-                  <PlusCircle className="w-4 h-4" /> Add Money to Security Deposit
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold opacity-75 block mb-1">Amount to Add (₹)</label>
-                    <input
-                      required
-                      type="number"
-                      min="1000"
-                      step="500"
-                      value={addDepositAmount}
-                      onChange={(e) => setAddDepositAmount(e.target.value)}
-                      className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold opacity-75 block mb-1">Source UPI / Bank Account</label>
-                    <input
-                      type="text"
-                      placeholder={sourceAccount}
-                      value={addDepositSource}
-                      onChange={(e) => setAddDepositSource(e.target.value)}
-                      className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddMoneyQr(!showAddMoneyQr)}
-                    className={`border px-3 py-2 rounded-xl font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
-                  >
-                    <QrCode className="w-3.5 h-3.5 text-teal-600" /> {showAddMoneyQr ? 'Hide Deposit QR' : 'Show UPI QR to Pay'}
-                  </button>
-                  <a
-                    href={addUpiUri}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" /> Pay ₹{addAmtNum.toLocaleString('en-IN')} via UPI App
-                  </a>
-                </div>
-
-                {showAddMoneyQr && (
-                  <div className="bg-white p-3 rounded-xl border border-emerald-300 text-center text-slate-900 w-fit mx-auto">
-                    <img src={addQrUrl} alt="Add Deposit QR" className="w-32 h-32 object-contain mx-auto" />
-                    <span className="text-[10px] font-bold block mt-1">Scan to Deposit ₹{addAmtNum.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <input
-                    required
-                    type="text"
-                    placeholder="Enter 12-Digit UPI / Bank UTR Reference"
-                    value={addDepositUtr}
-                    onChange={(e) => setAddDepositUtr(e.target.value)}
-                    className={`flex-1 border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                  />
-                  <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl cursor-pointer shrink-0">
-                    + Add Money
-                  </button>
-                </div>
-              </form>
-
-              {/* Deposit Transaction History */}
-              <div className="space-y-2 text-xs">
-                <span className="font-bold opacity-75 uppercase text-[11px]">Deposit History</span>
-                <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
-                  {history.map((h, i) => (
-                    <div key={i} className={`p-2.5 rounded-xl border flex items-center justify-between ${subCardBg}`}>
-                      <div>
-                        <span className="font-bold block">{h.note}</span>
-                        <span className="text-[11px] opacity-65 font-mono">{h.ref} • From: {h.source}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-extrabold text-emerald-500">+₹{(h.amount || 0).toLocaleString('en-IN')}</span>
-                        <span className="block text-[10px] opacity-55">{h.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Delete Account to Withdraw Money */}
-              <div className="pt-3 border-t border-slate-300/30 flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowHatcheryDepositModal(false);
-                    setDeleteConfirmPassword('');
-                    setShowDeleteAccountModal(true);
-                  }}
-                  className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <ArrowDownLeft className="w-4 h-4" /> Delete Account to Withdraw Money (₹{totalDeposit.toLocaleString('en-IN')})
-                </button>
-                <button type="button" onClick={() => setShowHatcheryDepositModal(false)} className={`px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
-                  {t.closeBtn}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* =========================================================
-          HATCHERY QR SCANNER MODAL (AUTO-COMPLETES PACKING, SETTLES PAYMENT, CLEARS GATE-PASS & GENERATES FULL PAID RECEIPT)
-         ========================================================= */}
-      {showHatcheryQrScanner && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-indigo-500 space-y-4 ${cardBg}`}>
-            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-              <div className="flex items-center gap-2 text-indigo-500">
-                <ScanLine className="w-5 h-5" />
-                <h3 className="font-extrabold text-base">Scan Buyer Gate-Pass QR</h3>
-              </div>
-              <button type="button" onClick={() => setShowHatcheryQrScanner(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
-            </div>
-
-            {/* Live Camera Scanner Viewport */}
-            <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-indigo-500/40 h-48 flex items-center justify-center">
-              <video ref={scannerVideoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${cameraStreamActive ? 'opacity-90' : 'hidden'}`} />
-              {!cameraStreamActive && (
-                <div className="text-center text-white/75 p-4 space-y-1.5">
-                  <QrCode className="w-10 h-10 text-indigo-400 mx-auto animate-pulse" />
-                  <p className="text-xs font-bold">Camera Ready / Quick-Scan Gate-Pass</p>
-                  <p className="text-[11px] opacity-65">Point camera at Buyer QR or select/enter Gate-Pass PIN below</p>
-                </div>
-              )}
-              <div className="absolute inset-6 border-2 border-dashed border-emerald-400/80 rounded-xl pointer-events-none" />
-            </div>
-
-            {/* Manual / Scanner Input */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                processScannedBuyerGatePass(qrScanInput);
-              }}
-              className="space-y-3 text-xs"
-            >
-              <div>
-                <label className="font-bold opacity-75 block mb-1">Gate-Pass PIN or Booking ID</label>
-                <div className="flex gap-2">
-                  <input
-                    required
-                    type="text"
-                    placeholder="e.g., GP-1024 or AQ-12345"
-                    value={qrScanInput}
-                    onChange={(e) => setQrScanInput(e.target.value)}
-                    className={`flex-1 border rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold uppercase select-text ${inputCls}`}
-                  />
-                  <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl cursor-pointer">
-                    Verify & Settle
-                  </button>
-                </div>
-              </div>
-
-              {/* Active Pending Gate-Passes for 1-Tap Simulation/Scan */}
-              {myHatcheryOrders.filter(o => !o.gatePassCleared && o.packingStatus !== 'CANCELLED').length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-bold opacity-70 block">Active Buyer Gate-Passes Ready to Scan:</span>
-                  <div className="max-h-36 overflow-y-auto space-y-1.5">
-                    {myHatcheryOrders
-                      .filter(o => !o.gatePassCleared && o.packingStatus !== 'CANCELLED')
-                      .map(o => (
-                        <button
-                          key={o.bookingId}
-                          type="button"
-                          onClick={() => processScannedBuyerGatePass(o.gatePassPin || o.bookingId)}
-                          className={`w-full text-left p-2.5 rounded-xl border hover:border-indigo-500 flex items-center justify-between cursor-pointer ${subCardBg}`}
-                        >
-                          <div>
-                            <span className="font-mono font-extrabold text-indigo-500">{o.gatePassPin}</span> • <b>{o.farmerName}</b>
-                            <span className="block text-[10px] opacity-65">{o.bookingId} • {(o.quantity || 0).toLocaleString('en-IN')} PL</span>
-                          </div>
-                          <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                            Scan & Settle →
-                          </span>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          BUYER ANIMATED STATUS TRACKING MODAL
-         ========================================================= */}
-      {statusModalBooking && (() => {
-        const isCleared = statusModalBooking.settlement?.status === 'BALANCE_CLEARED';
-        const isPacked = statusModalBooking.packingStatus === 'PACKING_DONE_BY_SELLER' || isCleared;
-        const steps = [
-          {
-            step: 1,
-            title: statusModalBooking.paymentPlan === 'FULL' ? '100% Full Payment Completed' : '4% Advance Payment Confirmed',
-            desc: `Paid ₹${(statusModalBooking.tokenAdvance || 0).toLocaleString('en-IN')} • Ref: ${statusModalBooking.paymentId}`,
-            done: true
-          },
-          {
-            step: 2,
-            title: 'Salinity Acclimatization & Hatchery Prep',
-            desc: `Target Pond: ${statusModalBooking.pondSalinity} PPT • Hatchery: ${statusModalBooking.batch?.salinity} PPT`,
-            done: true
-          },
-          {
-            step: 3,
-            title: 'Seed Packing & Gate-Pass Verification',
-            desc: `Scheduled: ${statusModalBooking.packingDate} (${statusModalBooking.packingTimeSlot}) • PIN: ${statusModalBooking.gatePassPin}`,
-            done: isPacked
-          },
-          {
-            step: 4,
-            title: 'Full Payment Settled & 2% Hold Refunded',
-            desc: isCleared
-              ? `100% Settled (${statusModalBooking.clearedAt || 'Completed'}) • Full Paid Receipt Ready`
-              : `Remaining Balance: ₹${(statusModalBooking.balanceAtPacking || 0).toLocaleString('en-IN')}`,
-            done: isCleared
-          }
-        ];
-
-        return (
-          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-teal-500/40 space-y-5 ${cardBg}`}>
-              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-                <div>
-                  <span className="font-mono text-xs font-bold text-teal-500">{statusModalBooking.bookingId}</span>
-                  <h3 className="font-extrabold text-base">Live Order & Packing Status</h3>
-                </div>
-                <button type="button" onClick={() => setStatusModalBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
-              </div>
-
-              <div className="space-y-3">
-                {steps.map((st) => {
-                  const isTickVisible = st.done && animatedStepIndex >= st.step;
-                  return (
-                    <div
-                      key={st.step}
-                      className={`p-3.5 rounded-2xl border flex items-start gap-3 transition-all duration-500 ${isTickVisible
-                        ? 'bg-emerald-500/10 border-emerald-500/40 scale-100 opacity-100'
-                        : st.done
-                          ? 'opacity-40 scale-95'
-                          : `${subCardBg} opacity-65`
-                        }`}
-                    >
-                      <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all duration-500 ${isTickVisible
-                          ? 'bg-emerald-500 text-white scale-110 shadow-md'
-                          : 'bg-slate-300/40 text-slate-500'
-                          }`}
-                      >
-                        {isTickVisible ? <Check className="w-4 h-4 stroke-[3]" /> : <span className="text-xs font-bold">{st.step}</span>}
-                      </div>
-                      <div className="space-y-0.5">
-                        <div className={`text-xs font-extrabold ${isTickVisible ? 'text-emerald-500' : ''}`}>
-                          {st.title}
-                        </div>
-                        <p className="text-[11px] opacity-75 leading-relaxed">{st.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                {!isCleared && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = statusModalBooking;
-                      setStatusModalBooking(null);
-                      setPayRemainingBooking(target);
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer"
-                  >
-                    Pay Remaining ₹{(statusModalBooking.balanceAtPacking || 0).toLocaleString('en-IN')}
-                  </button>
-                )}
-                <button type="button" onClick={() => setStatusModalBooking(null)} className={`px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
-                  {t.closeBtn}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* =========================================================
-          BUYER PAY REMAINING BALANCE MODAL (FROM SITE)
-         ========================================================= */}
-      {payRemainingBooking && (() => {
-        const remAmount = payRemainingBooking.balanceAtPacking || 0;
-        const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMarkBalance&am=${remAmount}&cu=INR&tn=Balance_${payRemainingBooking.bookingId}`;
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
-
-        return (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-emerald-500/40 space-y-4 ${cardBg}`}>
-              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-                <div>
-                  <span className="font-mono text-xs font-bold text-teal-500">{payRemainingBooking.bookingId}</span>
-                  <h3 className="font-extrabold text-base">Pay Remaining Balance (96%)</h3>
-                </div>
-                <button type="button" onClick={() => setPayRemainingBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
-              </div>
-
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 text-xs space-y-1">
-                <div className="flex justify-between"><span>Hatchery:</span><b>{payRemainingBooking.batch?.realName}</b></div>
-                <div className="flex justify-between"><span>Total Order Value:</span><b>₹{(payRemainingBooking.totalSeedCost || 0).toLocaleString('en-IN')}</b></div>
-                <div className="flex justify-between"><span>Advance Already Paid:</span><b>₹{(payRemainingBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
-                <div className="flex justify-between text-sm font-black text-emerald-500 border-t border-emerald-500/20 pt-1.5 mt-1">
-                  <span>Remaining Balance Payable Now:</span>
-                  <span>₹{remAmount.toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-
-              <form onSubmit={handleCompleteRemainingBalancePayment} className="space-y-3 text-xs">
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'DIRECT_UPI', label: 'UPI (QR / App)', icon: QrCode },
-                    { id: 'RAZORPAY', label: 'Razorpay', icon: CreditCard },
-                    { id: 'BANK_TO_BANK', label: 'Bank NEFT', icon: Landmark }
-                  ].map(pm => {
-                    const Icon = pm.icon;
-                    return (
-                      <button
-                        key={pm.id}
-                        type="button"
-                        onClick={() => setRemainingPayMethod(pm.id)}
-                        className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${remainingPayMethod === pm.id ? 'border-teal-600 bg-teal-500/15 text-teal-600 font-extrabold' : subCardBg}`}
-                      >
-                        <Icon className="w-4 h-4 text-teal-600" />
-                        <span className="text-[11px]">{pm.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {remainingPayMethod === 'DIRECT_UPI' && (
-                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-2.5">
-                    <div className="flex flex-col items-center bg-white p-2.5 rounded-xl border border-emerald-300 text-slate-900 relative">
-                      <img
-                        src={qrApiUrl}
-                        alt="Remaining Balance QR"
-                        className={`w-32 h-32 object-contain transition-all duration-300 ${remainingQrRevealed ? '' : 'blur-md select-none'}`}
-                      />
-                      {!remainingQrRevealed && (
-                        <button
-                          type="button"
-                          onClick={() => setRemainingQrRevealed(true)}
-                          className="absolute inset-0 m-auto h-9 w-24 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer"
-                        >
-                          Show QR
-                        </button>
-                      )}
-                      <span className="text-[11px] font-bold mt-1">Pay ₹{remAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                    <a
-                      href={upiUri}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs inline-flex items-center justify-center gap-1.5"
-                    >
-                      <Smartphone className="w-3.5 h-3.5" /> Pay ₹{remAmount.toLocaleString('en-IN')} By UPI App
-                    </a>
-                    <input
-                      required
-                      type="text"
-                      placeholder={t.utrPlaceholder}
-                      value={remainingUtr}
-                      onChange={(e) => setRemainingUtr(e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                    />
-                  </div>
-                )}
-
-                {remainingPayMethod === 'BANK_TO_BANK' && (
-                  <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
-                    <div className="font-mono text-[11px] select-text">
-                      <b>A/C:</b> 20419820112 • <b>IFSC:</b> SBIN0008812 • <b>Amount:</b> ₹{remAmount.toLocaleString('en-IN')}
-                    </div>
-                    <input
-                      required
-                      type="text"
-                      placeholder={t.utrPlaceholder}
-                      value={remainingUtr}
-                      onChange={(e) => setRemainingUtr(e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                    />
-                  </div>
-                )}
-
-                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-xs cursor-pointer">
-                  Confirm Remaining ₹{remAmount.toLocaleString('en-IN')} Payment & Generate Full Receipt
-                </button>
-              </form>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* =========================================================
-          ROLE-SPECIFIC NOTIFICATION DRAWER MODAL (FULL DETAILS FOR EACH USER)
-         ========================================================= */}
-      {showNotificationDrawer && (
-        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[86vh] flex flex-col ${cardBg}`}>
-            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3 shrink-0">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-teal-600" />
-                <div>
-                  <h3 className="font-extrabold text-base">
-                    {t.portalBadges[currentUser.role]} Notifications ({myNotifications.length})
-                  </h3>
-                  <p className="text-[11px] opacity-60">Personalized updates, cashback refunds, packing & payment alerts</p>
-                </div>
-              </div>
-              <button type="button" onClick={() => setShowNotificationDrawer(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
-            </div>
-
-            <div className="overflow-y-auto space-y-2.5 pr-1 flex-1">
-              {myNotifications.length === 0 ? (
-                <p className="text-xs opacity-60 py-10 text-center">No notifications yet.</p>
-              ) : (
-                myNotifications.map((item) => (
-                  <div key={item.id} className={`border rounded-xl p-3.5 space-y-1 text-xs ${subCardBg}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="bg-teal-500/15 text-teal-600 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
-                        {item.category}
-                      </span>
-                      <span className="text-[10px] opacity-60 font-mono">{item.timestamp}</span>
-                    </div>
-                    <h4 className="font-extrabold text-sm">{item.title}</h4>
-                    <p className="opacity-80 leading-relaxed">{item.message}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          BUYER & BROKER EDIT PROFILE MODAL
+          BUYER & BROKER EDIT PROFILE MODAL (NAME + MOBILE RE-VERIFY + DELETE ACCOUNT)
          ========================================================= */}
       {showBasicEditProfileModal && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -5383,6 +5076,11 @@ function AquaMarkApp() {
                     </button>
                   )}
                 </div>
+                {!editProfileDraft.phoneVerified && (
+                  <span className="text-[11px] text-amber-500 font-bold mt-1 block">
+                    Mobile number changed — click Verify to confirm via WhatsApp before saving.
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-300/30">
@@ -5391,7 +5089,7 @@ function AquaMarkApp() {
                   onClick={() => { setShowBasicEditProfileModal(false); setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
                   className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete Account
+                  <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
                 </button>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => setShowBasicEditProfileModal(false)} className={`px-3.5 py-2 border rounded-xl font-bold cursor-pointer ${subCardBg}`}>
@@ -5412,7 +5110,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          PASSWORD-VERIFIED ACCOUNT DELETION & DEPOSIT REFUND MODAL
+          PASSWORD-VERIFIED ACCOUNT DELETION MODAL
          ========================================================= */}
       {showDeleteAccountModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -5420,23 +5118,18 @@ function AquaMarkApp() {
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div className="flex items-center gap-2 text-rose-500">
                 <ShieldAlert className="w-5 h-5" />
-                <h3 className="font-extrabold text-base">
-                  {currentUser?.role === 'seller' ? 'Delete Account & Withdraw Deposit' : 'Confirm Permanent Account Deletion'}
-                </h3>
+                <h3 className="font-extrabold text-base">Confirm Permanent Account Deletion</h3>
               </div>
               <button type="button" onClick={() => setShowDeleteAccountModal(false)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
-            <p className="text-xs opacity-85 leading-relaxed">
-              {currentUser?.role === 'seller' ? (
-                <>
-                  Deleting your Hatchery account will immediately initiate a 100% refund of <b>₹{(myFixedHatchery?.depositAmount || 10000).toLocaleString('en-IN')}</b> back to your exact origin deposit account: <b className="text-teal-500 font-mono">{myFixedHatchery?.depositSourceAccount || myFixedHatchery?.bankDetails?.upiId || 'Original Source Account'}</b>.
-                </>
-              ) : (
-                <>
-                  This will permanently delete your <b>{t.portalBadges[currentUser?.role]}</b> account (<b>+91 {currentUser?.phone}</b>).
-                </>
+            <p className="text-xs opacity-80 leading-relaxed">
+              This will permanently delete your <b>{t.portalBadges[currentUser?.role]}</b> account (<b>+91 {currentUser?.phone}</b>) and all associated records from Supabase.
+              {isWithdrawingOnDelete && currentUser?.role === 'seller' && (
+                <span className="block mt-2 p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 font-bold">
+                  ₹{(hatcheryProfiles[currentUser.phone]?.depositAmount || 10000).toLocaleString('en-IN')} security deposit will be automatically refunded to the source account ({hatcheryProfiles[currentUser.phone]?.depositSourceAccount || hatcheryProfiles[currentUser.phone]?.depositUtr || hatcheryProfiles[currentUser.phone]?.bankDetails?.upiId || 'Original Payment Account'}).
+                </span>
               )}
-              {' '}Enter your account password to confirm:
+              {' '}Enter your account password to verify:
             </p>
             <form onSubmit={handleConfirmDeleteAccount} className="space-y-4">
               <div className="relative flex items-center">
@@ -5462,7 +5155,7 @@ function AquaMarkApp() {
                   Cancel
                 </button>
                 <button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                  {currentUser?.role === 'seller' ? 'Delete & Refund to Origin Account' : 'Verify & Delete Forever'}
+                  Verify & Delete Forever
                 </button>
               </div>
             </form>
@@ -5471,7 +5164,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          TRANSIT PREDICTOR MODAL
+          FEATURE 2: TRANSIT ROUTE & OXYGEN MORTALITY RISK PREDICTOR MODAL
          ========================================================= */}
       {transitPredictorBatch && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -5512,13 +5205,13 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          GATE-PASS QR CODE MODAL
+          FEATURE 6: PACKING DISPATCH GATE-PASS / QR CODE MODAL
          ========================================================= */}
       {gatePassBooking && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className={`rounded-2xl max-w-sm w-full p-6 shadow-2xl border-2 border-indigo-500 text-center space-y-4 ${cardBg}`}>
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-2">
-              <span className="text-xs font-extrabold text-indigo-500 uppercase">Hatchery Gate-Pass QR</span>
+              <span className="text-xs font-extrabold text-indigo-500 uppercase">Hatchery Gate-Pass</span>
               <button type="button" onClick={() => setGatePassBooking(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
             <div className="bg-white p-3 rounded-2xl border border-indigo-200 inline-block mx-auto">
@@ -5534,7 +5227,7 @@ function AquaMarkApp() {
               <p className="text-xs opacity-75">
                 {(gatePassBooking.quantity || 0).toLocaleString('en-IN')} PL ({gatePassBooking.batch?.plStage}) • {gatePassBooking.packingDate}
               </p>
-              <p className="text-[11px] opacity-60 pt-1">Show this QR to Hatchery Owner to complete packing & auto-settle receipt.</p>
+              <p className="text-[11px] opacity-60 pt-1">Present this QR & PIN at {gatePassBooking.batch?.realName} dispatch gate.</p>
             </div>
           </div>
         </div>
@@ -5629,6 +5322,9 @@ function AquaMarkApp() {
                     </div>
                     <div className="text-right text-xs">
                       <span className="font-extrabold text-emerald-500 block">2% Comm: ₹{bk.settlement?.brokerBase2Pct || 0}</span>
+                      {bk.brokerExtraMarginTotal > 0 && (
+                        <span className="text-teal-500 font-bold block">+ Margin: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')}</span>
+                      )}
                     </div>
                   </div>
                 ))
@@ -5638,7 +5334,9 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* FULL-SCREEN IMAGE & VIDEO VIEWER MODAL */}
+      {/* =========================================================
+          TOP-LAYER FULL-SCREEN IMAGE & VIDEO VIEWER MODAL (z-[9999])
+         ========================================================= */}
       {fullScreenMedia && (
         <div
           onClick={() => setFullScreenMedia(null)}
@@ -5757,159 +5455,95 @@ function AquaMarkApp() {
         </div>
       )}
 
-      {/* =========================================================
-          BUYER BOOKING DETAILS MODAL (CONTAINS ALL REMAINING BUTTONS: PAY REMAINING BALANCE, MAPS, CANCEL, WHATSAPP, RECEIPT, RATE & FEEDBACK)
-         ========================================================= */}
-      {inspectedBuyerBooking && (() => {
-        const currentBk = bookings.find(item => item.bookingId === inspectedBuyerBooking.bookingId) || inspectedBuyerBooking;
-        const isFinalCleared = currentBk.settlement?.status === 'BALANCE_CLEARED';
-        const isCancelled = currentBk.settlement?.status === 'CANCELLED_REFUNDED';
-        const mapsUrl = currentBk.batch?.googleMapsLink || hatcheryProfiles[currentBk.hatcheryOwnerPhone]?.googleMapsLink;
-        const draft = ratingDrafts[currentBk.bookingId] || { stars: 5, comment: '' };
-
-        return (
-          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl max-w-xl w-full p-6 shadow-2xl border space-y-4 max-h-[90vh] overflow-y-auto ${cardBg}`}>
-              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-teal-500">{currentBk.bookingId} • UTR: {currentBk.paymentId}</span>
-                  <h3 className="font-extrabold text-base">Hatchery Booking Details & Actions</h3>
-                </div>
-                <button type="button" onClick={() => setInspectedBuyerBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+      {/* BUYER OLD TRANSACTION INSPECTION MODAL */}
+      {inspectedBuyerBooking && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <span className="text-[11px] font-mono font-bold text-teal-500">{inspectedBuyerBooking.bookingId} • UTR: {inspectedBuyerBooking.paymentId}</span>
+                <h3 className="font-extrabold text-base">Seed Purchase & Transaction Details</h3>
               </div>
-
-              <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${subCardBg}`}>
-                <span className="text-[10px] font-bold uppercase text-teal-500">Purchased From Hatchery</span>
-                <p className="text-sm font-extrabold">{currentBk.batch?.realName} ({currentBk.batch?.id})</p>
-                <p className="opacity-75">CAA License: {currentBk.batch?.caaLicense} • {currentBk.batch?.zone}</p>
-                <p className="opacity-75">Address: {currentBk.batch?.realAddress} • +91 {currentBk.batch?.realPhone}</p>
-              </div>
-
-              <div className="text-xs space-y-2">
-                <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Buyer / Farmer:</span><b>{currentBk.farmerName} (+91 {currentBk.farmerPhone})</b></div>
-                <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Booked On:</span><b>{currentBk.date} at {currentBk.time}</b></div>
-                <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Species & Stage:</span><b>{currentBk.batch?.species} ({currentBk.batch?.plStage})</b></div>
-                <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Quantity + Free Bonus:</span><b>{(currentBk.quantity || 0).toLocaleString('en-IN')} + {(currentBk.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
-                <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Schedule:</span><b>{currentBk.packingDate} ({currentBk.packingTimeSlot})</b></div>
-                <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Total Paid Amount:</span><b className="text-emerald-500">₹{(currentBk.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
-                <div className="flex justify-between py-1">
-                  <span>Settlement Status:</span>
-                  <b className="text-emerald-500">
-                    {isFinalCleared
-                      ? `100% Full Paid (${currentBk.clearedAt || 'Settled'})`
-                      : isCancelled
-                        ? 'Cancelled (2% Refunded)'
-                        : `₹${(currentBk.balanceAtPacking || 0).toLocaleString('en-IN')} Remaining Balance`}
-                  </b>
-                </div>
-              </div>
-
-              {/* REMAINING ACTION BUTTONS NEATLY ALIGNED INSIDE */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-300/30">
-                {!isFinalCleared && !isCancelled && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInspectedBuyerBooking(null);
-                      setRemainingQrRevealed(false);
-                      setRemainingUtr('');
-                      setPayRemainingBooking(currentBk);
-                    }}
-                    className="col-span-2 sm:col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold py-2.5 px-4 rounded-xl inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    <CreditCard className="w-4 h-4" /> Pay Remaining Balance (₹{(currentBk.balanceAtPacking || 0).toLocaleString('en-IN')})
-                  </button>
-                )}
-
-                {mapsUrl && !isCancelled && (
-                  <a
-                    href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-600 text-xs font-bold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-1.5"
-                  >
-                    <MapPin className="w-3.5 h-3.5" /> Open Maps
-                  </a>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleSendBilingualBookingSummary(currentBk)}
-                  className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Send className="w-3.5 h-3.5" /> WhatsApp
-                </button>
-
-                {!isCancelled && (
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadVerifiedPdf(currentBk, isFinalCleared)}
-                    className={`text-white text-xs font-bold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${isFinalCleared ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900'}`}
-                  >
-                    <Printer className="w-3.5 h-3.5" /> {isFinalCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
-                  </button>
-                )}
-
-                {!isFinalCleared && !isCancelled && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleBuyerCancelBooking(currentBk);
-                      setInspectedBuyerBooking(null);
-                    }}
-                    className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> {t.cancelBookingBtn}
-                  </button>
-                )}
-              </div>
-
-              {/* Rating & Feedback Section inside Details */}
-              {isFinalCleared && (
-                <div className="pt-2 border-t border-slate-300/30">
-                  {!currentBk.rated ? (
-                    <div className={`space-y-2.5 p-3.5 rounded-xl border ${subCardBg}`}>
-                      <span className="text-xs font-bold block">{t.rateSeedLabel}</span>
-                      <div className="flex items-center gap-1.5">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setRatingDrafts({ ...ratingDrafts, [currentBk.bookingId]: { ...draft, stars: star } })}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : cardBg}`}
-                          >
-                            {star}★
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Write feedback for Hatchery..."
-                          value={draft.comment}
-                          onChange={(e) => setRatingDrafts({ ...ratingDrafts, [currentBk.bookingId]: { ...draft, comment: e.target.value } })}
-                          className={`flex-1 border rounded-xl px-3 py-1.5 text-xs select-text ${inputCls}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSubmitRatingAndFeedback(currentBk.bookingId, currentBk.batch?.id)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl cursor-pointer"
-                        >
-                          {t.submitReviewBtn}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-emerald-500 font-bold">
-                      ✓ {t.ratedLabel}: {currentBk.userRating}★ {currentBk.userFeedback ? `— "${currentBk.userFeedback}"` : ''}
-                    </div>
-                  )}
-                </div>
-              )}
+              <button type="button" onClick={() => setInspectedBuyerBooking(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
+            <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${subCardBg}`}>
+              <span className="text-[10px] font-bold uppercase text-teal-500">Purchased From Hatchery</span>
+              <p className="text-sm font-extrabold">{inspectedBuyerBooking.batch?.realName} ({inspectedBuyerBooking.batch?.id})</p>
+              <p className="opacity-75">CAA License: {inspectedBuyerBooking.batch?.caaLicense} • {inspectedBuyerBooking.batch?.zone}</p>
+              <p className="opacity-75">Address: {inspectedBuyerBooking.batch?.realAddress} • +91 {inspectedBuyerBooking.batch?.realPhone}</p>
+            </div>
+            <div className="text-xs space-y-2">
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Buyer / Farmer:</span><b>{inspectedBuyerBooking.farmerName} (+91 {inspectedBuyerBooking.farmerPhone})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>UTR / Payment Ref:</span><b className="font-mono">{inspectedBuyerBooking.paymentId} ({inspectedBuyerBooking.paymentMode})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Booked On:</span><b>{inspectedBuyerBooking.date} at {inspectedBuyerBooking.time}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Species & Stage:</span><b>{inspectedBuyerBooking.batch?.species} ({inspectedBuyerBooking.batch?.plStage})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Quantity + Free Bonus:</span><b>{(inspectedBuyerBooking.quantity || 0).toLocaleString('en-IN')} + {(inspectedBuyerBooking.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Schedule:</span><b>{inspectedBuyerBooking.packingDate} ({inspectedBuyerBooking.packingTimeSlot})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (4%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Balance Cleared (${inspectedBuyerBooking.clearedAt})` : inspectedBuyerBooking.settlement?.status === 'CANCELLED_REFUNDED' ? 'Cancelled (2% Refunded)' : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
+            </div>
+            {(() => {
+              const bk = inspectedBuyerBooking;
+              const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+              const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
+              const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
+              return (
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-300/20">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {mapsUrl && !isCancelled && (
+                      <a
+                        href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1"
+                      >
+                        <MapPin className="w-3.5 h-3.5" /> Maps
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSendBilingualBookingSummary(bk)}
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" /> WhatsApp
+                    </button>
+                    {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInspectedBuyerBooking(null);
+                          setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                          setPayRemainingBooking(bk);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" /> Full Payment
+                      </button>
+                    )}
+                    {!isFinalCleared && !isCancelled && (
+                      <button
+                        type="button"
+                        onClick={() => { handleBuyerCancelBooking(bk); setInspectedBuyerBooking(null); }}
+                        className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> {t.cancelBookingBtn}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isCancelled && (
+                      <button type="button" onClick={() => handleDownloadVerifiedPdf(bk, isFinalCleared)} className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                        <Printer className="w-3.5 h-3.5" /> {isFinalCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setInspectedBuyerBooking(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>{t.closeBtn}</button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* SELLER ASSIGNED ORDER FULL DETAILS MODAL */}
       {inspectedSellerOrder && (
@@ -5924,14 +5558,35 @@ function AquaMarkApp() {
             </div>
             <div className="text-xs space-y-2">
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Buyer / Farmer Name:</span><b>{inspectedSellerOrder.farmerName} (+91 {inspectedSellerOrder.farmerPhone})</b></div>
-              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>UTR / Ref No:</span><b className="font-mono text-teal-500">{inspectedSellerOrder.paymentId} ({inspectedSellerOrder.paymentMode})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance UTR / Ref No:</span><b className="font-mono text-teal-500">{inspectedSellerOrder.paymentId} ({inspectedSellerOrder.paymentMode})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Booked Timestamp:</span><b>{inspectedSellerOrder.date} {inspectedSellerOrder.time}</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Seed Quantity + Bonus:</span><b>{(inspectedSellerOrder.quantity || 0).toLocaleString('en-IN')} + {(inspectedSellerOrder.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
-              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Target Pond Salinity:</span><b className="text-teal-500">{inspectedSellerOrder.pondSalinity} PPT</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Target Pond Salinity:</span><b className="text-teal-500">{inspectedSellerOrder.pondSalinity} PPT (Source: {inspectedSellerOrder.batch?.salinity} PPT)</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Date & Slot:</span><b>{inspectedSellerOrder.packingDate} ({inspectedSellerOrder.packingTimeSlot})</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Logistics Mode:</span><b>{inspectedSellerOrder.includeTransport ? 'Oxygen Van Delivery (+₹1,500)' : 'Self Pickup'}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Hatchery Rate:</span><b>₹{(inspectedSellerOrder.hatcheryFixedRate || 0).toFixed(2)} / seed</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Your Total Hatchery Value:</span><b className="text-emerald-500">₹{(inspectedSellerOrder.hatcheryFixedTotal || 0).toLocaleString('en-IN')}</b></div>
-              <div className="flex justify-between py-1"><span>Payment Status:</span><b>{inspectedSellerOrder.settlement?.status === 'BALANCE_CLEARED' ? `Payment Received (${inspectedSellerOrder.clearedAt})` : 'Awaiting Packing & Settlement'}</b></div>
+              <div className="flex justify-between py-1"><span>Payment Status:</span><b>{inspectedSellerOrder.settlement?.status === 'BALANCE_CLEARED' ? `Payment Received (${inspectedSellerOrder.clearedAt})` : 'Awaiting Packing & Payment Received'}</b></div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-300/20">
+              <div className="flex items-center gap-2">
+                <a
+                  href={`tel:+91${(inspectedSellerOrder.farmerPhone || '').replace(/\D/g, '').slice(-10)}`}
+                  className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5"
+                >
+                  <Phone className="w-3.5 h-3.5" /> Call Farmer
+                </a>
+                <button
+                  type="button"
+                  onClick={() => openWhatsAppMessage(
+                    inspectedSellerOrder.farmerPhone,
+                    `Hello ${inspectedSellerOrder.farmerName}, regarding your Aqua Mark Booking ${inspectedSellerOrder.bookingId} (Batch ${inspectedSellerOrder.batch?.id}, ${(inspectedSellerOrder.quantity || 0).toLocaleString('en-IN')} PL) scheduled on ${inspectedSellerOrder.packingDate}.`
+                  )}
+                  className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" /> WhatsApp Farmer
+                </button>
+              </div>
               <button type="button" onClick={() => setInspectedSellerOrder(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>{t.closeBtn}</button>
             </div>
           </div>
@@ -5949,15 +5604,41 @@ function AquaMarkApp() {
               </div>
               <button type="button" onClick={() => setSelectedBrokerTx(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
             </div>
-            <div className={`border rounded-xl p-4 space-y-2 text-xs ${subCardBg}`}>
-              <div className="flex justify-between"><span>Farmer:</span><b>{selectedBrokerTx.farmerName} (+91 {selectedBrokerTx.farmerPhone})</b></div>
-              <div className="flex justify-between"><span>Hatchery:</span><b>{selectedBrokerTx.batch?.realName}</b></div>
-              <div className="flex justify-between"><span>Booked Quantity:</span><b>{(selectedBrokerTx.quantity || 0).toLocaleString('en-IN')} PL</b></div>
-              <div className="flex justify-between border-t border-slate-300/30 pt-2 text-sm font-extrabold text-emerald-500">
-                <span>Your 2% Commission:</span>
-                <span>₹{(selectedBrokerTx.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')}</span>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                <span className="text-[10px] opacity-60 uppercase font-bold block">Buyer / Farmer Full Details</span>
+                <b className="text-sm block mt-0.5">{selectedBrokerTx.farmerName}</b>
+                <span className="opacity-75">+91 {selectedBrokerTx.farmerPhone}</span>
+                <span className="block text-[11px] opacity-65 mt-0.5">Pond Salinity: {selectedBrokerTx.pondSalinity} PPT</span>
+              </div>
+              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                <span className="text-[10px] opacity-60 uppercase font-bold block">Hatchery (Seller) Details</span>
+                <b className="text-sm block mt-0.5">{selectedBrokerTx.batch?.realName}</b>
+                <span className="opacity-75">{selectedBrokerTx.batch?.zone} • Batch {selectedBrokerTx.batch?.id}</span>
               </div>
             </div>
+
+            <div className={`border rounded-xl p-4 space-y-2 text-xs ${subCardBg}`}>
+              <div className="flex justify-between"><span>Payment UTR / Ref:</span><b className="font-mono text-teal-500">{selectedBrokerTx.paymentId} ({selectedBrokerTx.paymentMode})</b></div>
+              <div className="flex justify-between"><span>Booked Quantity:</span><b>{(selectedBrokerTx.quantity || 0).toLocaleString('en-IN')} PL ({selectedBrokerTx.batch?.plStage})</b></div>
+              <div className="flex justify-between"><span>Packing Schedule:</span><b>{selectedBrokerTx.packingDate} ({selectedBrokerTx.packingTimeSlot})</b></div>
+              <div className="flex justify-between"><span>Hatchery Rate:</span><b>₹{(selectedBrokerTx.hatcheryFixedRate || 0).toFixed(2)} / seed</b></div>
+              <div className="flex justify-between"><span>Extra Margin Added by You:</span><b className="text-teal-500">+{selectedBrokerTx.brokerMarginPaise || 0} paise / seed</b></div>
+              <div className="flex justify-between border-t border-slate-300/30 pt-2">
+                <span>Your 2% Commission (From Advance Hold):</span>
+                <b>₹{(selectedBrokerTx.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')} ({selectedBrokerTx.settlement?.status === 'BALANCE_CLEARED' ? 'Credited' : 'On Hold'})</b>
+              </div>
+              <div className="flex justify-between">
+                <span>Your Extra Margin Profit (Collected at Packing):</span>
+                <b>₹{(selectedBrokerTx.brokerExtraMarginTotal || 0).toLocaleString('en-IN')}</b>
+              </div>
+              <div className="flex justify-between border-t border-slate-300/30 pt-2 text-sm font-extrabold text-emerald-500">
+                <span>Total Broker Combined Earnings:</span>
+                <span>₹{((selectedBrokerTx.settlement?.brokerBase2Pct || 0) + (selectedBrokerTx.brokerExtraMarginTotal || 0)).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setSelectedBrokerTx(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
                 {t.closeBtn}
@@ -5968,7 +5649,7 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          HATCHERY INSPECTION MODAL (SPF BIOSECURITY OPTION COMPLETELY REMOVED)
+          HATCHERY INSPECTION MODAL (FEATURE 10 SPF LINEAGE AUDIT + MEDIA)
          ========================================================= */}
       {inspectedBatch && (() => {
         const ownerProf = hatcheryProfiles[inspectedBatch.ownerPhone] || {};
@@ -6001,10 +5682,12 @@ function AquaMarkApp() {
                 </div>
               )}
 
+
+
               <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
                 <div><span className="text-[10px] opacity-60 block">Registered Since</span><b>{inspectedBatch.registeredAt || ownerProf.registeredAt || '2026'}</b></div>
                 <div><span className="text-[10px] opacity-60 block">Orders Fulfilled</span><b>{ordersCount} Orders</b></div>
-                <div><span className="text-[10px] opacity-60 block">Minimum Packing</span><b className="text-amber-500">{formatSeedQuantityShort(inspectedBatch.minPackingQty || 100000).split(' (')[0]}</b></div>
+                <div><span className="text-[10px] opacity-60 block">Active Batches</span><b>{allHatcheryBatches.length} Batches</b></div>
                 <div><span className="text-[10px] opacity-60 block">Salinity / Stage</span><b className="text-teal-500">{inspectedBatch.salinity} PPT • {inspectedBatch.plStage}</b></div>
               </div>
 
@@ -6055,7 +5738,7 @@ function AquaMarkApp() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-xs opacity-60">PCR lab verification verified on file for {inspectedBatch.caaLicense}.</div>
+                  <div className="p-4 text-center text-xs opacity-60">No PCR images uploaded.</div>
                 )}
               </div>
 
@@ -6094,13 +5777,6 @@ function AquaMarkApp() {
                     const b = inspectedBatch;
                     setInspectedBatch(null);
                     setModalError('');
-                    const defaultLakhs = Math.max(1, Math.ceil((b.minPackingQty || 100000) / 100000));
-                    setBookingForm(prev => ({
-                      ...prev,
-                      qtyAmount: String(Math.min(100, defaultLakhs)),
-                      qtyUnit: 'LAKHS',
-                      paymentPlan: 'ADVANCE'
-                    }));
                     setSelectedBatch(b);
                   }}
                   className="bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer"
@@ -6114,254 +5790,249 @@ function AquaMarkApp() {
       })()}
 
       {/* =========================================================
-          BOOKING MODAL — ADVANCE (4%) VS FULL PAYMENT (100%) + MINIMUM PACKING ENFORCEMENT
+          BOOKING MODAL — BLURRED-TO-REVEAL QR ("Show QR") + MULTI-POND SPLIT
          ========================================================= */}
-      {selectedBatch && (() => {
-        const qty = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
-        const minReqQty = selectedBatch.minPackingQty || 100000;
-        const isBelowMinPacking = qty < minReqQty;
-        const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
-        const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
-        const total = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
-        const token4Pct = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
-        const isFullPlan = bookingForm.paymentPlan === 'FULL';
-        const payableNow = isFullPlan ? total : token4Pct;
+      {selectedBatch && (
+        <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[92vh] overflow-y-auto ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <h3 className="font-extrabold text-base">{t.modalTitle}</h3>
+                <p className="text-xs opacity-60">{selectedBatch.hatcheryCode || 'Verified Hatchery'} • {selectedBatch.id} • {selectedBatch.zone}</p>
+              </div>
+              <button type="button" onClick={() => { setSelectedBatch(null); setModalError(''); }} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
 
-        return (
-          <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[92vh] overflow-y-auto ${cardBg}`}>
-              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-                <div>
-                  <h3 className="font-extrabold text-base">{t.modalTitle}</h3>
-                  <p className="text-xs opacity-60">{selectedBatch.hatcheryCode || 'Verified Hatchery'} • {selectedBatch.id} • {selectedBatch.zone}</p>
+            {modalError && (
+              <div className="bg-rose-500/15 border border-rose-500/40 text-rose-500 px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmBookingSubmit} className="space-y-4">
+              <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-teal-600 uppercase">{t.step1Label}</span>
+                  {currentUser.role === 'mediator' && (
+                    <button type="button" onClick={() => { setSelectedBatch(null); setModalError(''); }} className="text-[11px] font-bold text-teal-600 underline cursor-pointer">
+                      {t.changeHatcheryBtn}
+                    </button>
+                  )}
                 </div>
-                <button type="button" onClick={() => { setSelectedBatch(null); setModalError(''); }} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-extrabold block">{selectedBatch.hatcheryCode || 'Verified Hatchery'} ({selectedBatch.plStage})</span>
+                    <span className="opacity-75">{selectedBatch.species} • Remaining: {(selectedBatch.availableStock || 0).toLocaleString('en-IN')} PL</span>
+                  </div>
+                  <div className="text-right font-black text-teal-600 text-base">
+                    ₹{(selectedBatch.pricePer1000 || 0).toFixed(2)}<span className="text-[10px] font-normal block">/seed</span>
+                  </div>
+                </div>
               </div>
 
-              {modalError && (
-                <div className="bg-rose-500/15 border border-rose-500/40 text-rose-500 px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{modalError}</span>
-                </div>
-              )}
+              <div className="space-y-3">
+                <span className="text-[11px] font-extrabold opacity-75 uppercase block">{t.step2Label}</span>
 
-              <form onSubmit={handleConfirmBookingSubmit} className="space-y-4">
-                <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-extrabold text-teal-600 uppercase">{t.step1Label}</span>
-                    {currentUser.role === 'mediator' && (
-                      <button type="button" onClick={() => { setSelectedBatch(null); setModalError(''); }} className="text-[11px] font-bold text-teal-600 underline cursor-pointer">
-                        {t.changeHatcheryBtn}
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
+                {currentUser.role === 'mediator' && (
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 rounded-xl border ${subCardBg}`}>
                     <div>
-                      <span className="font-extrabold block">{selectedBatch.hatcheryCode || 'Verified Hatchery'} ({selectedBatch.plStage})</span>
-                      <span className="opacity-75">
-                        Stock: {(selectedBatch.availableStock || 0).toLocaleString('en-IN')} PL • <b className="text-amber-500">Min Packing: {formatSeedQuantityShort(minReqQty)}</b>
-                      </span>
-                    </div>
-                    <div className="text-right font-black text-teal-600 text-base">
-                      ₹{(selectedBatch.pricePer1000 || 0).toFixed(2)}<span className="text-[10px] font-normal block">/seed</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <span className="text-[11px] font-extrabold opacity-75 uppercase block">{t.step2Label}</span>
-
-                  {currentUser.role === 'mediator' && (
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 rounded-xl border ${subCardBg}`}>
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{t.selectSavedFarmer}</label>
-                        <select
-                          onChange={(e) => {
-                            const found = brokerFarmers.find(f => f.id === e.target.value);
-                            if (found) setBookingForm({ ...bookingForm, farmerName: found.name, farmerPhone: found.phone });
-                          }}
-                          className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-semibold ${inputCls}`}
-                        >
-                          <option value="">{t.manualFarmerOption}</option>
-                          {brokerFarmers.map(f => (
-                            <option key={f.id} value={f.id}>{f.name} ({f.village})</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{t.brokerMarginLabel}</label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={2}
-                          placeholder="0 - 99"
-                          value={bookingForm.brokerMarginPaise}
-                          onChange={(e) => {
-                            const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 2);
-                            setBookingForm({ ...bookingForm, brokerMarginPaise: clean });
-                          }}
-                          className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{t.farmerNameLabel}</label>
-                      <input required type="text" value={bookingForm.farmerName} onChange={(e) => setBookingForm({ ...bookingForm, farmerName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-sm select-text ${inputCls}`} />
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{t.selectSavedFarmer}</label>
+                      <select
+                        onChange={(e) => {
+                          const found = brokerFarmers.find(f => f.id === e.target.value);
+                          if (found) setBookingForm({ ...bookingForm, farmerName: found.name, farmerPhone: found.phone });
+                        }}
+                        className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-semibold ${inputCls}`}
+                      >
+                        <option value="">{t.manualFarmerOption}</option>
+                        {brokerFarmers.map(f => (
+                          <option key={f.id} value={f.id}>{f.name} ({f.village})</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{t.whatsappLabel}</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{t.brokerMarginLabel}</label>
                       <input
-                        required
-                        type="tel"
-                        maxLength={10}
-                        placeholder="9876543210"
-                        value={bookingForm.farmerPhone}
-                        onChange={(e) => setBookingForm({ ...bookingForm, farmerPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                        className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
+                        placeholder="0 - 99"
+                        value={bookingForm.brokerMarginPaise}
+                        onChange={(e) => {
+                          const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 2);
+                          setBookingForm({ ...bookingForm, brokerMarginPaise: clean });
+                        }}
+                        className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`}
                       />
                     </div>
                   </div>
+                )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-bold opacity-75 block mb-1">{t.quantityLabel}</label>
-                      <div className="flex gap-1.5">
-                        <input
-                          required
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={3}
-                          placeholder="1-100"
-                          value={bookingForm.qtyAmount}
-                          onChange={(e) => {
-                            const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                            const num = clean === '' ? '' : String(Math.min(100, Number(clean)));
-                            setBookingForm({ ...bookingForm, qtyAmount: num });
-                          }}
-                          className={`w-24 border rounded-xl px-2.5 py-2 text-sm font-bold text-center select-text ${isBelowMinPacking ? 'border-rose-500 text-rose-500' : inputCls}`}
-                        />
-                        <select
-                          value={bookingForm.qtyUnit}
-                          onChange={(e) => setBookingForm({ ...bookingForm, qtyUnit: e.target.value })}
-                          className={`flex-1 border rounded-xl px-2.5 py-2 text-xs font-bold ${inputCls}`}
-                        >
-                          <option value="LAKHS">Lakhs (× 1,00,000 PL)</option>
-                          <option value="MILLIONS">Millions (× 10,00,000 PL)</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{t.pondSalinityLabel}</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.farmerNameLabel}</label>
+                    <input required type="text" value={bookingForm.farmerName} onChange={(e) => setBookingForm({ ...bookingForm, farmerName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-sm select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.whatsappLabel}</label>
+                    <input
+                      required
+                      type="tel"
+                      maxLength={10}
+                      placeholder="9876543210"
+                      value={bookingForm.farmerPhone}
+                      onChange={(e) => setBookingForm({ ...bookingForm, farmerPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold opacity-75 block mb-1">
+                      {t.quantityLabel} <span className="text-amber-500">(Min: {((selectedBatch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL)</span>
+                    </label>
+                    <div className="flex gap-1.5">
                       <input
                         required
                         type="text"
                         inputMode="numeric"
-                        maxLength={2}
-                        value={bookingForm.pondSalinity}
-                        onChange={(e) => setBookingForm({ ...bookingForm, pondSalinity: e.target.value.replace(/\D/g, '').slice(0, 2) })}
-                        className={`w-full border rounded-xl px-2.5 py-2 text-sm font-bold select-text ${inputCls}`}
+                        maxLength={3}
+                        placeholder="1-100"
+                        value={bookingForm.qtyAmount}
+                        onChange={(e) => {
+                          const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                          const num = clean === '' ? '' : String(Math.min(100, Number(clean)));
+                          setBookingForm({ ...bookingForm, qtyAmount: num });
+                        }}
+                        className={`w-24 border rounded-xl px-2.5 py-2 text-sm font-bold text-center select-text ${inputCls}`}
                       />
-                    </div>
-                  </div>
-
-                  {/* MINIMUM PACKING WARNING IF BELOW HATCHERY MINIMUM */}
-                  {isBelowMinPacking && (
-                    <div className="bg-rose-500/15 border-2 border-rose-500/50 text-rose-500 rounded-xl p-3 text-xs font-extrabold flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>
-                        Minimum Packing Required: {formatSeedQuantityShort(minReqQty)}. Please increase quantity to at least {formatSeedQuantityShort(minReqQty).split(' (')[0]} to book.
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{t.packingDateLabel}</label>
-                      <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className={`w-full border rounded-xl px-2.5 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{t.packingTimeLabel}</label>
-                      <select value={bookingForm.packingTimeSlot} onChange={(e) => setBookingForm({ ...bookingForm, packingTimeSlot: e.target.value })} className={`w-full border rounded-xl px-2 py-2 text-xs font-bold ${inputCls}`}>
-                        {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">Split Across Ponds</label>
-                      <select value={bookingForm.pondSplitCount} onChange={(e) => setBookingForm({ ...bookingForm, pondSplitCount: e.target.value })} className={`w-full border rounded-xl px-2 py-2 text-xs font-bold ${inputCls}`}>
-                        <option value="1">1 Pond (Single)</option>
-                        <option value="2">2 Ponds (50/50)</option>
-                        <option value="3">3 Ponds (Equal)</option>
-                        <option value="4">4 Ponds (Equal)</option>
+                      <select
+                        value={bookingForm.qtyUnit}
+                        onChange={(e) => setBookingForm({ ...bookingForm, qtyUnit: e.target.value })}
+                        className={`flex-1 border rounded-xl px-2.5 py-2 text-xs font-bold ${inputCls}`}
+                      >
+                        <option value="LAKHS">Lakhs (× 1,00,000 PL)</option>
+                        <option value="MILLIONS">Millions (× 10,00,000 PL)</option>
                       </select>
                     </div>
                   </div>
-
-                  <label className={`flex items-center gap-2.5 border rounded-xl p-2.5 cursor-pointer text-xs font-bold ${subCardBg}`}>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.pondSalinityLabel}</label>
                     <input
-                      type="checkbox"
-                      checked={bookingForm.includeTransport}
-                      onChange={(e) => setBookingForm({ ...bookingForm, includeTransport: e.target.checked })}
+                      required
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      value={bookingForm.pondSalinity}
+                      onChange={(e) => setBookingForm({ ...bookingForm, pondSalinity: e.target.value.replace(/\D/g, '').slice(0, 2) })}
+                      className={`w-full border rounded-xl px-2.5 py-2 text-sm font-bold select-text ${inputCls}`}
                     />
-                    <Truck className="w-4 h-4 text-teal-600" />
-                    {t.transportAddonLabel}
-                  </label>
+                  </div>
+                </div>
+                {(() => {
+                  const qtyNow = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
+                  const minRequired = selectedBatch.minPacking || 100000;
+                  if (qtyNow < minRequired) {
+                    return (
+                      <div className="bg-rose-500/15 border border-rose-500/40 text-rose-500 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>Minimum Packing required: {((minRequired) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL ({minRequired.toLocaleString('en-IN')} PL). Booking disabled below minimum.</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
-                  {/* TWO PAYMENT PLAN OPTIONS: ADVANCE (4%) VS FULL PAYMENT (100%) */}
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-xs font-bold opacity-80 block">Choose Payment Option</label>
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => setBookingForm({ ...bookingForm, paymentPlan: 'ADVANCE', qrRevealed: false })}
-                        className={`p-3 rounded-xl border-2 text-left transition cursor-pointer ${!isFullPlan ? 'border-teal-600 bg-teal-500/15' : subCardBg}`}
-                      >
-                        <div className="text-xs font-extrabold text-teal-600">Advance Booking (4%)</div>
-                        <div className="text-sm font-black mt-0.5">₹{token4Pct.toLocaleString('en-IN')}</div>
-                        <div className="text-[10px] opacity-70">Pay remaining 96% later in My Bookings</div>
-                      </button>
+                {/* FEATURE 3: MULTI-POND SPLIT-ORDER PLANNER */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.packingDateLabel}</label>
+                    <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className={`w-full border rounded-xl px-2.5 py-2 text-xs font-bold select-text ${inputCls}`} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{t.packingTimeLabel}</label>
+                    <select value={bookingForm.packingTimeSlot} onChange={(e) => setBookingForm({ ...bookingForm, packingTimeSlot: e.target.value })} className={`w-full border rounded-xl px-2 py-2 text-xs font-bold ${inputCls}`}>
+                      {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold opacity-75 block mb-1">Split Across Ponds</label>
+                    <select value={bookingForm.pondSplitCount} onChange={(e) => setBookingForm({ ...bookingForm, pondSplitCount: e.target.value })} className={`w-full border rounded-xl px-2 py-2 text-xs font-bold ${inputCls}`}>
+                      <option value="1">1 Pond (Single)</option>
+                      <option value="2">2 Ponds (50/50)</option>
+                      <option value="3">3 Ponds (Equal)</option>
+                      <option value="4">4 Ponds (Equal)</option>
+                    </select>
+                  </div>
+                </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setBookingForm({ ...bookingForm, paymentPlan: 'FULL', qrRevealed: false })}
-                        className={`p-3 rounded-xl border-2 text-left transition cursor-pointer ${isFullPlan ? 'border-emerald-600 bg-emerald-500/15' : subCardBg}`}
-                      >
-                        <div className="text-xs font-extrabold text-emerald-500">Full Payment (100%)</div>
-                        <div className="text-sm font-black mt-0.5">₹{total.toLocaleString('en-IN')}</div>
-                        <div className="text-[10px] opacity-70">Instant Full Paid Receipt & 2% Cashback</div>
-                      </button>
-                    </div>
+                <label className={`flex items-center gap-2.5 border rounded-xl p-2.5 cursor-pointer text-xs font-bold ${subCardBg}`}>
+                  <input
+                    type="checkbox"
+                    checked={bookingForm.includeTransport}
+                    onChange={(e) => setBookingForm({ ...bookingForm, includeTransport: e.target.checked })}
+                  />
+                  <Truck className="w-4 h-4 text-teal-600" />
+                  {t.transportAddonLabel}
+                </label>
+
+                <div className="space-y-2 pt-1">
+                  <label className="text-xs font-bold opacity-75 block">Select Payment Option</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBookingForm({ ...bookingForm, paymentOption: 'ADVANCE', qrRevealed: false })}
+                      className={`p-2.5 rounded-xl border text-xs font-bold cursor-pointer ${bookingForm.paymentOption !== 'FULL' ? 'border-teal-600 bg-teal-500/15 text-teal-600' : subCardBg}`}
+                    >
+                      4% Advance Booking
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingForm({ ...bookingForm, paymentOption: 'FULL', qrRevealed: false })}
+                      className={`p-2.5 rounded-xl border text-xs font-bold cursor-pointer ${bookingForm.paymentOption === 'FULL' ? 'border-emerald-600 bg-emerald-500/15 text-emerald-600' : subCardBg}`}
+                    >
+                      100% Full Payment
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <label className="text-xs font-bold opacity-75 block">{bookingForm.paymentOption === 'FULL' ? 'Select Full Payment Method' : t.paymentMethodLabel}</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'RAZORPAY', label: 'Razorpay', icon: CreditCard },
+                      { id: 'DIRECT_UPI', label: 'UPI (QR / App)', icon: QrCode },
+                      { id: 'BANK_TO_BANK', label: 'Bank-to-Bank', icon: Landmark }
+                    ].map(pm => {
+                      const Icon = pm.icon;
+                      const active = bookingForm.paymentMethod === pm.id;
+                      return (
+                        <button
+                          key={pm.id}
+                          type="button"
+                          onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, paymentMethod: pm.id }); }}
+                          className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${active ? 'border-teal-600 bg-teal-500/15 text-teal-600 font-extrabold' : subCardBg}`}
+                        >
+                          <Icon className="w-4 h-4 text-teal-600" />
+                          <span className="text-[11px]">{pm.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {/* PAYMENT METHOD SELECTOR */}
-                  <div className="space-y-2 pt-1">
-                    <label className="text-xs font-bold opacity-75 block">{t.paymentMethodLabel}</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: 'RAZORPAY', label: 'Razorpay', icon: CreditCard },
-                        { id: 'DIRECT_UPI', label: 'UPI (QR / App)', icon: QrCode },
-                        { id: 'BANK_TO_BANK', label: 'Bank-to-Bank', icon: Landmark }
-                      ].map(pm => {
-                        const Icon = pm.icon;
-                        const active = bookingForm.paymentMethod === pm.id;
-                        return (
-                          <button
-                            key={pm.id}
-                            type="button"
-                            onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, paymentMethod: pm.id }); }}
-                            className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${active ? 'border-teal-600 bg-teal-500/15 text-teal-600 font-extrabold' : subCardBg}`}
-                          >
-                            <Icon className="w-4 h-4 text-teal-600" />
-                            <span className="text-[11px]">{pm.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {(() => {
+                    const qty = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
+                    const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
+                    const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
+                    const fullTotal = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
+                    const advToken = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
+                    const token = bookingForm.paymentOption === 'FULL' ? fullTotal : advToken;
 
-                    {bookingForm.paymentMethod === 'DIRECT_UPI' && (() => {
-                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${payableNow}&cu=INR&tn=SeedBooking_${bookingForm.paymentPlan}`;
+                    // UPI PAYMENT: BLURRED QR UNTIL "Show QR" CLICKED + "Pay By App" (NO REQUEST BY VPA)
+                    if (bookingForm.paymentMethod === 'DIRECT_UPI') {
+                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${token}&cu=INR&tn=${bookingForm.paymentOption === 'FULL' ? 'SeedFullPayment' : 'SeedAdvance4Pct'}`;
                       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
 
                       return (
@@ -6400,7 +6071,7 @@ function AquaMarkApp() {
                                 </button>
                               )}
                               <span className="text-xs font-extrabold mt-1">
-                                {bookingForm.qrRevealed ? `Scan QR with any UPI App • ₹${payableNow.toLocaleString('en-IN')}` : `Click Show QR to reveal ₹${payableNow.toLocaleString('en-IN')} code`}
+                                {bookingForm.qrRevealed ? `Scan QR with any UPI App • ₹${token.toLocaleString('en-IN')}` : `Click Show QR to reveal ₹${token.toLocaleString('en-IN')} code`}
                               </span>
                             </div>
                           ) : (
@@ -6409,8 +6080,9 @@ function AquaMarkApp() {
                                 href={upiUri}
                                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs inline-flex items-center justify-center gap-2"
                               >
-                                <Smartphone className="w-4 h-4" /> Open GPay / PhonePe / Paytm (₹{payableNow.toLocaleString('en-IN')})
+                                <Smartphone className="w-4 h-4" /> Open GPay / PhonePe / Paytm (₹{token.toLocaleString('en-IN')})
                               </a>
+                              <p className="text-[11px] opacity-70">After completing payment in your UPI app, enter the 12-digit UTR below.</p>
                             </div>
                           )}
 
@@ -6424,61 +6096,444 @@ function AquaMarkApp() {
                           />
                         </div>
                       );
-                    })()}
+                    }
 
-                    {bookingForm.paymentMethod === 'BANK_TO_BANK' && (
-                      <div className={`border rounded-xl p-3 space-y-2 text-xs ${subCardBg}`}>
-                        <div className="font-mono text-[11px] space-y-0.5 select-text">
-                          <div><b>Account Name:</b> Aqua Mark Settlement Account</div>
-                          <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
-                          <div><b>Payable Transfer:</b> ₹{payableNow.toLocaleString('en-IN')} (IMPS / NEFT)</div>
+                    if (bookingForm.paymentMethod === 'BANK_TO_BANK') {
+                      return (
+                        <div className={`border rounded-xl p-3 space-y-2 text-xs ${subCardBg}`}>
+                          <div className="font-mono text-[11px] space-y-0.5 select-text">
+                            <div><b>Account Name:</b> Aqua Mark Settlement Account</div>
+                            <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
+                            <div><b>4% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
+                          </div>
+                          <input
+                            required
+                            type="text"
+                            placeholder={t.utrPlaceholder}
+                            value={bookingForm.utrReference}
+                            onChange={(e) => setBookingForm({ ...bookingForm, utrReference: e.target.value })}
+                            className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
+                          />
                         </div>
-                        <input
-                          required
-                          type="text"
-                          placeholder={t.utrPlaceholder}
-                          value={bookingForm.utrReference}
-                          onChange={(e) => setBookingForm({ ...bookingForm, utrReference: e.target.value })}
-                          className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                        />
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+
+              {Math.abs((selectedBatch.salinity || 15) - (Number(bookingForm.pondSalinity) || 15)) > 4 && (
+                <div className="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{t.salinityWarn}</span>
+                </div>
+              )}
+
+              {(() => {
+                const qty = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
+                const minRequired = selectedBatch.minPacking || 100000;
+                const isBelowMin = qty < minRequired;
+                const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
+                const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
+                const total = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
+                const isFull = bookingForm.paymentOption === 'FULL';
+                const payNowAmt = isFull ? total : Math.max(800, Math.round(hatcheryFixedCost * 0.04));
+                return (
+                  <>
+                    <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 text-xs">
+                      <div className="flex justify-between text-slate-300">
+                        <span>{t.totalSeedValue} ({qty.toLocaleString('en-IN')} PL):</span>
+                        <span className="font-bold text-white">₹{total.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-emerald-400 font-extrabold text-sm border-t border-white/10 pt-2">
+                        <span>{isFull ? 'Pay Now (100% Full Payment):' : t.advancePaidLabel}:</span>
+                        <span>₹{payNowAmt.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300 pt-1">
+                        <span>{t.balanceAtPacking}:</span>
+                        <span className="font-bold text-white">₹{(total - payNowAmt).toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                    {!isBelowMin ? (
+                      <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
+                        {isFull ? `Confirm & Pay Full ₹${payNowAmt.toLocaleString('en-IN')}` : t.payNowBtn} →
+                      </button>
+                    ) : (
+                      <div className="w-full bg-rose-500/15 border border-rose-500/30 text-rose-500 font-bold py-3 rounded-xl text-xs text-center">
+                        Minimum Packing: {((minRequired) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL — Increase quantity to book
                       </div>
                     )}
+                  </>
+                );
+              })()}
+            </form>
+          </div>
+        </div>
+      )}
+
+
+      {/* =========================================================
+          NOTIFICATIONS PANEL MODAL (ALL ROLES + FULL DETAILS)
+         ========================================================= */}
+      {showNotifPanel && (() => {
+        const myNotifs = notifications.filter(
+          n => n.targetPhone === currentUser?.phone && (!n.targetRole || n.targetRole === currentUser?.role)
+        );
+        return (
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] flex flex-col ${cardBg}`}>
+              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <h3 className="font-extrabold text-base">Notifications & Live Updates</h3>
+                    <p className="text-[11px] opacity-60">Click any notification to view full details</p>
                   </div>
                 </div>
-
-                {Math.abs((selectedBatch.salinity || 15) - (Number(bookingForm.pondSalinity) || 15)) > 4 && (
-                  <div className="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{t.salinityWarn}</span>
-                  </div>
-                )}
-
-                <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-300">
-                    <span>{t.totalSeedValue} ({qty.toLocaleString('en-IN')} PL):</span>
-                    <span className="font-bold text-white">₹{total.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-emerald-400 font-extrabold text-sm border-t border-white/10 pt-2">
-                    <span>{isFullPlan ? 'Full Payment Now (100%):' : t.advancePaidLabel}:</span>
-                    <span>₹{payableNow.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-300 pt-1">
-                    <span>{t.balanceAtPacking}:</span>
-                    <span className="font-bold text-white">₹{(total - payableNow).toLocaleString('en-IN')}</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  {myNotifs.some(n => !n.read) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = notifications.map(n =>
+                          n.targetPhone === currentUser?.phone && (!n.targetRole || n.targetRole === currentUser?.role)
+                            ? { ...n, read: true }
+                            : n
+                        );
+                        setNotifications(next);
+                        saveKvToSupabase('notifications', next);
+                      }}
+                      className="text-[11px] font-bold text-teal-600 hover:underline cursor-pointer"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setShowNotifPanel(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
                 </div>
+              </div>
 
-                {/* HIDE BOOKING BUTTON WHEN QUANTITY IS BELOW MINIMUM PACKING */}
-                {!isBelowMinPacking && (
-                  <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
-                    {isFullPlan ? `Pay Full ₹${payableNow.toLocaleString('en-IN')} & Confirm` : `Pay 4% Advance ₹${payableNow.toLocaleString('en-IN')} & Confirm`} →
-                  </button>
+              <div className="overflow-y-auto space-y-2.5 pr-1 flex-1">
+                {myNotifs.length === 0 ? (
+                  <p className="text-xs opacity-60 py-8 text-center">No notifications yet. All booking, packing, cashback & payment updates appear here.</p>
+                ) : (
+                  myNotifs.map(n => {
+                    const isExpanded = selectedNotifDetail?.id === n.id;
+                    return (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          setSelectedNotifDetail(isExpanded ? null : n);
+                          if (!n.read) {
+                            const next = notifications.map(item => (item.id === n.id ? { ...item, read: true } : item));
+                            setNotifications(next);
+                            saveKvToSupabase('notifications', next);
+                          }
+                        }}
+                        className={`border rounded-xl p-3.5 space-y-1.5 cursor-pointer transition ${!n.read ? 'border-teal-500 bg-teal-500/5' : subCardBg}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-extrabold flex items-center gap-1.5">
+                            {!n.read && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                            {n.title}
+                          </span>
+                          <span className="text-[10px] opacity-60 shrink-0">{n.createdAt}</span>
+                        </div>
+                        <p className="text-xs opacity-80 leading-relaxed">{n.message}</p>
+                        {isExpanded && n.details && Object.keys(n.details).length > 0 && (
+                          <div className={`mt-2 p-2.5 rounded-lg border text-[11px] space-y-1 ${cardBg}`}>
+                            <span className="text-[10px] font-extrabold uppercase text-teal-600 block">Full Notification Details</span>
+                            {Object.entries(n.details).map(([k, v]) => (
+                              <div key={k} className="flex justify-between gap-2">
+                                <span className="opacity-65 capitalize">{k.replace(/([A-Z])/g, ' $1')}:</span>
+                                <b className="font-mono">{typeof v === 'number' ? v.toLocaleString('en-IN') : String(v)}</b>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
-              </form>
+              </div>
             </div>
           </div>
         );
       })()}
+
+      {/* =========================================================
+          HATCHERY SECURITY DEPOSIT MODAL (VIEW, ADD MONEY, DELETE TO WITHDRAW)
+         ========================================================= */}
+      {showSellerDepositModal && myFixedHatchery && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 max-h-[90vh] overflow-y-auto ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <h3 className="font-extrabold text-base flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-emerald-500" /> Hatchery Security Deposit
+              </h3>
+              <button type="button" onClick={() => setShowSellerDepositModal(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 text-center space-y-1">
+              <span className="text-[11px] font-bold uppercase text-emerald-600">Current Deposited Money</span>
+              <div className="text-3xl font-black text-emerald-600">₹{(myFixedHatchery.depositAmount || 10000).toLocaleString('en-IN')}</div>
+              <p className="text-[11px] opacity-70">
+                Source Ref: <span className="font-mono font-bold">{myFixedHatchery.depositSourceAccount || myFixedHatchery.depositUtr || 'VERIFIED_10K'}</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleAddHatcheryDepositMoney} className={`border rounded-2xl p-4 space-y-3 text-xs ${subCardBg}`}>
+              <h4 className="font-extrabold text-sm">Add Money to Deposit</h4>
+              <div>
+                <label className="font-bold opacity-75 block mb-1">Amount (₹)</label>
+                <input
+                  required
+                  type="number"
+                  min="500"
+                  step="500"
+                  value={addDepositAmount}
+                  onChange={(e) => setAddDepositAmount(e.target.value)}
+                  className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {['DIRECT_UPI', 'BANK_TO_BANK', 'RAZORPAY'].map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setAddDepositMethod(m)}
+                    className={`py-2 rounded-lg font-bold border text-[11px] cursor-pointer ${addDepositMethod === m ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                  >
+                    {m === 'DIRECT_UPI' ? 'UPI' : m === 'BANK_TO_BANK' ? 'Bank' : 'Razorpay'}
+                  </button>
+                ))}
+              </div>
+              {addDepositMethod === 'DIRECT_UPI' && (
+                <div className="flex flex-col items-center bg-white p-2.5 rounded-xl border text-slate-900 relative">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=aquamark@sbi&pn=AquaMarkDeposit&am=${Number(addDepositAmount) || 5000}&cu=INR`)}`}
+                    alt="Add Deposit QR"
+                    className={`w-28 h-28 object-contain ${addDepositQrRevealed ? '' : 'blur-md select-none'}`}
+                  />
+                  {!addDepositQrRevealed && (
+                    <button type="button" onClick={() => setAddDepositQrRevealed(true)} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
+                      Show QR
+                    </button>
+                  )}
+                </div>
+              )}
+              {(addDepositMethod === 'DIRECT_UPI' || addDepositMethod === 'BANK_TO_BANK') && (
+                <input
+                  required
+                  type="text"
+                  placeholder={t.utrPlaceholder}
+                  value={addDepositUtr}
+                  onChange={(e) => setAddDepositUtr(e.target.value)}
+                  className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
+                />
+              )}
+              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">
+                + Add Money to Deposit
+              </button>
+            </form>
+
+            <div className="pt-2 border-t border-slate-300/30 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsWithdrawingOnDelete(true);
+                  setDeleteConfirmPassword('');
+                  setShowDeleteAccountModal(true);
+                }}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" /> Delete Account to Withdraw Money
+              </button>
+              <p className="text-[10px] opacity-65 text-center">
+                Deleting your account automatically refunds your deposited money back to the exact source account it came from.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          HATCHERY SCAN QR MODAL (AUTO-PACKED + PAYMENT SETTLED + FULL RECEIPT)
+         ========================================================= */}
+      {showSellerScanQrModal && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <h3 className="font-extrabold text-base flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-indigo-500" /> Scan Buyer Gate-Pass QR
+              </h3>
+              <button type="button" onClick={() => setShowSellerScanQrModal(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+
+            {scanQrError && (
+              <div className="bg-rose-500/15 border border-rose-500/30 text-rose-500 px-3 py-2 rounded-xl text-xs font-bold">
+                {scanQrError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSellerScanQrComplete(scanQrInput);
+              }}
+              className="space-y-3 text-xs"
+            >
+              <div>
+                <label className="font-bold opacity-75 block mb-1">Scan / Paste Gate-Pass QR Code or Booking ID / PIN</label>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="e.g. AQ-75733 or GP-1024"
+                  value={scanQrInput}
+                  onChange={(e) => setScanQrInput(e.target.value)}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm font-mono font-bold select-text ${inputCls}`}
+                />
+              </div>
+              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">
+                Verify QR & Complete Packing + Settle Payment
+              </button>
+            </form>
+
+            {hatcheryUpcomingOrders.length > 0 && (
+              <div className={`border rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto ${subCardBg}`}>
+                <span className="text-[10px] font-extrabold uppercase opacity-70 block">Quick-Scan Active Hatchery Gate-Passes</span>
+                {hatcheryUpcomingOrders.map(bk => (
+                  <div key={bk.bookingId} className={`flex items-center justify-between gap-2 p-2 rounded-lg border text-xs ${cardBg}`}>
+                    <div>
+                      <b className="font-mono text-teal-600">{bk.bookingId}</b> • {bk.farmerName}
+                      <span className="block text-[10px] opacity-65">PIN: {bk.gatePassPin || 'GP-1024'} • {(bk.quantity || 0).toLocaleString('en-IN')} PL</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSellerScanQrComplete(bk.bookingId)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg cursor-pointer shrink-0"
+                    >
+                      Scan & Settle
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          BUYER ANIMATED STATUS TRACKING MODAL
+         ========================================================= */}
+      {statusModalBooking && (() => {
+        const bk = statusModalBooking;
+        const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+        const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
+        const steps = [
+          { title: bk.fullPaid ? '100% Full Payment Paid' : '4% Advance Paid', sub: `Ref: ${bk.paymentId}`, done: true },
+          { title: 'Salinity Acclimatization', sub: `Hatchery ${bk.batch?.salinity || 16} PPT → Pond ${bk.pondSalinity || 15} PPT`, done: true },
+          { title: 'Packing & Gate-Pass Ready', sub: `${bk.packingDate} (${bk.packingTimeSlot || 'All Day'})`, done: isPacked },
+          { title: 'Gate-Pass Scanned & Payment Settled', sub: isFinalCleared ? `Cleared ${bk.clearedAt || ''}` : 'Pending at Hatchery Gate', done: isFinalCleared }
+        ];
+        return (
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+              <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+                <div>
+                  <span className="font-mono text-[11px] font-bold text-teal-600">{bk.bookingId}</span>
+                  <h3 className="font-extrabold text-base">Live Booking & Escrow Status</h3>
+                </div>
+                <button type="button" onClick={() => setStatusModalBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+              </div>
+              <div className="space-y-3">
+                {steps.map((st, idx) => {
+                  const revealed = statusAnimStep >= idx + 1;
+                  const showTick = revealed && st.done;
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-500 ${revealed ? 'opacity-100 translate-x-0' : 'opacity-30 -translate-x-2'} ${showTick ? 'border-emerald-500/40 bg-emerald-500/10' : subCardBg}`}
+                    >
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${showTick ? 'bg-emerald-500 text-white scale-105' : 'bg-slate-400/20 text-slate-400'}`}>
+                        {showTick ? <Check className="w-4 h-4" /> : <Clock className="w-3.5 h-3.5" />}
+                      </div>
+                      <div className="text-xs">
+                        <div className={`font-extrabold ${showTick ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>{st.title}</div>
+                        <div className="text-[11px] opacity-70">{st.sub}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end">
+                <button type="button" onClick={() => setStatusModalBooking(null)} className={`px-4 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>{t.closeBtn}</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* =========================================================
+          BUYER PAY REMAINING 96% FULL PAYMENT MODAL
+         ========================================================= */}
+      {payRemainingBooking && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <span className="font-mono text-[11px] font-bold text-teal-600">{payRemainingBooking.bookingId}</span>
+                <h3 className="font-extrabold text-base">Pay Remaining Balance (Full Payment)</h3>
+              </div>
+              <button type="button" onClick={() => setPayRemainingBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
+              <span className="text-[11px] font-bold opacity-75 block">Remaining Balance Payable</span>
+              <span className="text-2xl font-black text-emerald-600">₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')}</span>
+            </div>
+            <form onSubmit={handleBuyerPayRemainingSubmit} className="space-y-3 text-xs">
+              <div className="grid grid-cols-3 gap-2">
+                {['DIRECT_UPI', 'BANK_TO_BANK', 'RAZORPAY'].map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setPayRemainingForm({ ...payRemainingForm, paymentMethod: m })}
+                    className={`py-2 rounded-xl border font-bold text-[11px] cursor-pointer ${payRemainingForm.paymentMethod === m ? 'bg-teal-600 text-white border-teal-600' : subCardBg}`}
+                  >
+                    {m === 'DIRECT_UPI' ? 'UPI (QR/App)' : m === 'BANK_TO_BANK' ? 'Bank Transfer' : 'Razorpay'}
+                  </button>
+                ))}
+              </div>
+              {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (
+                <div className="flex flex-col items-center bg-white p-3 rounded-xl border text-slate-900 relative">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${payRemainingBooking.balanceAtPacking || 0}&cu=INR&tn=Balance${payRemainingBooking.bookingId}`)}`}
+                    alt="Balance QR"
+                    className={`w-32 h-32 object-contain ${payRemainingForm.qrRevealed ? '' : 'blur-md select-none'}`}
+                  />
+                  {!payRemainingForm.qrRevealed && (
+                    <button type="button" onClick={() => setPayRemainingForm({ ...payRemainingForm, qrRevealed: true })} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
+                      Show QR
+                    </button>
+                  )}
+                </div>
+              )}
+              {(payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && (
+                <input
+                  required
+                  type="text"
+                  placeholder={t.utrPlaceholder}
+                  value={payRemainingForm.utrReference}
+                  onChange={(e) => setPayRemainingForm({ ...payRemainingForm, utrReference: e.target.value })}
+                  className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
+                />
+              )}
+              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
+                Confirm & Pay ₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} →
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* SIDE-BY-SIDE COMPARISON MODAL */}
       {showCompareModal && (
@@ -6498,7 +6553,7 @@ function AquaMarkApp() {
                     <div className="flex justify-between"><span>{t.perSeed}:</span><b>₹{(b.pricePer1000 || 0).toFixed(2)}</b></div>
                     <div className="flex justify-between"><span>{t.salinity}:</span><b>{b.salinity} PPT</b></div>
                     <div className="flex justify-between"><span>{t.bonus}:</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
-                    <div className="flex justify-between"><span>Min Packing:</span><b className="text-amber-500">{formatSeedQuantityShort(b.minPackingQty || 100000).split(' (')[0]}</b></div>
+                    <div className="flex justify-between"><span>PL Vigor:</span><b className="text-indigo-500">{b.vigorScore || 96}%</b></div>
                   </div>
                 </div>
               ))}
@@ -6517,7 +6572,7 @@ function AquaMarkApp() {
                   {activeInvoice.receiptType === 'FINAL' ? t.finalReceiptTitle : t.receiptTitle}
                 </h3>
                 <p className="text-[11px] font-mono text-emerald-500 font-bold">
-                  {activeInvoice.booking.bookingId} • Gate-Pass: {activeInvoice.booking.gatePassPin} • UTR: {activeInvoice.booking.balancePaymentId || activeInvoice.booking.paymentId}
+                  {activeInvoice.booking.bookingId} • Gate-Pass: {activeInvoice.booking.gatePassPin} • UTR: {activeInvoice.booking.paymentId}
                 </p>
               </div>
               <button type="button" onClick={() => setActiveInvoice(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
@@ -6529,6 +6584,16 @@ function AquaMarkApp() {
                 <p className="font-extrabold text-sm mt-0.5">{activeInvoice.booking.batch?.realName} (Batch {activeInvoice.booking.batch?.id})</p>
                 <p className="opacity-75">{activeInvoice.booking.batch?.realAddress}</p>
                 <p className="font-bold text-teal-500 mt-1">Phone: +91 {activeInvoice.booking.batch?.realPhone} | CAA: {activeInvoice.booking.batch?.caaLicense}</p>
+                {(activeInvoice.booking.batch?.googleMapsLink || hatcheryProfiles[activeInvoice.booking.hatcheryOwnerPhone]?.googleMapsLink) && (
+                  <a
+                    href={(activeInvoice.booking.batch?.googleMapsLink || hatcheryProfiles[activeInvoice.booking.hatcheryOwnerPhone]?.googleMapsLink)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 underline mt-1"
+                  >
+                    <MapPin className="w-3.5 h-3.5" /> Open Google Maps Location
+                  </a>
+                )}
               </div>
               <div className="flex justify-between py-1 border-b border-slate-300/20">
                 <span>{t.farmerNameLabel}:</span>
@@ -6543,11 +6608,11 @@ function AquaMarkApp() {
                 <span className="font-bold text-emerald-500">{(activeInvoice.booking.quantity || 0).toLocaleString('en-IN')} + {(activeInvoice.booking.bonusSeeds || 0).toLocaleString('en-IN')} Free PL</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-300/20 text-teal-500 font-bold">
-                <span>Total Paid Amount:</span>
+                <span>{t.advancePaidLabel}:</span>
                 <span>₹{(activeInvoice.booking.tokenAdvance || 0).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-1 font-bold">
-                <span>Remaining Balance:</span>
+                <span>{t.balanceAtPacking}:</span>
                 <span>₹{(activeInvoice.booking.balanceAtPacking || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
