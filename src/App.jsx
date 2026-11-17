@@ -445,7 +445,7 @@ const DICT = {
     deleteAccountBtn: 'Delete Account',
     editBatchBtn: 'Edit Batch',
     saveBtn: 'Save Changes',
-    addBatchTitle: 'Publish New Seed Batch & Packing Schedule',
+    addBatchTitle: 'Publish New Seed Batch',
     batchNoLabel: 'Batch Number',
     batchNoPlaceholder: 'e.g., BATCH-2026-01',
     speciesLabel: 'Shrimp Species',
