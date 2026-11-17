@@ -2345,7 +2345,7 @@ function AquaMarkApp() {
     const srcPpt = Number(bk.batch?.salinity || 16);
     const dstPpt = Number(bk.pondSalinity || 15);
     const pptVariance = Math.abs(srcPpt - dstPpt);
-    const transportLabel = bk.includeTransport ? 'Oxygen Van Delivery' : 'Self Pickup at Hatchery Gate';
+    const transportLabel = bk.includeTransport ? 'Oxygen Van Delivery' : 'Self Pickup from Hatchery';
     const bonusPct = bk.batch?.bonusPercent || 15;
     const isPaidFull = isFinalCleared || bk.fullPaid || bk.balanceAtPacking === 0;
 
@@ -2466,7 +2466,7 @@ function AquaMarkApp() {
                 <div class="totals-row"><span>Unit Seed Rate:</span><span>₹${(bk.hatcheryFixedRate || bk.batch?.pricePer1000 || 0.43).toFixed(2)} / seed</span></div>
                 <div class="totals-row"><span>Total Order Value:</span><span><b>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</b></span></div>
                 <div class="totals-row totals-highlight"><span>${isPaidFull ? 'Total Paid (100% Settled):' : '4% Advance Paid:'}</span><span>₹${(isPaidFull ? bk.totalSeedCost : bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
-                <div class="totals-row"><span>${isPaidFull ? 'Remaining Balance:' : '96% Balance at Gate:'}</span><span><b>₹${(isPaidFull ? 0 : bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span></div>
+                <div class="totals-row"><span>${isPaidFull ? 'Remaining Balance:' : '96% Balance at Hatchery:'}</span><span><b>₹${(isPaidFull ? 0 : bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span></div>
               </div>
             </div>
 
@@ -2474,7 +2474,7 @@ function AquaMarkApp() {
               <strong>Mandatory Hatchery Quality & Bio-Security Terms:</strong>
               1. Hatchery certifies that the above batch is quality-tested for WSSV, EHP, IHHNV, and TSV as per attached PCR reports (${pcrLabels}).<br/>
               2. Oxygen packing density must not exceed 1,000 PL per liter for transit durations exceeding 4 hours.<br/>
-              3. Farmer must inspect active swimming behavior and sample count at the hatchery gate before confirming final release.
+              3. Farmer must inspect active swimming behavior and sample count at the hatchery before confirming final release.
             </div>
 
             <div class="checklist-box">
@@ -2482,7 +2482,7 @@ function AquaMarkApp() {
               [ ✓ ] CAA License Verified &nbsp;&nbsp;&nbsp;
               [ ✓ ] PCR Lab Images Attached (${pcrLabels}) &nbsp;&nbsp;&nbsp;
               [ ✓ ] ${isPaidFull ? '100% Payment Settled' : '4% Advance Confirmed'} &nbsp;&nbsp;&nbsp;
-              [ ${bk.gatePassCleared ? '✓' : '&nbsp;'} ] Oxygen Packing Count Checked at Gate
+              [ ${bk.gatePassCleared ? '✓' : '&nbsp;'} ] Oxygen Packing Count Checked at Hatchery
             </div>
           </div>
 
