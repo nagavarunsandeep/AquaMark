@@ -469,7 +469,7 @@ const DICT = {
     removeBtn: 'Remove',
     markPackedBtn: 'Mark Packing Complete',
     paymentReceivedBtn: 'Payment Received',
-    sellerFeedbackTitle: 'Farmer Ratings & Feedback',
+    sellerFeedbackTitle: 'Farmer Ratings & Feedbacks',
     noFeedbackYet: 'No farmer feedback submitted yet.',
     brokerRegTitle: 'Mandatory Broker Bank & UPI Registration',
     brokerRegSub: 'Enter your settlement bank account & UPI ID to activate your Broker account.',
