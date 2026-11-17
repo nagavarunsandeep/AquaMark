@@ -356,8 +356,8 @@ const DICT = {
     selectRoleSub: 'Each portal has its own separate registration — select your role below',
     roles: {
       buyer: { title: 'Buyer (Farmer)', desc: 'Book CAA & PCR-verified seed' },
-      seller: { title: 'Seller (Hatchery)', desc: 'Manage hatchery & batches' },
-      mediator: { title: 'Mediator (Broker)', desc: 'Browse hatcheries & book' }
+      seller: { title: 'Seller (Hatchery)', desc: 'Manage Hatchery & Batches' },
+      mediator: { title: 'Mediator (Broker)', desc: 'Browse Hatcheries & Book' }
     },
     signUpTab: 'Sign Up',
     loginTab: 'Login',
