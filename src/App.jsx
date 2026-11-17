@@ -463,7 +463,7 @@ const DICT = {
     gpsLockedBtn: 'GPS Locked',
     captureGpsBtn: 'Tag Tank GPS',
     publishBtn: 'Publish Batch Live',
-    myBatchesTitle: 'Your Active Seed Batches (Pause/Live, Edit All Details & Media)',
+    myBatchesTitle: 'Your Active Seed Batches',
     noBatchesSeller: 'No active batches published yet.',
     saveChangesBtn: 'Save Batch',
     removeBtn: 'Remove',
