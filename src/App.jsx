@@ -436,7 +436,7 @@ const DICT = {
     accHolderLabel: 'Bank Account Holder Name',
     accNoLabel: 'Bank Account Number',
     ifscLabel: 'IFSC Code',
-    upiLabel: 'Settlement UPI ID',
+    upiLabel: 'UPI ID',
     completeRegBtn: 'Verify & Register Hatchery + Bank',
     hatcheryLockedBanner: 'Verified Hatchery Locked to +91',
     editSellerProfileBtn: 'Edit Profile, Maps & Bank',
