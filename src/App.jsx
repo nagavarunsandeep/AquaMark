@@ -4645,7 +4645,7 @@ function AquaMarkApp() {
                 >
                   <div className="space-y-1">
                     <span className="text-xs text-emerald-500 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-                      <Wallet className="w-4 h-4" /> Total Packing Revenue Received (Lifetime Ledger)
+                      <Wallet className="w-4 h-4" /> Total Packing Revenue Received
                     </span>
                     <div className="text-3xl font-black text-emerald-500">₹{hatcheryClearedRevenue.toLocaleString('en-IN')}</div>
                     <p className="text-xs opacity-65">Click here to inspect all {hatcheryClearedOrders.length} completed & settled transactions from start to end</p>
