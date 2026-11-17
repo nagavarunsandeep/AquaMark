@@ -4131,7 +4131,7 @@ function AquaMarkApp() {
                             onClick={() => { setAddDepositQrRevealed(false); setAddDepositUtr(''); setShowSellerDepositModal(true); }}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
                           >
-                            <Wallet className="w-3.5 h-3.5" /> Deposit (₹{(myFixedHatchery?.depositAmount || 10000).toLocaleString('en-IN')})
+                            <Wallet className="w-3.5 h-3.5" /> Deposited (₹{(myFixedHatchery?.depositAmount || 10000).toLocaleString('en-IN')})
                           </button>
                         </>
                       )}
