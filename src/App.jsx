@@ -355,7 +355,7 @@ const DICT = {
     selectRoleTitle: 'Welcome to Aqua Mark',
     selectRoleSub: 'Each portal has its own separate registration — select your role below',
     roles: {
-      buyer: { title: 'Buyer (Farmer)', desc: 'Book PCR-verified seed' },
+      buyer: { title: 'Buyer (Farmer)', desc: 'Book CAA & PCR-verified seed' },
       seller: { title: 'Seller (Hatchery)', desc: 'Manage hatchery & batches' },
       mediator: { title: 'Mediator (Broker)', desc: 'Browse hatcheries & book' }
     },
