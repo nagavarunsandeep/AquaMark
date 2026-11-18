@@ -930,11 +930,17 @@ function AquaMarkApp() {
     });
   };
 
-  const deleteStorageFilesByUrls = async (urls, bucketName) => {
+  const deleteStorageFilesByUrls = async (urls) => {
     if (!urls || urls.length === 0) return;
-    const paths = urls.map(u => extractStoragePathFromUrl(u, bucketName)).filter(Boolean);
-    if (paths.length > 0) {
-      await supabase.storage.from(bucketName).remove(paths);
+    const fileNames = urls
+      .filter((u) => typeof u === 'string' && u.includes('/files/'))
+      .map((u) => decodeURIComponent(u.split('/files/')[1]));
+    if (fileNames.length > 0) {
+      await fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileNames }),
+      }).catch(() => { });
     }
   };
 
@@ -1580,20 +1586,20 @@ function AquaMarkApp() {
       const readyFile = await stampAndCompressImage(rawFile, vivoMeta, 2 * 1024 * 1024);
       setUploadProgress({ active: true, percent: 80, label: `Uploading Image ${i + 1}/${filesArray.length} to Cloud...` });
 
-      const filePath = `pcr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
-      const { error } = await supabase.storage
-        .from('pcr-reports')
-        .upload(filePath, readyFile, { upsert: true });
+      const formData = new FormData();
+      formData.append('file', readyFile);
+      const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
 
-      if (!error) {
-        const { data: pub } = supabase.storage.from('pcr-reports').getPublicUrl(filePath);
+      if (upRes.ok) {
+        const upData = await upRes.json();
         uploadedResults.push({
           label: `Image-${baseCount + i + 1}`,
-          url: pub.publicUrl,
+          url: upData.url,
           stamp: `CAA: ${vivoMeta.caaNumber} | ${vivoMeta.dateTime}`
         });
       } else {
-        showToast(`Image Upload Error: ${error.message}`);
+        const errTxt = await upRes.text();
+        showToast(`Image Upload Error: ${errTxt}`);
       }
     }
 
@@ -1629,22 +1635,20 @@ function AquaMarkApp() {
       const readyVideo = await stampAndCompressVideo(rawFile, vivoMeta, 10 * 1024 * 1024);
       setUploadProgress({ active: true, percent: 80, label: `Uploading Video ${i + 1}/${filesArray.length} to Cloud...` });
 
-      const ext = readyVideo.name.split('.').pop() || 'webm';
-      const filePath = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const formData = new FormData();
+      formData.append('file', readyVideo);
+      const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
 
-      const { error } = await supabase.storage
-        .from('tank-videos')
-        .upload(filePath, readyVideo, { upsert: true });
-
-      if (!error) {
-        const { data: pub } = supabase.storage.from('tank-videos').getPublicUrl(filePath);
+      if (upRes.ok) {
+        const upData = await upRes.json();
         uploadedVideos.push({
           label: `Tank-Video-${baseCount + i + 1}`,
-          url: pub.publicUrl,
+          url: upData.url,
           stamp: `CAA: ${vivoMeta.caaNumber} | ${vivoMeta.dateTime}`
         });
       } else {
-        showToast(`Video Upload Error: ${error.message}`);
+        const errTxt = await upRes.text();
+        showToast(`Video Upload Error: ${errTxt}`);
       }
     }
 
