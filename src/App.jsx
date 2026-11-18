@@ -457,8 +457,8 @@ const DICT = {
     stockLabel: 'Available Stock (1 - 100)',
     availDateLabel: 'Available Packing Date',
     availTimeLabel: 'Available Time Slot',
-    pcrUploadBtnLabel: 'Upload PCR Images (≤2MB)',
-    videoUploadBtnLabel: 'Upload Tank Videos (≤10MB)',
+    pcrUploadBtnLabel: 'Upload Report/Seed Images',
+    videoUploadBtnLabel: 'Upload Live Seed Videos',
     pcrHintLabel: 'Required: At least 1 Image (Report or Seed)',
     gpsLockedBtn: 'GPS Locked',
     captureGpsBtn: 'Tag Tank GPS',
@@ -650,7 +650,7 @@ const DICT = {
     availDateLabel: 'ప్యాకింగ్ అందుబాటు తేదీ',
     availTimeLabel: 'ప్యాకింగ్ అందుబాటు సమయం',
     pcrUploadBtnLabel: 'PCR ఫోటోలు అప్‌లోడ్ (≤2MB)',
-    videoUploadBtnLabel: 'ట్యాంక్ వీడియోలు అప్‌లోడ్ (≤10MB)',
+    videoUploadBtnLabel: 'ట్యాంక్ వీడియోలు అప్‌లోడ్',
     pcrHintLabel: 'కనీసం 1 PCR ల్యాబ్ ఫోటో తప్పనిసరి (Camera లేదా Files)',
     gpsLockedBtn: 'GPS లాక్ అయింది',
     captureGpsBtn: 'GPS ట్యాగ్ చేయండి',
@@ -1630,7 +1630,7 @@ function AquaMarkApp() {
 
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      setUploadProgress({ active: true, percent: 45, label: `Compressing Video ${i + 1}/${filesArray.length} (≤10MB)...` });
+      setUploadProgress({ active: true, percent: 45, label: `Compressing Video ${i + 1}/${filesArray.length} ...` });
 
       const readyVideo = await stampAndCompressVideo(rawFile, vivoMeta, 10 * 1024 * 1024);
       setUploadProgress({ active: true, percent: 80, label: `Uploading Video ${i + 1}/${filesArray.length} to Cloud...` });
