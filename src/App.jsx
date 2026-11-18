@@ -1025,7 +1025,7 @@ function AquaMarkApp() {
 
   const [editingBatchId, setEditingBatchId] = useState(null);
   const [editBatchValues, setEditBatchValues] = useState({
-    species: 'Litopenaeus vannamei (SyAqua Line)',
+    species: 'Vannamei (SyAqua Line)',
     broodstock: 'SyAqua USA / Thailand Certified',
     plStage: 'PL12',
     salinity: 16,
@@ -1079,7 +1079,7 @@ function AquaMarkApp() {
 
   const [newBatchForm, setNewBatchForm] = useState({
     batchNumber: '',
-    species: 'Litopenaeus vannamei (SyAqua Line)',
+    species: 'Vannamei (SyAqua Line)',
     customSpecies: '',
     broodstock: 'SyAqua USA / Thailand Certified',
     plStage: 'PL12',
@@ -1684,7 +1684,7 @@ function AquaMarkApp() {
     }
 
     const finalSpecies = newBatchForm.species === 'OTHER_CUSTOM'
-      ? (newBatchForm.customSpecies.trim() || 'Litopenaeus vannamei')
+      ? (newBatchForm.customSpecies.trim() || 'Vannamei')
       : newBatchForm.species;
 
     const finalStage = newBatchForm.plStage === 'OTHER_CUSTOM'
@@ -1759,7 +1759,7 @@ function AquaMarkApp() {
       : Math.max(1, Math.round((batch.availableStock || 100000) / 100000));
 
     setEditBatchValues({
-      species: batch.species || 'Litopenaeus vannamei (SyAqua Line)',
+      species: batch.species || 'Vannamei (SyAqua Line)',
       broodstock: batch.broodstock || 'SyAqua USA / Thailand Certified',
       plStage: batch.plStage || 'PL12',
       salinity: batch.salinity || 16,
