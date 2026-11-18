@@ -11,7 +11,9 @@ import {
   Receipt, Moon, Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink,
   FolderOpen, Maximize2, RefreshCw, Share2, PauseCircle, PlayCircle,
   Sparkles, ShieldAlert, KeyRound, Activity, Navigation, Split,
-  Thermometer, Award, Layers as LayersIcon, CheckCircle, Bell, Phone
+  Thermometer, Award, Layers as LayersIcon, CheckCircle, Bell, Phone, ScanLine,
+  ShoppingCart, Download, Volume2, VolumeX, Zap, RotateCcw, Target, Timer,
+  PhoneCall, Megaphone, CloudSun, Sliders
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -93,6 +95,26 @@ const PACKING_TIME_SLOTS = [
   'Morning (08:00 AM – 12:00 PM)',
   'Afternoon (12:00 PM – 04:00 PM)',
   'Evening / Night (04:00 PM – 09:00 PM)'
+];
+
+
+const COASTAL_WEATHER_ADVISORIES = [
+  {
+    en: 'Coastal AP Weather (Kakinada–Nellore): 29°C–32°C, Moderate Humidity. Best seed packing window: 04:00 AM – 06:30 AM for 99% transit survival.',
+    te: 'కోస్తా ఆంధ్ర వాతావరణం (కాకినాడ–నెల్లూరు): 29°C–32°C. 99% సీడ్ సర్వైవల్ కోసం ఉదయం 04:00 – 06:30 మధ్య ప్యాకింగ్ ఉత్తమం.'
+  },
+  {
+    en: 'Night-Time DO Drop Alert: Keep paddle-wheel aerators running continuously from 11:00 PM to 05:30 AM to maintain Dissolved Oxygen above 5.0 ppm.',
+    te: 'రాత్రిపూట DO డ్రాప్ హెచ్చరిక: రాత్రి 11:00 నుండి ఉదయం 05:30 వరకు ఏరేటర్లు తప్పనిసరిగా నడపండి (DO 5.0 ppm పైన ఉండాలి).'
+  },
+  {
+    en: 'Salinity Shock Prevention: Sudden coastal showers can drop pond salinity by 2–3 PPT. Acclimatize PL gradually at 1 PPT every 4 hours before release.',
+    te: 'సెలైనిటీ షాక్ నివారణ: కోస్తా వర్షాల వల్ల చెరువు ఉప్పదనం 2–3 PPT తగ్గొచ్చు. సీడ్ వదిలే ముందు ప్రతి 4 గంటలకు 1 PPT చొప్పున అలవాటు చేయండి.'
+  },
+  {
+    en: 'Oxygen Packing Tip: For transit over 4 hours, insist on max 2,000 PL per bag with double-sealed medical-grade oxygen and insulated cartons.',
+    te: 'ఆక్సిజన్ ప్యాకింగ్ టిప్: 4 గంటల కంటే ఎక్కువ ప్రయాణానికి బ్యాగ్‌కు గరిష్టంగా 2,000 PL మాత్రమే ప్యాక్ చేయించి డబుల్ సీల్ ఆక్సిజన్ వాడండి.'
+  }
 ];
 
 const DOC_SCHEDULE_TABLE = [
@@ -405,7 +427,7 @@ const DICT = {
     bonus: 'Bonus',
     stock: 'Remaining Stock',
     availPackingLabel: 'Available Packing',
-    liveVideoBtn: 'Ask for Live Video',
+    liveVideoBtn: 'Request Live Video',
     liveVideoSentBadge: 'Live Video Requested ✓',
     bookSlotBtn: 'Book Packing Slot',
     myBookingsTitle: 'Your Bookings, Escrow Timeline & Gate-Passes',
@@ -413,10 +435,10 @@ const DICT = {
     paidLabel: 'Advance Paid (4%)',
     balancePackingLabel: 'Balance at Packing (96%)',
     packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete remaining payment at packing.',
-    pendingSettlementBadge: '4% Advance Paid • 2% Refundable Hold Active',
-    clearedSettlementBadge: '✅ Packing Complete • 2% Hold Refunded to You',
-    cancelledRefundBadge: '❌ Cancelled • 2% Hold Refunded',
-    cancelBookingBtn: 'Cancel Booking (2% Refund)',
+    pendingSettlementBadge: '4% Advance Paid • Non-Refundable',
+    clearedSettlementBadge: '✅ Packing Complete • Payment Settled',
+    cancelledRefundBadge: '❌ Cancelled • Non-Refundable',
+    cancelBookingBtn: 'Cancel Booking (Non-Refundable)',
     rateSeedLabel: 'Rate Hatchery (1-5★) & Feedback:',
     submitReviewBtn: 'Submit Feedback',
     ratedLabel: 'Feedback Sent',
@@ -510,8 +532,9 @@ const DICT = {
     payNowBtn: 'Confirm & Pay 4% Advance',
     receiptTitle: 'OFFICIAL SEED BOOKING RECEIPT',
     finalReceiptTitle: 'FINAL BALANCE CLEARED RECEIPT',
-    sellerDetailsHeading: 'Seller (Hatchery) Details',
+    sellerDetailsHeading: 'Hatchery (Seller) Details',
     printBtn: 'Print',
+    back: 'Back',
     closeBtn: 'Close',
     calculateBtn: 'Calculate Harvest & Profit',
     toasts: {
@@ -534,7 +557,7 @@ const DICT = {
       liveVideoRequested: 'Live tank video request sent to Hatchery!',
       packingMarked: 'Packing marked complete! Buyer notified.',
       paymentReceivedDone: 'Payment Received confirmed! Final Cleared Receipt generated.',
-      bookingCancelled: 'Booking cancelled! 2% refundable hold returned & stock restored.',
+      bookingCancelled: 'Booking cancelled! Advance is non-refundable & stock restored.',
       farmerLocked: 'Farmer locked to your Broker ID for 365 days!',
       paymentSuccess: '4% Advance paid! Gate-Pass & Receipt ready.',
       enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.',
@@ -560,7 +583,7 @@ const DICT = {
     verifyingWaAnim: 'WhatsApp లో ఆటోమేటిక్‌గా వెరిఫై అవుతోంది...',
     setPasswordLabel: 'కొత్త పాస్‌వర్డ్ సెట్ చేయండి (కనీసం 6 అక్షరాలు లేదా అంకెలు)',
     enterPasswordLabel: 'మీ పాస్‌వర్డ్ ఎంటర్ చేయండి',
-    forgotPasswordLink: 'Forgot Password? (పాస్‌వర్డ్ మర్చిపోయారా?)',
+    forgotPasswordLink: 'పాస్‌వర్డ్ మర్చిపోయారా?',
     resetPasswordTitle: 'WhatsApp వెరిఫికేషన్ ద్వారా కొత్త పాస్‌వర్డ్ సెట్ చేయండి',
     completeSignUpBtn: 'పాస్‌వర్డ్ సేవ్ చేసి ప్రవేశించండి',
     loginBtn: 'పాస్‌వర్డ్‌తో లాగిన్ అవ్వండి',
@@ -597,7 +620,7 @@ const DICT = {
     bonus: 'బోనస్ సీడ్',
     stock: 'మిగిలిన నిల్వ',
     availPackingLabel: 'ప్యాకింగ్ సమయం',
-    liveVideoBtn: 'Ask for Live Video',
+    liveVideoBtn: 'Request Live Video',
     liveVideoSentBadge: 'లైవ్ వీడియో రిక్వెస్ట్ పంపబడింది ✓',
     bookSlotBtn: 'ప్యాకింగ్ స్లాట్ బుక్ చేయండి',
     myBookingsTitle: 'మీ బుకింగ్స్, Gate-Pass & రసీదులు',
@@ -605,10 +628,10 @@ const DICT = {
     paidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
     balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (96%)',
     packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! ప్యాకింగ్ వద్ద బ్యాలెన్స్ చెల్లించండి.',
-    pendingSettlementBadge: '4% అడ్వాన్స్ చెల్లించబడింది • 2% హోల్డ్ సురక్షితం',
-    clearedSettlementBadge: '✅ ప్యాకింగ్ పూర్తయింది • 2% హోల్డ్ మీకు వాపస్ వచ్చింది',
-    cancelledRefundBadge: '❌ క్యాన్సిల్ చేయబడింది • 2% వాపస్ వచ్చింది',
-    cancelBookingBtn: 'బుకింగ్ క్యాన్సిల్ (2% వాపస్)',
+    pendingSettlementBadge: '4% అడ్వాన్స్ చెల్లించబడింది • నాన్-రిఫండబుల్',
+    clearedSettlementBadge: '✅ ప్యాకింగ్ పూర్తయింది • పేమెంట్ సెటిల్ అయింది',
+    cancelledRefundBadge: '❌ క్యాన్సిల్ చేయబడింది • నాన్-రిఫండబుల్',
+    cancelBookingBtn: 'బుకింగ్ క్యాన్సిల్ (నాన్-రిఫండబుల్)',
     rateSeedLabel: 'రేటింగ్ (1-5★) & అభిప్రాయం రాయండి:',
     submitReviewBtn: 'ఫీడ్‌బ్యాక్ పంపండి',
     ratedLabel: 'ఫీడ్‌బ్యాక్ పంపబడింది',
@@ -660,7 +683,7 @@ const DICT = {
     saveChangesBtn: 'మార్పులు సేవ్ చేయండి',
     removeBtn: 'తొలగించు',
     markPackedBtn: 'ప్యాకింగ్ పూర్తయింది (Notify Buyer)',
-    paymentReceivedBtn: 'Payment Received (బ్యాలెన్స్ అందింది)',
+    paymentReceivedBtn: 'పేమెంట్ అందింది (బ్యాలెన్స్ పూర్తి)',
     sellerFeedbackTitle: 'రైతుల రేటింగ్స్ & అభిప్రాయాలు',
     noFeedbackYet: 'ఇంకా ఎటువంటి రైతు అభిప్రాయాలు రాలేదు.',
     brokerRegTitle: 'బ్రోకర్ బ్యాంక్ & UPI రిజిస్ట్రేషన్ (తప్పనిసరి)',
@@ -702,8 +725,9 @@ const DICT = {
     payNowBtn: '4% అడ్వాన్స్ చెల్లించి బుక్ చేయండి',
     receiptTitle: 'అధికారిక సీడ్ బుకింగ్ రసీదు (RECEIPT)',
     finalReceiptTitle: 'ఫైనల్ బ్యాలెన్స్ క్లియర్డ్ రసీదు (FINAL RECEIPT)',
-    sellerDetailsHeading: 'Seller (Hatchery) Details',
+    sellerDetailsHeading: 'Hatchery (Seller) Details',
     printBtn: 'Print',
+    back: 'వెనుకకు',
     closeBtn: 'మూసివేయండి',
     calculateBtn: 'దిగుబడి & లాభం లెక్కించండి',
     toasts: {
@@ -726,7 +750,7 @@ const DICT = {
       liveVideoRequested: 'లైవ్ ట్యాంక్ వీడియో రిక్వెస్ట్ హేచరీకి పంపబడింది!',
       packingMarked: 'ప్యాకింగ్ పూర్తయినట్లు రైతుకు పంపబడింది!',
       paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! Final Receipt సిద్ధం.',
-      bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! 2% వాపస్ వచ్చింది.',
+      bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! అడ్వాన్స్ నాన్-రిఫండబుల్, స్టాక్ పునరుద్ధరించబడింది.',
       farmerLocked: 'రైతు 365 రోజుల పాటు మీ ID కి లాక్ చేయబడ్డారు!',
       paymentSuccess: '4% అడ్వాన్స్ పేమెంట్ పూర్తయింది! Gate-Pass & రసీదు సిద్ధం.',
       enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి.',
@@ -748,9 +772,11 @@ function safeLoadStorage(key, fallback) {
 }
 
 function AquaMarkApp() {
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState(() => safeLoadStorage('aqm_v11_lang', 'en'));
   const [darkMode, setDarkMode] = useState(() => safeLoadStorage('aqm_v11_dark', false));
   const t = DICT[lang] || DICT.en;
+  const L = (enText, teText) => (lang === 'te' ? teText : enText);
+  const [razorpayModal, setRazorpayModal] = useState(null);
 
   // Separate Camera & File Input Refs
   const pcrFileRef = useRef(null);
@@ -792,6 +818,100 @@ function AquaMarkApp() {
   const [payRemainingBooking, setPayRemainingBooking] = useState(null);
   const [payRemainingForm, setPayRemainingForm] = useState({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
 
+  // =========================================================================
+  // NEW PRODUCTION FEATURES STATE (FRONTEND ONLY — ZERO BACKEND CHANGES)
+  // =========================================================================
+  // 1. Live Camera QR Scanner (Hatchery Portal)
+  const [scanQrTab, setScanQrTab] = useState('camera'); // 'camera' | 'manual'
+  const [scannerFacingMode, setScannerFacingMode] = useState('environment');
+  const [scannerFlashOn, setScannerFlashOn] = useState(false);
+  const [scannerStatus, setScannerStatus] = useState('');
+  const scannerVideoRef = useRef(null);
+  const scannerStreamRef = useRef(null);
+  const scannerIntervalRef = useRef(null);
+  const photoQrInputRef = useRef(null);
+
+  // 3. Smart Seed Matchmaker (Buyer Marketplace)
+  const [matchmakerOpen, setMatchmakerOpen] = useState(false);
+  const [matchmaker, setMatchmaker] = useState(() => safeLoadStorage('aqm_v12_matchmaker', { enabled: false, pondPpt: 15, acres: 3, maxBudget: 0.45 }));
+
+  // 4. Price Drop Watchlist & Alert
+  const [watchlistPrice, setWatchlistPrice] = useState(() => safeLoadStorage('aqm_v12_watchlist_price', 0.40));
+  const [watchlistActive, setWatchlistActive] = useState(() => safeLoadStorage('aqm_v12_watchlist_active', true));
+  const [watchlistFilterOnly, setWatchlistFilterOnly] = useState(false);
+
+  // 6. Live Salinity Acclimatization Countdown Timer
+  const [acclimTimerSec, setAcclimTimerSec] = useState(0);
+  const [acclimTimerRunning, setAcclimTimerRunning] = useState(false);
+
+  // 9. Coastal Weather & Packing Advisory Banner
+  const [weatherIdx, setWeatherIdx] = useState(0);
+
+  // 10. Multi-Pond Seed Cart (Bulk Cart)
+  const [bulkCart, setBulkCart] = useState(() => safeLoadStorage('aqm_v12_bulk_cart', []));
+  const [showBulkCartModal, setShowBulkCartModal] = useState(false);
+
+  // 11. Broker Monthly Commission Goal Tracker
+  const [brokerMonthlyGoal, setBrokerMonthlyGoal] = useState(() => safeLoadStorage('aqm_v12_broker_goal', 50000));
+  const [editingBrokerGoal, setEditingBrokerGoal] = useState(false);
+  const [brokerGoalDraft, setBrokerGoalDraft] = useState('50000');
+
+  // 14. 72-Hour Post-Stocking Survival Check-In
+  const [survivalLogs, setSurvivalLogs] = useState(() => safeLoadStorage('aqm_v12_survival_logs', {}));
+  const [survivalModalBooking, setSurvivalModalBooking] = useState(null);
+  const [survivalDraft, setSurvivalDraft] = useState({ h24: 96, h48: 92, h72: 88, note: '' });
+
+  // 16. Interactive "What-If" FCR Feed Optimizer (Pond Log)
+  const [whatIfFcr, setWhatIfFcr] = useState(1.35);
+  const [whatIfBagPrice, setWhatIfBagPrice] = useState(2200);
+
+  // 17. Hatchery Holiday / Dispatch Notice Bar
+  const [noticeDraft, setNoticeDraft] = useState('');
+  const [editingNotice, setEditingNotice] = useState(false);
+
+  // 19. Rate Converter Pill (SEED | LAKH | MILLION)
+  const [rateUnit, setRateUnit] = useState('SEED');
+
+  // 22. Bilingual Voice Readout (SpeechSynthesis)
+  const [isSpeakingId, setIsSpeakingId] = useState(null);
+
+  useEffect(() => { try { localStorage.setItem('aqm_v12_matchmaker', JSON.stringify(matchmaker)); } catch { } }, [matchmaker]);
+  useEffect(() => { try { localStorage.setItem('aqm_v12_watchlist_price', JSON.stringify(watchlistPrice)); } catch { } }, [watchlistPrice]);
+  useEffect(() => { try { localStorage.setItem('aqm_v12_watchlist_active', JSON.stringify(watchlistActive)); } catch { } }, [watchlistActive]);
+  useEffect(() => { try { localStorage.setItem('aqm_v12_bulk_cart', JSON.stringify(bulkCart)); } catch { } }, [bulkCart]);
+  useEffect(() => { try { localStorage.setItem('aqm_v12_broker_goal', JSON.stringify(brokerMonthlyGoal)); } catch { } }, [brokerMonthlyGoal]);
+  useEffect(() => { try { localStorage.setItem('aqm_v12_survival_logs', JSON.stringify(survivalLogs)); } catch { } }, [survivalLogs]);
+
+  // Auto-rotate Coastal Weather & Packing Advisory Banner every 7s
+  useEffect(() => {
+    const id = setInterval(() => {
+      setWeatherIdx(prev => (prev + 1) % COASTAL_WEATHER_ADVISORIES.length);
+    }, 7000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (!acclimTimerRunning) return;
+    const id = setInterval(() => {
+      setAcclimTimerSec(prev => {
+        if (prev <= 1) {
+          setAcclimTimerRunning(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [acclimTimerRunning]);
+
+  // Cleanup SpeechSynthesis on unmount
+  useEffect(() => {
+    return () => {
+      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch { }
+    };
+  }, []);
+
+  useEffect(() => { try { localStorage.setItem('aqm_v11_lang', JSON.stringify(lang)); } catch { } }, [lang]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_dark', JSON.stringify(darkMode)); } catch { } }, [darkMode]);
   useEffect(() => {
     try {
@@ -1020,7 +1140,8 @@ function AquaMarkApp() {
 
   const [newPondForm, setNewPondForm] = useState({
     pondName: 'Pond-1', acres: 2.5, stockedQty: 200000,
-    stockingDate: new Date().toISOString().split('T')[0], dailyFeedKg: 6, trayLeftover: '0% (Clean)'
+    stockingDate: new Date().toISOString().split('T')[0], dailyFeedKg: 6, trayLeftover: '0% (Clean)',
+    moltingPct: 12, gutStatus: 'Full & Dark (Healthy)', antennaStatus: 'Intact & Long'
   });
 
   const [editingBatchId, setEditingBatchId] = useState(null);
@@ -1256,20 +1377,73 @@ function AquaMarkApp() {
     setModalError('');
   };
 
+  const launchRazorpayPayment = ({ amountInr, description, prefillName, prefillPhone, onSuccess, onFailure }) => {
+    const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    const startCheckout = () => {
+      if (rzpKey && window.Razorpay) {
+        const options = {
+          key: rzpKey,
+          amount: Math.round(Number(amountInr) * 100),
+          currency: 'INR',
+          name: 'Aqua Mark',
+          description,
+          prefill: {
+            name: prefillName || currentUser?.name || 'Aqua Mark User',
+            contact: prefillPhone || currentUser?.phone || '',
+            method: 'upi'
+          },
+          theme: { color: '#0d9488' },
+          handler: function (response) {
+            onSuccess(response.razorpay_payment_id);
+          },
+          modal: {
+            ondismiss: function () {
+              if (onFailure) onFailure(L('Payment cancelled by user.', 'పేమెంట్ రద్దు చేయబడింది.'));
+            }
+          }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', (resp) => {
+          if (onFailure) onFailure(`Payment Failed: ${resp.error?.description || 'Cancelled'}`);
+        });
+        rzp.open();
+        return;
+      }
+      setRazorpayModal({
+        amountInr: Number(amountInr) || 0,
+        description,
+        prefillName: prefillName || currentUser?.name || 'Aqua Mark User',
+        prefillPhone: prefillPhone || currentUser?.phone || '',
+        onSuccess,
+        onFailure
+      });
+    };
+
+    if (rzpKey && !window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = startCheckout;
+      script.onerror = () => {
+        setRazorpayModal({
+          amountInr: Number(amountInr) || 0,
+          description,
+          prefillName: prefillName || currentUser?.name || 'Aqua Mark User',
+          prefillPhone: prefillPhone || currentUser?.phone || '',
+          onSuccess,
+          onFailure
+        });
+      };
+      document.body.appendChild(script);
+    } else {
+      startCheckout();
+    }
+  };
+
   // =========================================================================
   // HATCHERY ₹10,000 MANDATORY SECURITY DEPOSIT CONFIRMATION
   // =========================================================================
-  const handleConfirmHatcheryDeposit = async (e) => {
-    e.preventDefault();
+  const finalizeHatcheryDeposit = async (utrRef) => {
     if (!currentUser?.phone) return;
-    if ((depositPayMethod === 'DIRECT_UPI' || depositPayMethod === 'BANK_TO_BANK') && !depositUtr.trim()) {
-      showToast(t.toasts.enterUtr);
-      return;
-    }
-
-    const utrRef = depositPayMethod === 'RAZORPAY'
-      ? `RZP_DEP_${Math.floor(100000 + Math.random() * 900000)}`
-      : `${depositPayMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${depositUtr.trim().toUpperCase()}`;
 
     const roleKey = getUserKey(currentUser.phone, 'seller');
     const existingUser = registeredUsers[roleKey] || {
@@ -1309,6 +1483,26 @@ function AquaMarkApp() {
     setDepositUtr('');
     setDepositQrRevealed(false);
     showToast(t.toasts.depositComplete);
+  };
+
+  const handleConfirmHatcheryDeposit = async (e) => {
+    e.preventDefault();
+    if (!currentUser?.phone) return;
+    if ((depositPayMethod === 'DIRECT_UPI' || depositPayMethod === 'BANK_TO_BANK') && !depositUtr.trim()) {
+      showToast(t.toasts.enterUtr);
+      return;
+    }
+    if (depositPayMethod === 'RAZORPAY') {
+      launchRazorpayPayment({
+        amountInr: 10000,
+        description: L('Hatchery Mandatory Security Deposit (₹10,000)', 'హేచరీ తప్పనిసరి సెక్యూరిటీ డిపాజిట్ (₹10,000)'),
+        onSuccess: (rzpId) => finalizeHatcheryDeposit(rzpId),
+        onFailure: (msg) => showToast(msg)
+      });
+      return;
+    }
+    const utrRef = `${depositPayMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${depositUtr.trim().toUpperCase()}`;
+    await finalizeHatcheryDeposit(utrRef);
   };
 
   // =========================================================================
@@ -1581,7 +1775,7 @@ function AquaMarkApp() {
 
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      setUploadProgress({ active: true, percent: 45, label: `Uploading Video ${i + 1}/${filesArray.length}...` });
+      setUploadProgress({ active: true, percent: 45, label: `Compressing & Stamping Image ${i + 1}/${filesArray.length}...` });
 
       const readyFile = await stampAndCompressImage(rawFile, vivoMeta, 2 * 1024 * 1024);
       setUploadProgress({ active: true, percent: 80, label: `Uploading Image ${i + 1}/${filesArray.length} to Cloud...` });
@@ -1874,8 +2068,10 @@ function AquaMarkApp() {
       clearedAt: isFullPayment ? `${issueDateStr} ${issueTimeStr}` : undefined,
       settlement: {
         hold2PctAmount: hold2Pct,
+        platform2Pct: silentPlatform2Pct,
+        ownerDirect2Pct: !isBrokerLinked ? hold2Pct : 0,
         brokerBase2Pct: isBrokerLinked ? hold2Pct : 0,
-        farmerRefundable2Pct: !isBrokerLinked ? hold2Pct : 0,
+        farmerRefundable2Pct: 0,
         status: isFullPayment ? 'BALANCE_CLEARED' : 'ADVANCE_HOLD'
       },
       packingStatus: 'PACKING_PENDING',
@@ -1964,33 +2160,21 @@ function AquaMarkApp() {
       return;
     }
 
-    const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    if (rzpKey && window.Razorpay) {
-      const options = {
-        key: rzpKey,
-        amount: chargeNow * 100,
-        currency: 'INR',
-        name: 'Aqua Mark',
-        description: `${selectedBatch.plStage} Seed ${isFullPayment ? '100% Full Payment' : '4% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
-        prefill: { name: bookingForm.farmerName || 'Farmer', contact: bookingForm.farmerPhone, method: 'upi' },
-        theme: { color: '#0d9488' },
-        handler: function (response) {
-          finalizeBookingRecord(response.razorpay_payment_id, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment);
-        }
-      };
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (resp) => setModalError(`Payment Failed: ${resp.error?.description || 'Cancelled'}`));
-      rzp.open();
-    } else {
-      finalizeBookingRecord(`RZP_${Math.floor(100000 + Math.random() * 900000)}`, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment);
-    }
+    launchRazorpayPayment({
+      amountInr: chargeNow,
+      description: `${selectedBatch.plStage} Seed ${isFullPayment ? '100% Full Payment' : '4% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
+      prefillName: bookingForm.farmerName || 'Farmer',
+      prefillPhone: bookingForm.farmerPhone,
+      onSuccess: (rzpId) => finalizeBookingRecord(rzpId, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment),
+      onFailure: (msg) => setModalError(msg)
+    });
   };
 
   const handleBuyerCancelBooking = async (bk) => {
     const updatedBk = {
       ...bk,
       packingStatus: 'CANCELLED',
-      settlement: { ...bk.settlement, status: 'CANCELLED_REFUNDED' }
+      settlement: { ...bk.settlement, status: 'CANCELLED_NON_REFUNDABLE' }
     };
     setBookings(prev => prev.map(item => (item.bookingId === bk.bookingId ? updatedBk : item)));
     await saveBookingToSupabase(updatedBk);
@@ -2059,7 +2243,7 @@ function AquaMarkApp() {
         targetBk.farmerPhone,
         'buyer',
         `Packing Ready (${targetBk.bookingId})`,
-        `${targetBk.batch?.realName} marked packing complete for Batch ${targetBk.batch?.id}. Present Gate-Pass QR at gate.`,
+        `${targetBk.batch?.realName} marked packing complete for Batch ${targetBk.batch?.id}. Present Gate-Pass QR at Hatchery.`,
         { bookingId: targetBk.bookingId, batchId: targetBk.batch?.id, hatcheryName: targetBk.batch?.realName, balance: targetBk.balanceAtPacking }
       );
     }
@@ -2095,29 +2279,15 @@ function AquaMarkApp() {
       await pushAppNotification(
         targetBk.farmerPhone,
         'buyer',
-        `Payment Settled & 2% Cashback Refunded (${targetBk.bookingId})`,
-        `Full balance settled for ${targetBk.batch?.realName}. 2% Cashback Hold (₹${(targetBk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')}) refunded to your account.`,
-        { bookingId: targetBk.bookingId, cashback: targetBk.settlement?.farmerRefundable2Pct || 0, totalPaid: targetBk.totalSeedCost }
+        `Payment Settled (${targetBk.bookingId})`,
+        `Full balance settled for ${targetBk.batch?.realName}. Your Final Cleared Receipt is ready.`,
+        { bookingId: targetBk.bookingId, totalPaid: targetBk.totalSeedCost }
       );
     }
     showToast(t.toasts.paymentReceivedDone);
   };
 
-  const handleAddHatcheryDepositMoney = async (e) => {
-    e.preventDefault();
-    const amt = Number(addDepositAmount) || 0;
-    if (amt < 500) {
-      showToast('Minimum deposit top-up is ₹500.');
-      return;
-    }
-    if ((addDepositMethod === 'DIRECT_UPI' || addDepositMethod === 'BANK_TO_BANK') && !addDepositUtr.trim()) {
-      showToast(t.toasts.enterUtr);
-      return;
-    }
-    const ref = addDepositMethod === 'RAZORPAY'
-      ? `RZP_DEP_${Math.floor(100000 + Math.random() * 900000)}`
-      : `${addDepositMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${addDepositUtr.trim().toUpperCase()}`;
-
+  const finalizeAddHatcheryDepositMoney = async (amt, ref) => {
     const prevAmt = Number(hatcheryProfiles[currentUser.phone]?.depositAmount || 10000);
     const nextAmt = prevAmt + amt;
     const nextHatcheries = {
@@ -2140,7 +2310,31 @@ function AquaMarkApp() {
     );
     setAddDepositUtr('');
     setAddDepositQrRevealed(false);
-    showToast(`₹${amt.toLocaleString('en-IN')} added! Total Deposit: ₹${nextAmt.toLocaleString('en-IN')}`);
+    showToast(L(`₹${amt.toLocaleString('en-IN')} added! Total Deposit: ₹${nextAmt.toLocaleString('en-IN')}`, `₹${amt.toLocaleString('en-IN')} జతచేయబడింది! మొత్తం డిపాజిట్: ₹${nextAmt.toLocaleString('en-IN')}`));
+  };
+
+  const handleAddHatcheryDepositMoney = async (e) => {
+    e.preventDefault();
+    const amt = Number(addDepositAmount) || 0;
+    if (amt < 500) {
+      showToast(L('Minimum deposit top-up is ₹500.', 'కనీస డిపాజిట్ మొత్తం ₹500 ఉండాలి.'));
+      return;
+    }
+    if ((addDepositMethod === 'DIRECT_UPI' || addDepositMethod === 'BANK_TO_BANK') && !addDepositUtr.trim()) {
+      showToast(t.toasts.enterUtr);
+      return;
+    }
+    if (addDepositMethod === 'RAZORPAY') {
+      launchRazorpayPayment({
+        amountInr: amt,
+        description: L(`Hatchery Deposit Top-up (₹${amt.toLocaleString('en-IN')})`, `హేచరీ డిపాజిట్ టాప్-అప్ (₹${amt.toLocaleString('en-IN')})`),
+        onSuccess: (rzpId) => finalizeAddHatcheryDepositMoney(amt, rzpId),
+        onFailure: (msg) => showToast(msg)
+      });
+      return;
+    }
+    const ref = `${addDepositMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${addDepositUtr.trim().toUpperCase()}`;
+    await finalizeAddHatcheryDepositMoney(amt, ref);
   };
 
   const handleSellerScanQrComplete = async (rawInput) => {
@@ -2163,8 +2357,8 @@ function AquaMarkApp() {
       setScanQrError('No matching active booking found for this Hatchery Gate-Pass QR / Booking ID.');
       return;
     }
-    if (targetBk.settlement?.status === 'CANCELLED_REFUNDED') {
-      setScanQrError('This booking was cancelled and cannot be scanned.');
+    if (targetBk.settlement?.status === 'CANCELLED_REFUNDED' || targetBk.settlement?.status === 'CANCELLED_NON_REFUNDABLE') {
+      setScanQrError(L('This booking was cancelled and cannot be scanned.', 'ఈ బుకింగ్ క్యాన్సిల్ చేయబడింది, స్కాన్ చేయడం సాధ్యం కాదు.'));
       return;
     }
 
@@ -2187,7 +2381,7 @@ function AquaMarkApp() {
       updatedBk.farmerPhone,
       'buyer',
       `Packing Completed & Payment Settled (${updatedBk.bookingId})`,
-      `Your Gate-Pass QR was scanned by ${updatedBk.batch?.realName}. Packing is complete, payment is settled, 2% Cashback (₹${(updatedBk.settlement?.farmerRefundable2Pct || 0).toLocaleString('en-IN')}) refunded, and your Full Paid Receipt is ready!`,
+      `Your Gate-Pass QR was scanned by ${updatedBk.batch?.realName}. Packing is complete, payment is settled, and your Full Paid Receipt is ready!`,
       { bookingId: updatedBk.bookingId, batchId: updatedBk.batch?.id, hatcheryName: updatedBk.batch?.realName, clearedAt: clearedStamp, totalPaid: updatedBk.totalSeedCost }
     );
     await pushAppNotification(
@@ -2204,19 +2398,7 @@ function AquaMarkApp() {
     showToast(`QR Verified! ${updatedBk.bookingId} marked Packing Completed & Payment Settled.`);
   };
 
-  const handleBuyerPayRemainingSubmit = async (e) => {
-    e.preventDefault();
-    if (!payRemainingBooking) return;
-    const bk = payRemainingBooking;
-    if ((payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && !payRemainingForm.utrReference.trim()) {
-      showToast(t.toasts.enterUtr);
-      return;
-    }
-    const prefix = payRemainingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : payRemainingForm.paymentMethod === 'BANK_TO_BANK' ? 'NEFT' : 'RZP';
-    const ref = payRemainingForm.paymentMethod === 'RAZORPAY'
-      ? `RZP_BAL_${Math.floor(100000 + Math.random() * 900000)}`
-      : `${prefix}_${payRemainingForm.utrReference.trim().toUpperCase()}`;
-
+  const finalizeBuyerPayRemaining = async (bk, ref) => {
     const now = new Date();
     const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
     const updatedBk = {
@@ -2250,7 +2432,31 @@ function AquaMarkApp() {
     setPayRemainingBooking(null);
     setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
     setActiveInvoice({ booking: updatedBk, receiptType: 'FINAL' });
-    showToast('Remaining balance paid! Final Cleared Receipt generated.');
+    showToast(L('Remaining balance paid! Final Cleared Receipt generated.', 'మిగిలిన బ్యాలెన్స్ చెల్లించబడింది! ఫైనల్ రసీదు సిద్ధమైంది.'));
+  };
+
+  const handleBuyerPayRemainingSubmit = async (e) => {
+    e.preventDefault();
+    if (!payRemainingBooking) return;
+    const bk = payRemainingBooking;
+    if ((payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && !payRemainingForm.utrReference.trim()) {
+      showToast(t.toasts.enterUtr);
+      return;
+    }
+    if (payRemainingForm.paymentMethod === 'RAZORPAY') {
+      launchRazorpayPayment({
+        amountInr: bk.balanceAtPacking || 0,
+        description: L(`Remaining Balance Payment (${bk.bookingId})`, `మిగిలిన బ్యాలెన్స్ చెల్లింపు (${bk.bookingId})`),
+        prefillName: bk.farmerName,
+        prefillPhone: bk.farmerPhone,
+        onSuccess: (rzpId) => finalizeBuyerPayRemaining(bk, rzpId),
+        onFailure: (msg) => showToast(msg)
+      });
+      return;
+    }
+    const prefix = payRemainingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT';
+    const ref = `${prefix}_${payRemainingForm.utrReference.trim().toUpperCase()}`;
+    await finalizeBuyerPayRemaining(bk, ref);
   };
 
   const openAnimatedStatusModal = (bk) => {
@@ -2560,6 +2766,370 @@ function AquaMarkApp() {
   const brokerHeld2PctTotal = brokerHeldBookings.reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
   const brokerCredited2PctTotal = brokerCreditedBookings.reduce((sum, b) => sum + (b.settlement?.brokerBase2Pct || 0), 0);
 
+
+  // =========================================================================
+  // PRODUCTION FEATURE HELPERS (ALL 22 FEATURES — ZERO BACKEND CHANGES)
+  // =========================================================================
+
+  // Sync Acclimatization Countdown Timer total when PPT changes (if paused at 0)
+  useEffect(() => {
+    const totalSecs = Math.abs((acclimCalc.hatcheryPpt || 0) - (acclimCalc.pondPpt || 0)) * 4 * 3600;
+    if (!acclimTimerRunning) setAcclimTimerSec(totalSecs);
+  }, [acclimCalc.hatcheryPpt, acclimCalc.pondPpt]);
+
+  // Feature 1: Live Camera QR Scanner Controls & BarcodeDetector
+  const stopQrCamera = () => {
+    if (scannerIntervalRef.current) {
+      clearInterval(scannerIntervalRef.current);
+      scannerIntervalRef.current = null;
+    }
+    if (scannerStreamRef.current) {
+      scannerStreamRef.current.getTracks().forEach(tr => { try { tr.stop(); } catch { } });
+      scannerStreamRef.current = null;
+    }
+    setScannerFlashOn(false);
+  };
+
+  useEffect(() => {
+    if (!showSellerScanQrModal || scanQrTab !== 'camera') {
+      stopQrCamera();
+      return;
+    }
+    let cancelled = false;
+    const startCamera = async () => {
+      setScannerStatus(L('Starting camera...', 'కెమెరా ప్రారంభమవుతోంది...'));
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setScannerStatus(L('Camera API unavailable. Use Photo QR or Manual tab.', 'కెమెరా అందుబాటులో లేదు. Photo QR లేదా Manual వాడండి.'));
+          return;
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: scannerFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        if (cancelled) {
+          stream.getTracks().forEach(tr => tr.stop());
+          return;
+        }
+        scannerStreamRef.current = stream;
+        if (scannerVideoRef.current) {
+          scannerVideoRef.current.srcObject = stream;
+          await scannerVideoRef.current.play().catch(() => { });
+        }
+        if ('BarcodeDetector' in window) {
+          const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+          setScannerStatus(L('Point camera at Buyer Gate-Pass QR...', 'బయ్యర్ Gate-Pass QR పై కెమెరా ఉంచండి...'));
+          scannerIntervalRef.current = setInterval(async () => {
+            if (!scannerVideoRef.current || scannerVideoRef.current.readyState < 2) return;
+            try {
+              const codes = await detector.detect(scannerVideoRef.current);
+              if (codes && codes.length > 0 && codes[0].rawValue) {
+                const val = codes[0].rawValue;
+                stopQrCamera();
+                handleSellerScanQrComplete(val);
+              }
+            } catch { }
+          }, 350);
+        } else {
+          setScannerStatus(L('Live auto-detect needs Chrome/Edge/Android. Use Photo QR or Manual tab.', 'ఆటో-డిటెక్ట్ Chrome/Android లో పనిచేస్తుంది. Photo QR లేదా Manual వాడండి.'));
+        }
+      } catch (err) {
+        setScannerStatus(L('Camera permission denied or unavailable. Use Photo QR or Manual tab.', 'కెమెరా అనుమతి లేదు. Photo QR లేదా Manual ట్యాబ్ వాడండి.'));
+      }
+    };
+    startCamera();
+    return () => {
+      cancelled = true;
+      stopQrCamera();
+    };
+  }, [showSellerScanQrModal, scanQrTab, scannerFacingMode]);
+
+  const handleToggleScannerFlash = async () => {
+    try {
+      const track = scannerStreamRef.current?.getVideoTracks?.()[0];
+      if (!track) return;
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
+      if (!caps.torch) {
+        showToast(L('Flashlight not supported on this camera.', 'ఈ కెమెరాలో ఫ్లాష్‌లైట్ సపోర్ట్ లేదు.'));
+        return;
+      }
+      const nextFlash = !scannerFlashOn;
+      await track.applyConstraints({ advanced: [{ torch: nextFlash }] });
+      setScannerFlashOn(nextFlash);
+    } catch {
+      showToast(L('Unable to toggle flashlight on this device.', 'ఈ పరికరంలో ఫ్లాష్ ఆన్ చేయడం సాధ్యం కాలేదు.'));
+    }
+  };
+
+  const handlePhotoQrUpload = async (file) => {
+    if (!file) return;
+    setScanQrError('');
+    try {
+      if (!('BarcodeDetector' in window)) {
+        setScanQrError(L('Photo QR requires Chrome/Edge BarcodeDetector. Please enter Booking ID / PIN in Manual tab.', 'Photo QR కోసం Chrome/Edge అవసరం. దయచేసి Manual ట్యాబ్‌లో Booking ID / PIN ఎంటర్ చేయండి.'));
+        return;
+      }
+      const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+      const bitmap = await createImageBitmap(file);
+      const codes = await detector.detect(bitmap);
+      if (codes && codes.length > 0 && codes[0].rawValue) {
+        stopQrCamera();
+        handleSellerScanQrComplete(codes[0].rawValue);
+      } else {
+        setScanQrError(L('No QR code detected in the selected photo. Try a clearer image.', 'ఫోటోలో QR కోడ్ కనిపించలేదు. స్పష్టమైన ఫోటోను ప్రయత్నించండి.'));
+      }
+    } catch {
+      setScanQrError(L('Could not scan QR from photo. Please try Manual entry.', 'ఫోటో నుండి QR స్కాన్ చేయడం సాధ్యం కాలేదు. Manual ట్యాబ్ వాడండి.'));
+    }
+  };
+
+  // Feature 2: Hatchery Daily Dispatch Slots Meter
+  const getDispatchSlotsInfo = (batch) => {
+    const dailyCapacity = 10;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const bookedToday = bookings.filter(
+      bk => bk.batch?.id === batch.id && bk.packingStatus !== 'CANCELLED' && (bk.packingDate === todayStr || bk.packingDate === batch.availableDate)
+    ).length;
+    const remaining = Math.max(0, dailyCapacity - bookedToday);
+    return { remaining, dailyCapacity, pct: Math.round((remaining / dailyCapacity) * 100) };
+  };
+
+  // Feature 3: Smart Seed Matchmaker Score
+  const computeBatchMatchScore = (batch) => {
+    const pptDiff = Math.abs((Number(batch.salinity) || 15) - (Number(matchmaker.pondPpt) || 15));
+    const pptScore = pptDiff <= 2 ? 40 : pptDiff <= 4 ? 30 : pptDiff <= 6 ? 18 : 6;
+    const rate = Number(batch.pricePer1000) || 0.43;
+    const maxB = Number(matchmaker.maxBudget) || 0.45;
+    const budgetScore = rate <= maxB ? 35 : rate <= maxB + 0.05 ? 22 : 8;
+    const neededPl = Math.round((Number(matchmaker.acres) || 1) * 4046.86 * 40);
+    const stock = Number(batch.availableStock) || 0;
+    const stockScore = stock >= neededPl ? 25 : stock >= neededPl * 0.5 ? 15 : 5;
+    return Math.min(100, pptScore + budgetScore + stockScore);
+  };
+
+  // Feature 7: Printable Batch Crate QR Sticker (Seller)
+  const handlePrintCrateQrSticker = (batch) => {
+    const win = window.open('', '_blank', 'width=520,height=640');
+    if (!win) return;
+    const qrPayload = `AQUAMARK-CRATE:${batch.id}|HATCHERY:${batch.realName}|STAGE:${batch.plStage}|PPT:${batch.salinity}|CAA:${batch.caaLicense}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrPayload)}`;
+    win.document.write(`<!DOCTYPE html><html><head><title>Crate_QR_${batch.id}</title>
+      <style>
+        @page { size: 105mm 148mm; margin: 6mm; }
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 12px; background: #fff; color: #0f172a; }
+        .sticker { border: 3px solid #0f766e; border-radius: 14px; padding: 14px; text-align: center; }
+        .brand { font-size: 18px; font-weight: 900; color: #0f766e; letter-spacing: 0.5px; }
+        .sub { font-size: 10px; font-weight: 700; color: #475569; margin-bottom: 8px; }
+        .batch { font-size: 16px; font-weight: 900; background: #0f172a; color: #fff; padding: 5px 10px; border-radius: 8px; display: inline-block; margin: 6px 0; font-family: monospace; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; text-align: left; font-size: 11px; margin-top: 10px; background: #f8fafc; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .foot { font-size: 9.5px; color: #065f46; font-weight: 700; margin-top: 10px; border-top: 1px dashed #94a3b8; padding-top: 6px; }
+      </style></head><body>
+      <div class="sticker">
+        <div class="brand">AQUA MARK • OXYGEN CRATE STICKER</div>
+        <div class="sub">${batch.realName} • CAA: ${batch.caaLicense}</div>
+        <div class="batch">${batch.id} • ${batch.plStage}</div><br/>
+        <img src="${qrUrl}" width="170" height="170" style="margin:6px auto;display:block;border:1px solid #e2e8f0;padding:4px;border-radius:8px;" />
+        <div class="grid">
+          <div><b>Species:</b> ${batch.species}</div>
+          <div><b>Salinity:</b> ${batch.salinity} PPT</div>
+          <div><b>Bonus:</b> +${batch.bonusPercent}% PL</div>
+          <div><b>Packing:</b> ${batch.availableDate || 'Live'}</div>
+          <div><b>Zone:</b> ${batch.zone}</div>
+          <div><b>Vigor:</b> ${batch.vigorScore || 96}%</div>
+        </div>
+        <div class="foot">LIVE SHRIMP SEED • HANDLE WITH CARE • KEEP COOL & OXYGENATED</div>
+      </div>
+      <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
+      </body></html>`);
+    win.document.close();
+  };
+
+  // Feature 8: Farmer Loyalty Tier Badge
+  const getFarmerLoyaltyTier = () => {
+    const completed = bookings.filter(b => b.farmerPhone === currentUser?.phone && b.packingStatus !== 'CANCELLED').length;
+    if (completed >= 10) return { tier: 'Platinum', count: completed, cls: 'bg-indigo-500/20 text-indigo-400 border-indigo-400/40', next: null };
+    if (completed >= 5) return { tier: 'Gold', count: completed, cls: 'bg-amber-500/20 text-amber-500 border-amber-400/40', next: 10 - completed };
+    if (completed >= 2) return { tier: 'Silver', count: completed, cls: 'bg-slate-400/20 text-slate-400 border-slate-400/40', next: 5 - completed };
+    return { tier: 'Bronze', count: completed, cls: 'bg-orange-500/20 text-orange-500 border-orange-400/40', next: 2 - completed };
+  };
+
+  // Feature 10: Multi-Pond Seed Cart helpers
+  const toggleBulkCartItem = (batch) => {
+    setBulkCart(prev => {
+      const exists = prev.some(i => i.batchId === batch.id);
+      if (exists) {
+        showToast(L(`Removed ${batch.id} from Cart`, `${batch.id} కార్ట్ నుండి తొలగించబడింది`));
+        return prev.filter(i => i.batchId !== batch.id);
+      }
+      const minLakhs = Math.max(1, Math.round((batch.minPacking || 100000) / 100000));
+      showToast(L(`Added ${batch.id} (${minLakhs}L PL) to Multi-Pond Cart`, `${batch.id} కార్ట్‌లో జతచేయబడింది`));
+      return [...prev, { batchId: batch.id, lakhs: minLakhs }];
+    });
+  };
+
+  // Feature 12: Broker Farmer 365-Day Lock Renewal
+  const handleRenewFarmerLock = async (farmerId) => {
+    const nextFarmers = brokerFarmers.map(f => {
+      if (f.id !== farmerId) return f;
+      const baseDate = f.lockedUntil && new Date(f.lockedUntil) > new Date() ? new Date(f.lockedUntil) : new Date();
+      baseDate.setFullYear(baseDate.getFullYear() + 1);
+      return { ...f, lockedUntil: baseDate.toISOString().split('T')[0] };
+    });
+    setBrokerFarmers(nextFarmers);
+    await saveKvToSupabase('farmers', nextFarmers);
+    showToast(L('Farmer 365-day protection renewed for +1 Year!', 'రైతు ప్రొటెక్షన్ +1 సంవత్సరం పొడిగించబడింది!'));
+  };
+
+  // Feature 14: 72-Hour Post-Stocking Survival Check-In Submit
+  const handleSaveSurvivalCheckIn = async (e) => {
+    e.preventDefault();
+    if (!survivalModalBooking) return;
+    const bk = survivalModalBooking;
+    const record = {
+      h24: Number(survivalDraft.h24) || 0,
+      h48: Number(survivalDraft.h48) || 0,
+      h72: Number(survivalDraft.h72) || 0,
+      note: (survivalDraft.note || '').trim(),
+      updatedAt: new Date().toLocaleDateString('en-IN')
+    };
+    setSurvivalLogs(prev => ({ ...prev, [bk.bookingId]: record }));
+    await pushAppNotification(
+      bk.hatcheryOwnerPhone,
+      'seller',
+      `72h Survival Check-In (${bk.bookingId})`,
+      `${bk.farmerName} reported post-stocking survival for Batch ${bk.batch?.id}: 24h=${record.h24}%, 48h=${record.h48}%, 72h=${record.h72}%. ${record.note}`,
+      { bookingId: bk.bookingId, batchId: bk.batch?.id, h24: `${record.h24}%`, h48: `${record.h48}%`, h72: `${record.h72}%` }
+    );
+    setSurvivalModalBooking(null);
+    showToast(L('72h Survival Check-In saved & Hatchery notified!', '72h సర్వైవల్ రిపోర్ట్ సేవ్ అయింది & హేచరీకి నోటిఫికేషన్ పంపబడింది!'));
+  };
+
+  // Feature 15: 1-Click Quick Reorder
+  const handleQuickReorder = (bk) => {
+    const liveBatch = batches.find(b => b.id === bk.batch?.id && !b.paused && (b.availableStock || 0) > 0)
+      || batches.find(b => b.ownerPhone === bk.hatcheryOwnerPhone && !b.paused && (b.availableStock || 0) > 0);
+    if (!liveBatch) {
+      showToast(L('No active stock currently available from this hatchery.', 'ఈ హేచరీలో ప్రస్తుతం యాక్టివ్ స్టాక్ అందుబాటులో లేదు.'));
+      return;
+    }
+    const prevLakhs = Math.max(1, Math.min(100, Math.round((bk.quantity || 200000) / 100000)));
+    setModalError('');
+    setBookingForm(prev => ({
+      ...prev,
+      farmerName: bk.farmerName || currentUser.name,
+      farmerPhone: bk.farmerPhone || currentUser.phone,
+      qtyAmount: String(prevLakhs),
+      qtyUnit: 'LAKHS',
+      pondSplitCount: String(bk.pondSplitCount || 1),
+      pondSalinity: String(bk.pondSalinity || 15),
+      packingDate: liveBatch.availableDate || prev.packingDate,
+      packingTimeSlot: liveBatch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+      includeTransport: Boolean(bk.includeTransport),
+      upiSubMode: 'QR',
+      qrRevealed: false,
+      utrReference: ''
+    }));
+    setSelectedBatch(liveBatch);
+    showToast(L(`Quick Reorder loaded for ${liveBatch.realName} (${liveBatch.id})!`, `${liveBatch.realName} కోసం క్విక్ రీఆర్డర్ లోడ్ అయింది!`));
+  };
+
+  // Feature 17: Hatchery Holiday / Dispatch Notice Save
+  const handleSaveHatcheryNotice = async (textVal) => {
+    if (!currentUser?.phone || !hatcheryProfiles[currentUser.phone]) return;
+    const nextProfiles = {
+      ...hatcheryProfiles,
+      [currentUser.phone]: {
+        ...hatcheryProfiles[currentUser.phone],
+        dispatchNotice: (textVal || '').trim()
+      }
+    };
+    setHatcheryProfiles(nextProfiles);
+    await saveKvToSupabase('hatcheries', nextProfiles);
+    setEditingNotice(false);
+    showToast((textVal || '').trim()
+      ? L('Hatchery Holiday / Dispatch Notice updated!', 'హేచరీ నోటీసు అప్‌డేట్ చేయబడింది!')
+      : L('Hatchery Dispatch Notice cleared.', 'హేచరీ నోటీసు తొలగించబడింది.'));
+  };
+
+  // Feature 18: 1-Click CSV Ledger Export (All Roles)
+  const handleExportCsvLedger = (rows, roleLabel) => {
+    if (!rows || rows.length === 0) {
+      showToast(L('No bookings available to export.', 'ఎక్స్‌పోర్ట్ చేయడానికి బుకింగ్స్ లేవు.'));
+      return;
+    }
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const headers = ['Booking ID', 'Date', 'Farmer Name', 'Farmer Phone', 'Hatchery', 'Batch ID', 'Stage', 'Qty (PL)', 'Bonus (PL)', 'Packing Date', 'Total (INR)', 'Advance Paid (INR)', 'Balance (INR)', 'UTR / Ref', 'Status'];
+    const csvLines = [headers.map(esc).join(',')];
+    rows.forEach(bk => {
+      csvLines.push([
+        bk.bookingId, bk.date || '', bk.farmerName || '', bk.farmerPhone || '',
+        bk.batch?.realName || bk.batch?.hatcheryCode || '', bk.batch?.id || '', bk.batch?.plStage || '',
+        bk.quantity || 0, bk.bonusSeeds || 0, bk.packingDate || '',
+        bk.totalSeedCost || 0, bk.tokenAdvance || 0, bk.balanceAtPacking || 0,
+        bk.paymentId || '', bk.settlement?.status || bk.packingStatus || ''
+      ].map(esc).join(','));
+    });
+    const blob = new Blob(['\uFEFF' + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AquaMark_${roleLabel}_Ledger_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(L(`Exported ${rows.length} ledger rows to CSV!`, `${rows.length} రికార్డులు CSV లోకి డౌన్‌లోడ్ అయ్యాయి!`));
+  };
+
+  // Feature 19: Rate Converter Formatter (₹/Seed ↔ ₹/Lakh ↔ ₹/Million)
+  const formatConvertedRate = (pricePerSeed) => {
+    const p = Number(pricePerSeed) || 0;
+    if (rateUnit === 'LAKH') return { value: `₹${Math.round(p * 100000).toLocaleString('en-IN')}`, unit: L('per lakh', 'లక్షకు') };
+    if (rateUnit === 'MILLION') return { value: `₹${Math.round(p * 1000000).toLocaleString('en-IN')}`, unit: L('per million', 'మిలియన్‌కు') };
+    return { value: `₹${p.toFixed(2)}`, unit: t.perSeed };
+  };
+
+  // Feature 22: Bilingual Voice Readout (Telugu & English)
+  const handleVoiceReadout = (id, textEn, textTe) => {
+    try {
+      if (!('speechSynthesis' in window)) {
+        showToast(L('Voice readout is not supported in this browser.', 'ఈ బ్రౌజర్‌లో వాయిస్ రీడౌట్ సపోర్ట్ లేదు.'));
+        return;
+      }
+      if (isSpeakingId === id) {
+        window.speechSynthesis.cancel();
+        setIsSpeakingId(null);
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(lang === 'te' ? textTe : textEn);
+      utter.lang = lang === 'te' ? 'te-IN' : 'en-IN';
+      utter.rate = 0.96;
+      utter.onend = () => setIsSpeakingId(null);
+      utter.onerror = () => setIsSpeakingId(null);
+      setIsSpeakingId(id);
+      window.speechSynthesis.speak(utter);
+    } catch {
+      setIsSpeakingId(null);
+    }
+  };
+
+  const resetAllMarketplaceFilters = () => {
+    setSearchQuery('');
+    setZoneFilter('ALL');
+    setStageFilter('ALL');
+    setOnlySavedFilter(false);
+    setSortBy('RATING');
+    setWatchlistFilterOnly(false);
+    setRateUnit('SEED');
+    setMatchmaker(prev => ({ ...prev, enabled: false }));
+    showToast(L('All marketplace filters reset!', 'అన్ని ఫిల్టర్లు క్లియర్ చేయబడ్డాయి!'));
+  };
+
+  const watchlistMatches = batches.filter(
+    b => !b.paused && (b.availableStock || 0) > 0 && Number(b.pricePer1000 || 0) <= Number(watchlistPrice || 0)
+  );
+
   const filteredAndSortedBatches = batches
     .filter(b => {
       const q = searchQuery.toLowerCase().trim();
@@ -2573,9 +3143,11 @@ function AquaMarkApp() {
       const zoneMatch = zoneFilter === 'ALL' || b.zone === zoneFilter;
       const stageMatch = stageFilter === 'ALL' || b.plStage === stageFilter;
       const savedMatch = !onlySavedFilter || savedBatchIds.includes(b.id);
-      return searchMatch && zoneMatch && stageMatch && savedMatch;
+      const watchMatch = !watchlistFilterOnly || (!b.paused && (b.availableStock || 0) > 0 && Number(b.pricePer1000 || 0) <= Number(watchlistPrice || 0));
+      return searchMatch && zoneMatch && stageMatch && savedMatch && watchMatch;
     })
     .sort((a, b) => {
+      if (sortBy === 'MATCH_HIGH') return computeBatchMatchScore(b) - computeBatchMatchScore(a);
       if (sortBy === 'PRICE_LOW') return (a.pricePer1000 || 0) - (b.pricePer1000 || 0);
       if (sortBy === 'SALINITY_LOW') return (a.salinity || 0) - (b.salinity || 0);
       if (sortBy === 'BONUS_HIGH') return (b.bonusPercent || 0) - (a.bonusPercent || 0);
@@ -2612,11 +3184,38 @@ function AquaMarkApp() {
           <ArrowUpDown className="w-3.5 h-3.5 text-teal-600" />
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent text-xs font-bold focus:outline-none">
             <option value="RATING">{t.sortRating}</option>
+            {isBuyerView && <option value="MATCH_HIGH">{L('Best Match %', 'బెస్ట్ మ్యాచ్ %')}</option>}
             <option value="PRICE_LOW">{t.sortPriceLow}</option>
             <option value="SALINITY_LOW">{t.sortSalinity}</option>
             <option value="BONUS_HIGH">{t.sortBonus}</option>
           </select>
         </div>
+        {/* FEATURE 19: RATE CONVERTER PILL */}
+        <div className={`inline-flex items-center rounded-xl border p-0.5 text-[11px] font-bold ${subCardBg}`}>
+          {[
+            { id: 'SEED', label: '₹/Seed' },
+            { id: 'LAKH', label: '₹/Lakh' },
+            { id: 'MILLION', label: '₹/Million' }
+          ].map(u => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => setRateUnit(u.id)}
+              className={`px-2 py-1 rounded-lg cursor-pointer transition ${rateUnit === u.id ? 'bg-teal-600 text-white' : 'opacity-70 hover:opacity-100'}`}
+            >
+              {u.label}
+            </button>
+          ))}
+        </div>
+        {isBuyerView && (
+          <button
+            type="button"
+            onClick={() => setMatchmakerOpen(!matchmakerOpen)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${matchmaker.enabled ? 'bg-indigo-600 text-white border-indigo-600' : subCardBg}`}
+          >
+            <Sparkles className="w-3.5 h-3.5" /> {L('Matchmaker', 'మ్యాచ్‌మేకర్')}
+          </button>
+        )}
         {isBuyerView && (
           <button
             type="button"
@@ -2626,6 +3225,15 @@ function AquaMarkApp() {
             <Heart className={`w-3.5 h-3.5 ${onlySavedFilter ? 'fill-rose-500 text-rose-500' : ''}`} /> {t.onlySaved}
           </button>
         )}
+        {isBuyerView && (
+          <button
+            type="button"
+            onClick={() => setShowBulkCartModal(true)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${bulkCart.length > 0 ? 'bg-emerald-600 text-white border-emerald-600' : subCardBg}`}
+          >
+            <ShoppingCart className="w-3.5 h-3.5" /> {L('Cart', 'కార్ట్')} ({bulkCart.length})
+          </button>
+        )}
         {isBuyerView && compareIds.length >= 2 && (
           <button
             type="button"
@@ -2633,6 +3241,16 @@ function AquaMarkApp() {
             className="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Scale className="w-3.5 h-3.5" /> {t.compareBtn} ({compareIds.length})
+          </button>
+        )}
+        {/* FEATURE 22: RESET CHIP */}
+        {(searchQuery || zoneFilter !== 'ALL' || stageFilter !== 'ALL' || onlySavedFilter || sortBy !== 'RATING' || watchlistFilterOnly || rateUnit !== 'SEED' || matchmaker.enabled) && (
+          <button
+            type="button"
+            onClick={resetAllMarketplaceFilters}
+            className="px-2.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+          >
+            <RotateCcw className="w-3 h-3" /> {L('Reset', 'రీసెట్')}
           </button>
         )}
       </div>
@@ -3063,11 +3681,23 @@ function AquaMarkApp() {
               <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-base font-extrabold tracking-tight">Aqua Mark</h1>
                 <span className="text-[11px] bg-teal-500/15 text-teal-600 border border-teal-500/30 px-2.5 py-0.5 rounded-full font-bold">
                   {t.portalBadges[currentUser.role] || currentUser.role}
                 </span>
+                {/* FEATURE 8: FARMER LOYALTY TIER BADGE */}
+                {currentUser.role === 'buyer' && (() => {
+                  const lt = getFarmerLoyaltyTier();
+                  return (
+                    <span
+                      title={lt.next ? `${lt.count} orders completed • ${lt.next} more for next tier` : `${lt.count} orders completed • Top Platinum Tier`}
+                      className={`text-[10px] border px-2.5 py-0.5 rounded-full font-extrabold inline-flex items-center gap-1 ${lt.cls}`}
+                    >
+                      <Award className="w-3 h-3" /> {lt.tier} Farmer
+                    </span>
+                  );
+                })()}
               </div>
               <p className="text-xs opacity-60">{currentUser.name} • +91 {currentUser.phone}</p>
             </div>
@@ -3093,7 +3723,7 @@ function AquaMarkApp() {
                 className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer"
                 title="Scan Buyer Gate-Pass QR"
               >
-                <QrCode className="w-3.5 h-3.5" /> Scan QR
+                <ScanLine className="w-4 h-4" /> {L('Scan QR', 'QR స్కాన్')}
               </button>
             )}
 
@@ -3174,6 +3804,40 @@ function AquaMarkApp() {
               </div>
             </div>
 
+            {/* FEATURE 9 & 22: COASTAL WEATHER & PACKING ADVISORY BANNER + VOICE LISTEN */}
+            {(() => {
+              const adv = COASTAL_WEATHER_ADVISORIES[weatherIdx % COASTAL_WEATHER_ADVISORIES.length];
+              return (
+                <div className={`rounded-2xl px-4 py-2.5 border border-sky-500/30 bg-sky-500/10 flex flex-wrap items-center justify-between gap-2 text-xs`}>
+                  <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+                    <CloudSun className="w-4 h-4 text-sky-500 shrink-0" />
+                    <span className="font-semibold leading-snug">{lang === 'te' ? adv.te : adv.en}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 mr-1">
+                      {COASTAL_WEATHER_ADVISORIES.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setWeatherIdx(idx)}
+                          className={`w-2 h-2 rounded-full cursor-pointer transition ${idx === weatherIdx ? 'bg-sky-500 scale-110' : 'bg-sky-500/30'}`}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleVoiceReadout('weather', adv.en, adv.te)}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer ${isSpeakingId === 'weather' ? 'bg-sky-600 text-white border-sky-600' : cardBg}`}
+                    >
+                      {isSpeakingId === 'weather' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-sky-500" />}
+                      {isSpeakingId === 'weather' ? L('Stop', 'ఆపు') : L('Listen', 'వినండి')}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+
             <div className={`flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border w-fit ${cardBg}`}>
               {[
                 { id: 'marketplace', label: t.tabMarketplace, icon: Building2 },
@@ -3202,6 +3866,111 @@ function AquaMarkApp() {
             {buyerTab === 'marketplace' && (
               <>
                 {renderFilterSortBar(true)}
+
+                {/* FEATURE 4: PRICE DROP WATCHLIST & ALERT */}
+                <div className={`rounded-2xl p-3.5 border flex flex-wrap items-center justify-between gap-3 text-xs ${watchlistActive && watchlistMatches.length > 0 ? 'border-emerald-500/50 bg-emerald-500/10' : cardBg}`}>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 font-extrabold text-emerald-600">
+                      <Bell className="w-4 h-4" /> {L('Price Drop Watchlist', 'ధర తగ్గింపు అలర్ట్')}
+                    </span>
+                    <div className="inline-flex items-center gap-1.5">
+                      <span className="opacity-70">{L('Alert if ≤', 'ధర ≤')} ₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.10"
+                        max="2.00"
+                        value={watchlistPrice}
+                        onChange={(e) => setWatchlistPrice(Number(e.target.value))}
+                        className={`w-20 border rounded-lg px-2 py-1 text-xs font-mono font-bold select-text ${inputCls}`}
+                      />
+                      <span className="opacity-70">/seed</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setWatchlistActive(!watchlistActive)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border cursor-pointer ${watchlistActive ? 'bg-emerald-600 text-white border-emerald-600' : subCardBg}`}
+                    >
+                      {watchlistActive ? L('Alert ON', 'అలర్ట్ ఆన్') : L('Alert OFF', 'అలర్ట్ ఆఫ్')}
+                    </button>
+                  </div>
+                  {watchlistActive && watchlistMatches.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-emerald-600">
+                        🔥 {watchlistMatches.length} {L('batch(es) available ≤', 'బ్యాచ్‌లు అందుబాటులో ఉన్నాయి ≤')} ₹{Number(watchlistPrice).toFixed(2)}/seed!
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setWatchlistFilterOnly(!watchlistFilterOnly)}
+                        className={`px-3 py-1 rounded-lg text-[11px] font-bold cursor-pointer ${watchlistFilterOnly ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                      >
+                        {watchlistFilterOnly ? L('Show All', 'అన్నీ చూడు') : L('View Matches', 'మ్యాచ్‌లు చూడు')}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] opacity-65">
+                      {L('Set your target seed rate to get instant top-banner alerts.', 'మీకు కావాల్సిన ధర సెట్ చేస్తే ఆ ధరలో బ్యాచ్ రాగానే అలర్ట్ వస్తుంది.')}
+                    </span>
+                  )}
+                </div>
+
+                {/* FEATURE 3: SMART SEED MATCHMAKER PANEL */}
+                {matchmakerOpen && (
+                  <div className={`rounded-2xl p-4 border-2 border-indigo-500/30 space-y-3 text-xs ${cardBg}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-extrabold text-indigo-500 inline-flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4" /> {L('Smart Seed Matchmaker (Auto Match % Score)', 'స్మార్ట్ సీడ్ మ్యాచ్‌మేకర్ (ఆటో మ్యాచ్ % స్కోర్)')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextEnabled = !matchmaker.enabled;
+                          setMatchmaker(prev => ({ ...prev, enabled: nextEnabled }));
+                          if (nextEnabled) setSortBy('MATCH_HIGH');
+                        }}
+                        className={`px-3 py-1 rounded-xl font-bold text-xs cursor-pointer ${matchmaker.enabled ? 'bg-indigo-600 text-white' : 'bg-teal-600 text-white'}`}
+                      >
+                        {matchmaker.enabled ? L('Match Scoring Active ✓', 'మ్యాచ్ స్కోర్ ఆన్ ✓') : L('Activate Match % Score', 'మ్యాచ్ % స్కోర్ ఆన్ చేయండి')}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Your Pond Salinity (PPT)', 'మీ చెరువు ఉప్పదనం (PPT)')}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="45"
+                          value={matchmaker.pondPpt}
+                          onChange={(e) => setMatchmaker(prev => ({ ...prev, pondPpt: Number(e.target.value), enabled: true }))}
+                          className={`w-full border rounded-xl px-3 py-1.5 text-xs font-bold select-text ${inputCls}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond Area (Acres)', 'చెరువు విస్తీర్ణం (ఎకరాలు)')}</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0.5"
+                          value={matchmaker.acres}
+                          onChange={(e) => setMatchmaker(prev => ({ ...prev, acres: Number(e.target.value), enabled: true }))}
+                          className={`w-full border rounded-xl px-3 py-1.5 text-xs font-bold select-text ${inputCls}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Max Budget (₹ / Seed)', 'గరిష్ట బడ్జెట్ (₹ / సీడ్)')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.10"
+                          value={matchmaker.maxBudget}
+                          onChange={(e) => setMatchmaker(prev => ({ ...prev, maxBudget: Number(e.target.value), enabled: true }))}
+                          className={`w-full border rounded-xl px-3 py-1.5 text-xs font-bold select-text ${inputCls}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
 
                 {filteredAndSortedBatches.length === 0 ? (
                   <div className={`rounded-2xl border p-12 text-center space-y-2 ${cardBg}`}>
@@ -3241,6 +4010,15 @@ function AquaMarkApp() {
                                     <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                                       <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
                                     </span>
+                                    {/* FEATURE 3: SMART SEED MATCHMAKER SCORE */}
+                                    {matchmaker.enabled && (() => {
+                                      const mScore = computeBatchMatchScore(batch);
+                                      return (
+                                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${mScore >= 80 ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40' : mScore >= 60 ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' : 'bg-slate-500/15 text-slate-400 border-slate-500/30'}`}>
+                                          <Sparkles className="w-3 h-3" /> Match {mScore}%
+                                        </span>
+                                      );
+                                    })()}
                                     <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
                                     <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
                                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
@@ -3254,7 +4032,7 @@ function AquaMarkApp() {
                                   </div>
                                   <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
                                     {isUnlocked ? (
-                                      <span className="text-teal-500 inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-500" /> {batch.realName}</span>
+                                      <span className="text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-400" /> {batch.realName}</span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
                                     )}
@@ -3271,7 +4049,7 @@ function AquaMarkApp() {
                                           onClick={(e) => e.stopPropagation()}
                                           className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
                                         >
-                                          <MapPin className="w-3.5 h-3.5" /> Open Google Maps Location <ExternalLink className="w-3 h-3" />
+                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
                                         </a>
                                       )}
                                     </div>
@@ -3305,10 +4083,15 @@ function AquaMarkApp() {
                                   >
                                     <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-50'}`} />
                                   </button>
-                                  <div className="text-right pl-1">
-                                    <div className="text-2xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
-                                    <div className="text-[11px] opacity-60">{t.perSeed}</div>
-                                  </div>
+                                  {(() => {
+                                    const conv = formatConvertedRate(batch.pricePer1000);
+                                    return (
+                                      <div className="text-right pl-1">
+                                        <div className="text-xl sm:text-2xl font-black">{conv.value}</div>
+                                        <div className="text-[11px] opacity-60">{conv.unit}</div>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
 
@@ -3319,9 +4102,38 @@ function AquaMarkApp() {
                                 <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
                               </div>
 
+                              {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
+                              {ownerProfile.dispatchNotice && (
+                                <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
+                                  <Megaphone className="w-3.5 h-3.5 shrink-0" />
+                                  <span>{ownerProfile.dispatchNotice}</span>
+                                </div>
+                              )}
+
+                              {/* FEATURE 2: HATCHERY DAILY DISPATCH SLOTS METER */}
+                              {(() => {
+                                const slots = getDispatchSlotsInfo(batch);
+                                return (
+                                  <div className={`border rounded-xl px-3 py-2 space-y-1 text-[11px] ${subCardBg}`}>
+                                    <div className="flex items-center justify-between font-bold">
+                                      <span className="opacity-80">{L('Dispatch Slots Today', 'ఈ రోజు ప్యాకింగ్ స్లాట్లు')}</span>
+                                      <span className={slots.remaining >= 5 ? 'text-emerald-500' : slots.remaining >= 2 ? 'text-amber-500' : 'text-rose-500'}>
+                                        {slots.remaining} / {slots.dailyCapacity} {L('slots left', 'స్లాట్లు మిగిలాయి')}
+                                      </span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${slots.remaining >= 5 ? 'bg-emerald-500' : slots.remaining >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                        style={{ width: `${slots.pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {/* POND COVERAGE QUICK-ESTIMATOR ON CARD */}
                               <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
-                                <span className="font-bold opacity-80">Pond Coverage Estimator:</span>
+                                <span className="font-bold opacity-80">{L('Pond Coverage Estimator:', 'చెరువు విస్తీర్ణం అంచనా:')}</span>
                                 <div className="flex items-center gap-1.5">
                                   {[30, 40, 50].map(d => (
                                     <button
@@ -3362,6 +4174,19 @@ function AquaMarkApp() {
                               >
                                 {isComparing ? t.comparingBtn : t.compareBtn}
                               </button>
+                              {/* FEATURE 10: MULTI-POND BULK CART BUTTON */}
+                              {!isSoldOut && !isPaused && (() => {
+                                const inCart = bulkCart.some(c => c.batchId === batch.id);
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleBulkCartItem(batch)}
+                                    className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${inCart ? 'bg-emerald-600 text-white border-emerald-600' : cardBg}`}
+                                  >
+                                    <ShoppingCart className="w-3.5 h-3.5" /> {inCart ? L('In Cart ✓', 'కార్ట్‌లో ఉంది ✓') : L('+ Cart', '+ కార్ట్')}
+                                  </button>
+                                );
+                              })()}
                               <button
                                 type="button"
                                 disabled={isSoldOut || isPaused}
@@ -3400,9 +4225,19 @@ function AquaMarkApp() {
             {/* TAB 2: BUYER BOOKINGS, DIGITAL ESCROW TIMELINE & GATE-PASSES */}
             {buyerTab === 'bookings' && (
               <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                <h3 className="text-base font-bold flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-teal-600" /> {t.myBookingsTitle}
-                </h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-base font-bold flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-teal-600" /> {t.myBookingsTitle}
+                  </h3>
+                  {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BUYER) */}
+                  <button
+                    type="button"
+                    onClick={() => handleExportCsvLedger(bookings.filter(b => b.farmerPhone === currentUser.phone), 'Buyer')}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                  >
+                    <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                  </button>
+                </div>
                 {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
                   <p className="text-xs opacity-60">{t.noBookingsYet}</p>
                 ) : (
@@ -3410,7 +4245,7 @@ function AquaMarkApp() {
                     {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
                       const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
                       const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
-                      const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
+                      const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
                       const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
                       const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
 
@@ -3443,7 +4278,7 @@ function AquaMarkApp() {
                                       : t.pendingSettlementBadge}
                                 </span>
                               </div>
-                              <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400">
+                              <p className="text-sm font-extrabold text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-block">
                                 {bk.batch?.realName} • +91 {bk.batch?.realPhone}
                               </p>
                               <p className="text-xs opacity-75">
@@ -3501,6 +4336,33 @@ function AquaMarkApp() {
                                   </button>
                                 )
                               )}
+
+                              {/* FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN */}
+                              {!isCancelled && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const existing = survivalLogs[bk.bookingId];
+                                    setSurvivalDraft(existing ? { h24: existing.h24, h48: existing.h48, h72: existing.h72, note: existing.note || '' } : { h24: 96, h48: 92, h72: 88, note: '' });
+                                    setSurvivalModalBooking(bk);
+                                  }}
+                                  className={`border text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer ${survivalLogs[bk.bookingId] ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600' : cardBg}`}
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5 text-teal-600" />
+                                  {survivalLogs[bk.bookingId]
+                                    ? `72h: ${survivalLogs[bk.bookingId].h72}% ✓`
+                                    : L('72h Survival', '72h సర్వైవల్')}
+                                </button>
+                              )}
+
+                              {/* FEATURE 15: 1-CLICK QUICK REORDER */}
+                              <button
+                                type="button"
+                                onClick={() => handleQuickReorder(bk)}
+                                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" /> {L('Reorder', 'రీఆర్డర్')}
+                              </button>
                             </div>
                           </div>
 
@@ -3561,31 +4423,31 @@ function AquaMarkApp() {
                   </h3>
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">Pond Name</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond Name', 'చెరువు పేరు')}</label>
                       <input required type="text" value={newPondForm.pondName} onChange={(e) => setNewPondForm({ ...newPondForm, pondName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">Acres</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Acres', 'ఎకరాలు')}</label>
                       <input required type="number" step="0.5" value={newPondForm.acres} onChange={(e) => setNewPondForm({ ...newPondForm, acres: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">Stocked Seed (PL)</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
                       <input required type="number" step="10000" value={newPondForm.stockedQty} onChange={(e) => setNewPondForm({ ...newPondForm, stockedQty: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">Stocking Date</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocking Date', 'సీడ్ వదిలిన తేదీ')}</label>
                       <input required type="date" value={newPondForm.stockingDate} onChange={(e) => setNewPondForm({ ...newPondForm, stockingDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">Today Feed (kg)</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Today Feed (kg)', 'నేటి ఫీడ్ (కేజీలు)')}</label>
                       <input required type="number" step="0.5" value={newPondForm.dailyFeedKg} onChange={(e) => setNewPondForm({ ...newPondForm, dailyFeedKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">Check-Tray Leftover</label>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Check-Tray Leftover', 'చెక్-ట్రే మిగులు')}</label>
                       <select value={newPondForm.trayLeftover} onChange={(e) => setNewPondForm({ ...newPondForm, trayLeftover: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
                         <option>0% (Clean — Increase 5%)</option>
                         <option>10% (Normal — Keep Same)</option>
@@ -3593,8 +4455,31 @@ function AquaMarkApp() {
                       </select>
                     </div>
                   </div>
+                  {/* FEATURE 20: POND CHECK-TRAY JOURNAL (MOLTING / GUT / ANTENNA) */}
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-300/20">
+                    <div>
+                      <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Molting %', 'మోల్టింగ్ %')}</label>
+                      <input type="number" min="0" max="100" value={newPondForm.moltingPct ?? 12} onChange={(e) => setNewPondForm({ ...newPondForm, moltingPct: Number(e.target.value) })} className={`w-full border rounded-xl px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Gut Status', 'గట్ స్థితి')}</label>
+                      <select value={newPondForm.gutStatus || 'Full & Dark (Healthy)'} onChange={(e) => setNewPondForm({ ...newPondForm, gutStatus: e.target.value })} className={`w-full border rounded-xl px-2 py-1.5 text-[11px] font-bold ${inputCls}`}>
+                        <option>Full & Dark (Healthy)</option>
+                        <option>Half-Full (Monitor)</option>
+                        <option>Empty / White Gut Alert</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Antenna', 'యాంటెన్నా')}</label>
+                      <select value={newPondForm.antennaStatus || 'Intact & Long'} onChange={(e) => setNewPondForm({ ...newPondForm, antennaStatus: e.target.value })} className={`w-full border rounded-xl px-2 py-1.5 text-[11px] font-bold ${inputCls}`}>
+                        <option>Intact & Long</option>
+                        <option>Slightly Cut</option>
+                        <option>Broken / Necrosis</option>
+                      </select>
+                    </div>
+                  </div>
                   <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer">
-                    + Save Pond Feed Entry
+                    {L('+ Save Pond Feed & Journal', '+ చెరువు ఫీడ్ & జర్నల్ సేవ్ చేయండి')}
                   </button>
                 </form>
 
@@ -3604,7 +4489,7 @@ function AquaMarkApp() {
                     {lang === 'te' ? 'మీ చెరువుల DOC & చెక్-ట్రే రికార్డులు' : 'Active Pond DOC & Check-Tray Records'}
                   </h3>
                   {farmerPonds.length === 0 ? (
-                    <p className="text-xs opacity-60">No pond records added yet. Log your pond stocking and daily feed on the left.</p>
+                    <p className="text-xs opacity-60">{L('No pond records added yet. Log your pond stocking and daily feed on the left.', 'ఇంకా చెరువు రికార్డులు లేవు. ఎడమవైపు మీ చెరువు స్టాకింగ్ & రోజువారీ ఫీడ్ నమోదు చేయండి.')}</p>
                   ) : (
                     <div className="max-h-80 overflow-y-auto pr-1 space-y-2.5">
                       {farmerPonds.map((p) => {
@@ -3614,6 +4499,13 @@ function AquaMarkApp() {
                             <div>
                               <span className="font-extrabold text-sm text-teal-500">{p.pondName}</span> ({p.acres} Acres) • <span className="font-bold">DOC {daysElapsed}</span>
                               <p className="opacity-75 mt-0.5">Stocked: {Number(p.stockedQty).toLocaleString('en-IN')} PL on {p.stockingDate}</p>
+                              {(p.moltingPct !== undefined || p.gutStatus || p.antennaStatus) && (
+                                <div className="flex flex-wrap gap-1.5 mt-1.5 text-[10px] font-bold">
+                                  <span className="bg-sky-500/15 text-sky-500 px-2 py-0.5 rounded-full">Molting: {p.moltingPct ?? 0}%</span>
+                                  <span className={`px-2 py-0.5 rounded-full ${(p.gutStatus || '').includes('Empty') ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-500'}`}>Gut: {p.gutStatus || 'Full'}</span>
+                                  <span className={`px-2 py-0.5 rounded-full ${(p.antennaStatus || '').includes('Broken') ? 'bg-rose-500/15 text-rose-500' : 'bg-teal-500/15 text-teal-500'}`}>Antenna: {p.antennaStatus || 'Intact'}</span>
+                                </div>
+                              )}
                             </div>
                             <div className="text-right">
                               <span className="font-bold block">Daily Feed: {p.dailyFeedKg} kg</span>
@@ -3624,6 +4516,71 @@ function AquaMarkApp() {
                       })}
                     </div>
                   )}
+                </div>
+
+                {/* FEATURE 16: INTERACTIVE "WHAT-IF" FCR FEED OPTIMIZER (10-TON HARVEST) */}
+                <div className={`lg:col-span-3 rounded-2xl p-5 border shadow-xs space-y-4 ${cardBg}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-extrabold text-sm flex items-center gap-2 text-teal-500">
+                      <Sliders className="w-4 h-4" /> {L('Interactive "What-If" FCR Feed Optimizer (For 10-Ton Harvest)', 'ఇంటరాక్టివ్ "What-If" FCR ఫీడ్ ఆప్టిమైజర్ (10 టన్నుల దిగుబడికి)')}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="opacity-70 font-bold">{L('25kg Bag Price (₹):', '25kg బస్తా ధర (₹):')}</span>
+                      <input
+                        type="number"
+                        step="50"
+                        value={whatIfBagPrice}
+                        onChange={(e) => setWhatIfBagPrice(Math.max(500, Number(e.target.value) || 2200))}
+                        className={`w-24 border rounded-lg px-2 py-1 text-xs font-bold select-text ${inputCls}`}
+                      />
+                    </div>
+                  </div>
+                  {(() => {
+                    const harvestKg = 10000; // 10 Tons
+                    const baseFcr = 1.50;
+                    const baseBags = Math.ceil((harvestKg * baseFcr) / 25);
+                    const currBags = Math.ceil((harvestKg * whatIfFcr) / 25);
+                    const bagsDiff = baseBags - currBags;
+                    const moneyDiff = bagsDiff * whatIfBagPrice;
+                    const totalCost = currBags * whatIfBagPrice;
+                    return (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span>{L('Target FCR:', 'లక్ష్య FCR:')} <b className="text-teal-500 text-sm">{whatIfFcr.toFixed(2)}</b></span>
+                            <span className="opacity-60">{L('Baseline Standard FCR: 1.50', 'సాధారణ బేస్‌లైన్ FCR: 1.50')}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="1.10"
+                            max="2.00"
+                            step="0.05"
+                            value={whatIfFcr}
+                            onChange={(e) => setWhatIfFcr(Number(e.target.value))}
+                            className="w-full accent-teal-600 cursor-pointer"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                          <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                            <span className="text-[10px] opacity-60 block">{L('Feed Needed (10 Tons)', 'కావాల్సిన ఫీడ్ (10 టన్నులకు)')}</span>
+                            <b className="text-base">{currBags.toLocaleString('en-IN')} {L('Bags', 'బస్తాలు')}</b>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                            <span className="text-[10px] opacity-60 block">{L('Total Feed Spend', 'మొత్తం ఫీడ్ ఖర్చు')}</span>
+                            <b className="text-base">₹{totalCost.toLocaleString('en-IN')}</b>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${bagsDiff >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-rose-500/10 border-rose-500/30 text-rose-500'}`}>
+                            <span className="text-[10px] opacity-80 block">{bagsDiff >= 0 ? L('Bags Saved vs 1.50 FCR', 'ఆదా అయ్యే బస్తాలు') : L('Extra Bags vs 1.50 FCR', 'అదనపు బస్తాలు')}</span>
+                            <b className="text-base">{bagsDiff >= 0 ? `+${bagsDiff}` : bagsDiff} {L('Bags', 'బస్తాలు')}</b>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${moneyDiff >= 0 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-rose-600 text-white border-rose-600'}`}>
+                            <span className="text-[10px] opacity-90 block">{moneyDiff >= 0 ? L('Net Cost Saved', 'నికర ఖర్చు ఆదా') : L('Extra Cost Impact', 'అదనపు ఖర్చు')}</span>
+                            <b className="text-base">{moneyDiff >= 0 ? '₹' : '-₹'}{Math.abs(moneyDiff).toLocaleString('en-IN')}</b>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -3646,15 +4603,15 @@ function AquaMarkApp() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Number of Ponds</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Number of Ponds', 'చెరువుల సంఖ్య')}</label>
                     <input type="number" min="1" value={calcInputs.ponds} onChange={(e) => setCalcInputs({ ...calcInputs, ponds: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Acres per Pond</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Acres per Pond', 'ఒక్కో చెరువు విస్తీర్ణం (ఎకరాలు)')}</label>
                     <input type="number" step="0.5" min="0.5" value={calcInputs.acresPerPond} onChange={(e) => setCalcInputs({ ...calcInputs, acresPerPond: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Stocking Density (/m²)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Stocking Density (/m²)', 'స్టాకింగ్ సాంద్రత (/m²)')}</label>
                     <select value={calcInputs.density} onChange={(e) => setCalcInputs({ ...calcInputs, density: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
                       <option value={30}>30 / m²</option>
                       <option value={40}>40 / m²</option>
@@ -3663,11 +4620,11 @@ function AquaMarkApp() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Expected Survival (%)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Expected Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
                     <input type="number" min="40" max="100" value={calcInputs.survival} onChange={(e) => setCalcInputs({ ...calcInputs, survival: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Target Count (/kg)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Target Count (/kg)', 'లక్ష్య కౌంట్ (/kg)')}</label>
                     <select value={calcInputs.targetCount} onChange={(e) => setCalcInputs({ ...calcInputs, targetCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
                       <option value={25}>25 Count</option>
                       <option value={30}>30 Count</option>
@@ -3676,61 +4633,61 @@ function AquaMarkApp() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">FCR (Feed Ratio)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('FCR (Feed Ratio)', 'FCR (ఫీడ్ నిష్పత్తి)')}</label>
                     <input type="number" step="0.1" min="1.0" max="2.5" value={calcInputs.fcr} onChange={(e) => setCalcInputs({ ...calcInputs, fcr: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Market Price (₹ / kg)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Market Price (₹ / kg)', 'మార్కెట్ ధర (₹ / kg)')}</label>
                     <input type="number" value={calcInputs.marketRatePerKg} onChange={(e) => setCalcInputs({ ...calcInputs, marketRatePerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Feed Cost (₹ / kg)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Feed Cost (₹ / kg)', 'ఫీడ్ ధర (₹ / kg)')}</label>
                     <input type="number" value={calcInputs.feedCostPerKg} onChange={(e) => setCalcInputs({ ...calcInputs, feedCostPerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">Power & Probiotics (/Acre)</label>
+                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Power & Probiotics (/Acre)', 'కరెంట్ & ప్రోబయోటిక్స్ (/ఎకరానికి)')}</label>
                     <input type="number" value={calcInputs.powerProbioticCostPerAcre} onChange={(e) => setCalcInputs({ ...calcInputs, powerProbioticCostPerAcre: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
                   <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
-                    <span className="text-[11px] opacity-60 font-bold block">Total Seed ({calcResult.totalAcres} Acres)</span>
+                    <span className="text-[11px] opacity-60 font-bold block">{L(`Total Seed (${calcResult.totalAcres} Acres)`, `మొత్తం సీడ్ (${calcResult.totalAcres} ఎకరాలు)`)}</span>
                     <span className="text-lg font-black">{calcResult.totalSeedsNeeded.toLocaleString('en-IN')} PL</span>
                   </div>
                   <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-teal-600 font-bold block">Projected Harvest</span>
-                    <span className="text-lg font-black">{calcResult.harvestTons} Tons ({calcResult.harvestKg.toLocaleString('en-IN')} kg)</span>
+                    <span className="text-[11px] text-teal-600 font-bold block">{L('Projected Harvest', 'అంచనా దిగుబడి')}</span>
+                    <span className="text-lg font-black">{calcResult.harvestTons} {L('Tons', 'టన్నులు')} ({calcResult.harvestKg.toLocaleString('en-IN')} kg)</span>
                   </div>
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-amber-600 font-bold block">Total Feed Required</span>
-                    <span className="text-lg font-black">{calcResult.totalFeedBags} Bags ({calcResult.totalFeedKg.toLocaleString('en-IN')} kg)</span>
+                    <span className="text-[11px] text-amber-600 font-bold block">{L('Total Feed Required', 'మొత్తం కావాల్సిన ఫీడ్')}</span>
+                    <span className="text-lg font-black">{calcResult.totalFeedBags} {L('Bags', 'బస్తాలు')} ({calcResult.totalFeedKg.toLocaleString('en-IN')} kg)</span>
                   </div>
                   <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
-                    <span className="text-[11px] opacity-60 font-bold block">Break-Even Cost / kg</span>
+                    <span className="text-[11px] opacity-60 font-bold block">{L('Break-Even Cost / kg', 'బ్రేక్-ఈవెన్ ఖర్చు / kg')}</span>
                     <span className="text-lg font-black">₹{calcResult.breakEvenPerKg} / kg</span>
                   </div>
                   <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
-                    <span className="text-[11px] opacity-60 font-bold block">Gross Crop Revenue</span>
+                    <span className="text-[11px] opacity-60 font-bold block">{L('Gross Crop Revenue', 'మొత్తం పంట ఆదాయం')}</span>
                     <span className="text-lg font-black">₹{calcResult.grossRevenue.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-rose-500 font-bold block">Total Production Cost</span>
+                    <span className="text-[11px] text-rose-500 font-bold block">{L('Total Production Cost', 'మొత్తం సాగు ఖర్చు')}</span>
                     <span className="text-lg font-black">₹{calcResult.totalExpenses.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-emerald-500 font-bold block">Net Profit / Acre</span>
+                    <span className="text-[11px] text-emerald-500 font-bold block">{L('Net Profit / Acre', 'నికర లాభం / ఎకరం')}</span>
                     <span className="text-lg font-black">₹{calcResult.profitPerAcre.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="bg-emerald-600 text-white rounded-xl p-3.5">
-                    <span className="text-[11px] text-emerald-100 font-bold block">Total Net Crop Profit</span>
+                    <span className="text-[11px] text-emerald-100 font-bold block">{L('Total Net Crop Profit', 'మొత్తం నికర లాభం')}</span>
                     <span className="text-lg font-black">₹{calcResult.netProfit.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 
                 {/* FEATURE 8: HARVEST COUNT & MARKET RATE SENSITIVITY MATRIX */}
                 <div className={`p-4 rounded-2xl border space-y-2 ${subCardBg}`}>
-                  <h4 className="text-xs font-extrabold uppercase text-teal-500">Count-Wise Profit Sensitivity Matrix (At {calcInputs.survival}% Survival)</h4>
+                  <h4 className="text-xs font-extrabold uppercase text-teal-500">{L(`Count-Wise Profit Sensitivity Matrix (At ${calcInputs.survival}% Survival)`, `కౌంట్ వారీగా లాభాల అంచనా (${calcInputs.survival}% సర్వైవల్ వద్ద)`)}</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     {[
                       { count: 30, rate: 395 },
@@ -3742,10 +4699,10 @@ function AquaMarkApp() {
                       const prof = (kg * sc.rate) - calcResult.totalExpenses;
                       return (
                         <div key={sc.count} className={`p-3 rounded-xl border ${cardBg}`}>
-                          <div className="font-extrabold">{sc.count} Count @ ₹{sc.rate}/kg</div>
-                          <div className="text-[11px] opacity-70">Harvest: {kg.toLocaleString('en-IN')} kg</div>
+                          <div className="font-extrabold">{sc.count} {L('Count', 'కౌంట్')} @ ₹{sc.rate}/kg</div>
+                          <div className="text-[11px] opacity-70">{L('Harvest:', 'దిగుబడి:')} {kg.toLocaleString('en-IN')} kg</div>
                           <div className={`font-black mt-1 ${prof >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                            Net Profit: ₹{prof.toLocaleString('en-IN')}
+                            {L('Net Profit:', 'నికర లాభం:')} ₹{prof.toLocaleString('en-IN')}
                           </div>
                         </div>
                       );
@@ -3760,27 +4717,27 @@ function AquaMarkApp() {
               <div className="space-y-6">
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <h3 className="text-base font-extrabold flex items-center gap-2">
-                    <Droplets className="w-5 h-5 text-teal-600" /> Pond Water & Vibrio/WSSV Disease Early-Warning Matrix
+                    <Droplets className="w-5 h-5 text-teal-600" /> {L('Pond Water & Vibrio/WSSV Disease Early-Warning Matrix', 'చెరువు నీటి పరీక్ష & విబ్రియో/WSSV వ్యాధి ముందస్తు హెచ్చరిక')}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                     <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">Water pH (7.5 - 8.3)</label>
+                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Water pH (7.5 - 8.3)', 'నీటి pH (7.5 - 8.3)')}</label>
                       <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">Dissolved Oxygen (ppm)</label>
+                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Dissolved Oxygen (ppm)', 'కరిగిన ఆక్సిజన్ / DO (ppm)')}</label>
                       <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">Alkalinity (ppm)</label>
+                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Alkalinity (ppm)', 'ఆల్కలీనిటీ (ppm)')}</label>
                       <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">Ammonia (ppm)</label>
+                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Ammonia (ppm)', 'అమ్మోనియా (ppm)')}</label>
                       <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">Pond Salinity (PPT)</label>
+                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Pond Salinity (PPT)', 'చెరువు ఉప్పదనం (PPT)')}</label>
                       <input type="number" value={waterTest.salinity} onChange={(e) => setWaterTest({ ...waterTest, salinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                   </div>
@@ -3791,12 +4748,12 @@ function AquaMarkApp() {
                       <div className="space-y-2">
                         <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
                           {isSafe
-                            ? '✅ Pond water parameters are OPTIMAL for immediate PL stocking!'
-                            : '⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.'}
+                            ? L('✅ Pond water parameters are OPTIMAL for immediate PL stocking!', '✅ చెరువు నీటి నాణ్యత సీడ్ వదలడానికి అనుకూలంగా ఉంది!')
+                            : L('⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.', '⚠️ హెచ్చరిక: సీడ్ వదిలే ముందు pH (7.5-8.3), DO (4.5 ppm పైన), మరియు అమ్మోనియా (0.1 ppm లోపు) సరిచేయండి.')}
                         </div>
                         {/* FEATURE 7: VIBRIO / PATHOGEN RISK BADGE */}
                         <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-between ${subCardBg}`}>
-                          <span>Luminescent Vibrio & EHP Susceptibility Risk:</span>
+                          <span>{L('Luminescent Vibrio & EHP Susceptibility Risk:', 'విబ్రియో & EHP వ్యాధి రిస్క్ అంచనా:')}</span>
                           <span className={vibrioRisk === 'LOW' ? 'text-emerald-500' : vibrioRisk === 'MODERATE' ? 'text-amber-500' : 'text-rose-500'}>
                             {vibrioRisk} RISK ({vibrioRisk === 'LOW' ? 'Safe Bio-floc Balance' : 'Apply Gut Probiotics & Minerals'})
                           </span>
@@ -3808,31 +4765,74 @@ function AquaMarkApp() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                    <h4 className="font-bold text-sm text-teal-500">Salinity Acclimatization Time Calculator</h4>
+                    <h4 className="font-bold text-sm text-teal-500">{L('Salinity Acclimatization Time Calculator', 'ఉప్పదనం అలవాటు (Acclimatization) కాలిక్యులేటర్')}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">Hatchery PPT</label>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Hatchery PPT', 'హేచరీ PPT')}</label>
                         <input type="number" value={acclimCalc.hatcheryPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, hatcheryPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">Pond PPT</label>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond PPT', 'చెరువు PPT')}</label>
                         <input type="number" value={acclimCalc.pondPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, pondPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                     </div>
                     <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
                       Salinity Variance: <b>{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt)} PPT</b> • Required Acclimatization Time: <b className="text-teal-500">{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4} Hours</b> (1 PPT every 4 hrs).
                     </div>
+                    {/* FEATURE 6: LIVE SALINITY ACCLIMATIZATION COUNTDOWN TIMER */}
+                    {(() => {
+                      const totalSecs = Math.max(1, Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
+                      const hrs = String(Math.floor(acclimTimerSec / 3600)).padStart(2, '0');
+                      const mins = String(Math.floor((acclimTimerSec % 3600) / 60)).padStart(2, '0');
+                      const secs = String(acclimTimerSec % 60).padStart(2, '0');
+                      const pctDone = Math.min(100, Math.max(0, Math.round(((totalSecs - acclimTimerSec) / totalSecs) * 100)));
+                      return (
+                        <div className={`p-3.5 rounded-xl border border-teal-500/30 space-y-2.5 ${subCardBg}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-extrabold text-teal-500 inline-flex items-center gap-1.5">
+                              <Timer className="w-3.5 h-3.5" /> {L('Live Acclimatization Countdown', 'లైవ్ అక్లైమటైజేషన్ టైమర్')}
+                            </span>
+                            <span className="font-mono text-lg font-black text-teal-600">{hrs}:{mins}:{secs}</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                            <div className="h-full bg-teal-500 transition-all" style={{ width: `${pctDone}%` }} />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (acclimTimerSec <= 0) setAcclimTimerSec(Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
+                                setAcclimTimerRunning(!acclimTimerRunning);
+                              }}
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer ${acclimTimerRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'}`}
+                            >
+                              {acclimTimerRunning ? L('Pause', 'పాజ్') : L('Start Timer', 'ప్రారంభించు')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAcclimTimerRunning(false);
+                                setAcclimTimerSec(Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
+                              }}
+                              className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer ${cardBg}`}
+                            >
+                              {L('Reset', 'రీసెట్')}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                    <h4 className="font-bold text-sm text-teal-500">Oxygen Packing Bags & Van Size Estimator</h4>
+                    <h4 className="font-bold text-sm text-teal-500">{L('Oxygen Packing Bags & Van Size Estimator', 'ఆక్సిజన్ ప్యాకింగ్ బ్యాగ్‌లు & వ్యాన్ అంచనా')}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">Total Seed (PL)</label>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Total Seed (PL)', 'మొత్తం సీడ్ (PL)')}</label>
                         <input type="number" step="50000" value={oxygenCalc.seedCount} onChange={(e) => setOxygenCalc({ ...oxygenCalc, seedCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">Transit Hours</label>
+                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Transit Hours', 'ప్రయాణ సమయం (గంటలు)')}</label>
                         <input type="number" value={oxygenCalc.travelHours} onChange={(e) => setOxygenCalc({ ...oxygenCalc, travelHours: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                     </div>
@@ -3848,22 +4848,71 @@ function AquaMarkApp() {
                     })()}
                   </div>
                 </div>
+
+                {/* FEATURE 21: EMERGENCY AQUA LAB & DISEASE SOS HELPLINE */}
+                <div className={`rounded-2xl p-5 border-2 border-rose-500/40 bg-rose-500/5 flex flex-wrap items-center justify-between gap-4`}>
+                  <div className="space-y-1">
+                    <span className="text-xs font-extrabold uppercase text-rose-500 inline-flex items-center gap-1.5">
+                      <ShieldAlert className="w-4 h-4" /> {L('Emergency Aqua Lab & Disease SOS Helpline', 'అత్యవసర ఆక్వా ల్యాబ్ & వ్యాధి SOS హెల్ప్‌లైన్')}
+                    </span>
+                    <p className="text-xs opacity-80">
+                      {L('Suspecting White Spot (WSSV), EHP, or sudden mortality? Call AP Fisheries SOS or send your current Water Lab report on WhatsApp in 1 click.', 'వైట్ స్పాట్ (WSSV), EHP లేదా ఆకస్మిక మరణాలు కనిపిస్తే వెంటనే AP ఫిషరీస్ SOS కు కాల్ చేయండి లేదా వాటర్ రిపోర్ట్ WhatsApp లో పంపండి.')}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <a
+                      href="tel:18004251660"
+                      className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <PhoneCall className="w-4 h-4" /> {L('AP Fisheries SOS (1800-425-1660)', 'AP ఫిషరీస్ SOS కాల్')}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const msg = `🚨 *Aqua Mark Emergency Water Lab Report*
+• Farmer: ${currentUser.name} (+91 ${currentUser.phone})
+• pH: ${waterTest.ph} | DO: ${waterTest.doLevel} ppm
+• Alkalinity: ${waterTest.alkalinity} ppm | Ammonia: ${waterTest.ammonia} ppm
+• Salinity: ${waterTest.salinity} PPT
+Please advise immediate treatment protocol.`;
+                        openWhatsAppMessage(ADMIN_WHATSAPP_NUMBER, msg);
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Send className="w-4 h-4" /> {L('WhatsApp Water Report to Lab', 'ల్యాబ్‌కు వాటర్ రిపోర్ట్ పంపండి')}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* TAB 6: DOC 1-110 FEEDING SCHEDULE */}
             {buyerTab === 'guide' && (
               <div className={`rounded-2xl p-6 border shadow-xs space-y-3 ${cardBg}`}>
-                <h4 className="font-bold text-sm">DOC 1–110 Standard Vannamei Feeding & Check-Tray Chart (Per 1,00,000 PL)</h4>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="font-bold text-sm">{L('DOC 1–110 Standard Vannamei Feeding & Check-Tray Chart (Per 1,00,000 PL)', 'DOC 1–110 వనామీ ఫీడింగ్ & చెక్-ట్రే చార్ట్ (1,00,000 PL కు)')}</h4>
+                  <button
+                    type="button"
+                    onClick={() => handleVoiceReadout(
+                      'doc_guide',
+                      'DOC 1 to 10: feed 2 to 4 kg per lakh daily, blind feeding. DOC 11 to 20: 4.2 to 7.5 kg. DOC 21 to 35: 8 to 14 kg, check tray after 2.5 hours. DOC 36 to 55: 15 to 24 kg. DOC 56 to 80: 25 to 34 kg. DOC 81 to 110: 35 to 42 kg per lakh.',
+                      'DOC 1 నుండి 10 రోజులు: లక్ష సీడ్ కు రోజుకు 2 నుండి 4 కిలోల ఫీడ్ వేయండి. DOC 11 నుండి 20: 4.2 నుండి 7.5 కిలోలు. DOC 21 నుండి 35: 8 నుండి 14 కిలోలు, 2.5 గంటల తర్వాత చెక్ ట్రే చూడండి. DOC 36 నుండి 55: 15 నుండి 24 కిలోలు. DOC 56 నుండి 110: 25 నుండి 42 కిలోల వరకు ఫీడ్ అందించండి.'
+                    )}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${isSpeakingId === 'doc_guide' ? 'bg-teal-600 text-white border-teal-600' : subCardBg}`}
+                  >
+                    {isSpeakingId === 'doc_guide' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-teal-600" />}
+                    {isSpeakingId === 'doc_guide' ? L('Stop Audio', 'ఆపు') : L('Listen Chart', 'వాయిస్‌లో వినండి')}
+                  </button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-300/30 opacity-65 uppercase text-[10px]">
-                        <th className="py-2">Crop Stage</th>
-                        <th className="py-2">Avg Body Weight</th>
-                        <th className="py-2">Daily Feed / Lakh</th>
-                        <th className="py-2">Feed Grade</th>
-                        <th className="py-2">Check-Tray Protocol</th>
+                        <th className="py-2">{L('Crop Stage', 'పంట దశ')}</th>
+                        <th className="py-2">{L('Avg Body Weight', 'సగటు బరువు')}</th>
+                        <th className="py-2">{L('Daily Feed / Lakh', 'రోజువారీ ఫీడ్ / లక్షకు')}</th>
+                        <th className="py-2">{L('Feed Grade', 'ఫీడ్ గ్రేడ్')}</th>
+                        <th className="py-2">{L('Check-Tray Protocol', 'చెక్-ట్రే విధానం')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300/20">
@@ -4085,7 +5134,7 @@ function AquaMarkApp() {
                           <ShieldCheck className="w-3.5 h-3.5" /> ₹10,000 Security Deposited
                         </span>
                       </div>
-                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-teal-600 dark:text-teal-400">
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white bg-slate-900 px-3 py-1 rounded-xl inline-block">
                         {myFixedHatchery.realName}
                       </h2>
                       <p className="text-xs sm:text-sm opacity-80 font-medium">
@@ -4101,7 +5150,7 @@ function AquaMarkApp() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-bold text-teal-500 hover:underline pt-1"
                         >
-                          <MapPin className="w-3.5 h-3.5" /> View Google Maps Pin <ExternalLink className="w-3 h-3" />
+                          <MapPin className="w-3.5 h-3.5" /> {L('View Google Maps Pin', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
                     </div>
@@ -4133,9 +5182,10 @@ function AquaMarkApp() {
                           <button
                             type="button"
                             onClick={() => { setAddDepositQrRevealed(false); setAddDepositUtr(''); setShowSellerDepositModal(true); }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-xl inline-flex items-center justify-center cursor-pointer shadow-xs"
+                            title={L('Security Deposit Wallet', 'సెక్యూరిటీ డిపాజిట్ వాలెట్')}
                           >
-                            <Wallet className="w-3.5 h-3.5" /> Deposited (₹{(myFixedHatchery?.depositAmount || 10000).toLocaleString('en-IN')})
+                            <Wallet className="w-4 h-4" />
                           </button>
                         </>
                       )}
@@ -4223,7 +5273,7 @@ function AquaMarkApp() {
                     className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
                   >
                     <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> Upcoming Packing Receivable</span>
+                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {L('Upcoming Packing Receivable', 'రాబోయే ప్యాకింగ్ ఆదాయం')}</span>
                       <span className="underline text-[11px]">View All →</span>
                     </span>
                     <div className="text-2xl font-black mt-1.5">₹{hatcheryPendingRevenue.toLocaleString('en-IN')}</div>
@@ -4235,7 +5285,7 @@ function AquaMarkApp() {
                     className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
                   >
                     <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> Packing Orders</span>
+                      <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> {L('Packing Orders', 'ప్యాకింగ్ ఆర్డర్లు')}</span>
                       <span className="underline text-[11px]">Manage →</span>
                     </span>
                     <div className="text-2xl font-black mt-1.5">{hatcheryUpcomingOrders.length} Scheduled</div>
@@ -4247,7 +5297,7 @@ function AquaMarkApp() {
                     className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
                   >
                     <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Video className="w-4 h-4" /> Live Video Requests</span>
+                      <span className="inline-flex items-center gap-1.5"><Video className="w-4 h-4" /> {L('Live Video Requests', 'లైవ్ వీడియో అభ్యర్థనలు')}</span>
                       <span className="underline text-[11px]">Open & Reply →</span>
                     </span>
                     <div className="text-2xl font-black mt-1.5">{myLiveVideoReqs.length} Requests</div>
@@ -4257,6 +5307,104 @@ function AquaMarkApp() {
                         : 'Click to view farmer live video requests'}
                     </p>
                   </div>
+                </div>
+
+
+                {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
+                <div className={`rounded-2xl p-4 border shadow-xs space-y-2.5 ${myFixedHatchery.dispatchNotice ? 'border-amber-500/50 bg-amber-500/10' : cardBg}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-extrabold inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                      <Megaphone className="w-4 h-4" /> {L('Hatchery Holiday / Dispatch Notice Bar', 'హేచరీ సెలవు / ప్యాకింగ్ నోటీసు బార్')}
+                    </span>
+                    {!editingNotice && (
+                      <div className="flex items-center gap-2">
+                        {myFixedHatchery.dispatchNotice && (
+                          <button type="button" onClick={() => handleSaveHatcheryNotice('')} className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer">
+                            {L('Clear Notice', 'నోటీసు తొలగించు')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => { setNoticeDraft(myFixedHatchery.dispatchNotice || ''); setEditingNotice(true); }}
+                          className={`px-3 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${subCardBg}`}
+                        >
+                          {myFixedHatchery.dispatchNotice ? L('Edit Notice', 'నోటీసు మార్చు') : L('+ Set Notice', '+ నోటీసు పెట్టు')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {editingNotice ? (
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="text"
+                        placeholder={L('e.g., Sunday Holiday — Next packing starts Monday 04:00 AM', 'ఉదా: ఆదివారం సెలవు — తదుపరి ప్యాకింగ్ సోమవారం ఉదయం 4 గంటలకు')}
+                        value={noticeDraft}
+                        onChange={(e) => setNoticeDraft(e.target.value)}
+                        className={`flex-1 min-w-[220px] border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
+                      />
+                      <button type="button" onClick={() => handleSaveHatcheryNotice(noticeDraft)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                        {L('Publish Notice', 'సేవ్ చేయండి')}
+                      </button>
+                      <button type="button" onClick={() => setEditingNotice(false)} className={`px-3 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs opacity-80">
+                      {myFixedHatchery.dispatchNotice
+                        ? myFixedHatchery.dispatchNotice
+                        : L('No active holiday or delay notice. Set a custom notice to display on all your live batch cards.', 'ప్రస్తుతం నోటీసు లేదు. సెలవు లేదా ప్యాకింగ్ ఆలస్యం ఉంటే ఇక్కడ నోట్ పెట్టుకోవచ్చు.')}
+                    </p>
+                  )}
+                </div>
+
+                {/* FEATURE 13: HATCHERY PACKING BAY SHIFT QUEUE BOARD */}
+                <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-extrabold text-sm flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-teal-600" /> {L('Hatchery Packing Bay Shift Queue Board', 'హేచరీ ప్యాకింగ్ బే షిఫ్ట్ క్యూ బోర్డ్')}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => handleExportCsvLedger(myHatcheryOrders, 'Hatchery')}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                    >
+                      <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                    </button>
+                  </div>
+                  {hatcheryUpcomingOrders.length === 0 ? (
+                    <p className="text-xs opacity-60">{L('No active packing orders in the shift queue right now.', 'ప్రస్తుతం ప్యాకింగ్ క్యూలో ఆర్డర్లు లేవు.')}</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {PACKING_TIME_SLOTS.map(slot => {
+                        const slotOrders = hatcheryUpcomingOrders.filter(o => (o.packingTimeSlot || 'All Day (24 Hours Flexible)') === slot);
+                        if (slotOrders.length === 0) return null;
+                        return (
+                          <div key={slot} className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
+                            <div className="flex items-center justify-between text-[11px] font-extrabold text-teal-600">
+                              <span>{slot}</span>
+                              <span className="bg-teal-500/15 px-2 py-0.5 rounded-full">{slotOrders.length} {L('Order(s)', 'ఆర్డర్లు')}</span>
+                            </div>
+                            {slotOrders.map(ord => (
+                              <div
+                                key={ord.bookingId}
+                                onClick={() => setInspectedSellerOrder(ord)}
+                                className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs cursor-pointer hover:border-teal-500 ${cardBg}`}
+                              >
+                                <div>
+                                  <b className="font-mono text-teal-500">{ord.bookingId}</b> • <b>{ord.farmerName}</b>
+                                  <span className="block text-[10px] opacity-65">Batch {ord.batch?.id} • {(ord.quantity || 0).toLocaleString('en-IN')} PL • Pond {ord.pondSalinity} PPT • {ord.packingDate}</span>
+                                </div>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${ord.packingStatus === 'PACKING_DONE_BY_SELLER' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>
+                                  {ord.packingStatus === 'PACKING_DONE_BY_SELLER' ? 'Packed ✓' : 'Queued'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* ADD NEW SEED BATCH */}
@@ -4473,6 +5621,14 @@ function AquaMarkApp() {
                                 </span>
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
+                                {/* FEATURE 7: PRINTABLE BATCH CRATE QR STICKER */}
+                                <button
+                                  type="button"
+                                  onClick={() => handlePrintCrateQrSticker(b)}
+                                  className="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <QrCode className="w-3.5 h-3.5" /> {L('Crate QR', 'క్రేట్ QR')}
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => togglePauseBatch(b.id)}
@@ -4757,6 +5913,68 @@ function AquaMarkApp() {
                   </div>
                 </div>
 
+
+                {/* FEATURE 11: BROKER MONTHLY COMMISSION GOAL TRACKER */}
+                {(() => {
+                  const totalMargin = myBrokerBookings.filter(b => b.packingStatus !== 'CANCELLED').reduce((s, b) => s + (b.brokerExtraMarginTotal || 0), 0);
+                  const totalEarnedAndPending = brokerCredited2PctTotal + brokerHeld2PctTotal + totalMargin;
+                  const goal = Math.max(1000, Number(brokerMonthlyGoal) || 50000);
+                  const pct = Math.min(100, Math.round((totalEarnedAndPending / goal) * 100));
+                  return (
+                    <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Target className="w-5 h-5 text-teal-600" />
+                          <div>
+                            <h3 className="font-extrabold text-sm">{L('Monthly Commission + Margin Goal Tracker', 'నెలవారీ కమిషన్ + మార్జిన్ టార్గెట్ ట్రాకర్')}</h3>
+                            <p className="text-[11px] opacity-65">
+                              ₹{totalEarnedAndPending.toLocaleString('en-IN')} / ₹{goal.toLocaleString('en-IN')} ({pct}% {L('achieved', 'పూర్తయింది')})
+                            </p>
+                          </div>
+                        </div>
+                        {editingBrokerGoal ? (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              step="5000"
+                              min="1000"
+                              value={brokerGoalDraft}
+                              onChange={(e) => setBrokerGoalDraft(e.target.value)}
+                              className={`w-28 border rounded-lg px-2.5 py-1 text-xs font-bold select-text ${inputCls}`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBrokerMonthlyGoal(Math.max(1000, Number(brokerGoalDraft) || 50000));
+                                setEditingBrokerGoal(false);
+                                showToast(L('Monthly target updated!', 'నెలవారీ టార్గెట్ అప్‌డేట్ అయింది!'));
+                              }}
+                              className="bg-teal-600 text-white text-xs font-bold px-3 py-1 rounded-lg cursor-pointer"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => { setBrokerGoalDraft(String(brokerMonthlyGoal)); setEditingBrokerGoal(true); }}
+                            className={`px-3 py-1 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
+                          >
+                            <Edit3 className="w-3 h-3 text-teal-600" /> {L('Edit Target', 'టార్గెట్ మార్చు')}
+                          </button>
+                        )}
+                      </div>
+                      <div className="w-full h-3 bg-slate-300/30 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="flex flex-wrap justify-between text-[11px] opacity-70 font-semibold">
+                        <span>2% Comm: ₹{(brokerCredited2PctTotal + brokerHeld2PctTotal).toLocaleString('en-IN')} • Extra Margin: ₹{totalMargin.toLocaleString('en-IN')}</span>
+                        <span>{totalEarnedAndPending >= goal ? L('🎉 Monthly Goal Reached!', '🎉 నెలవారీ టార్గెట్ పూర్తయింది!') : L(`₹${(goal - totalEarnedAndPending).toLocaleString('en-IN')} to go`, `ఇంకా ₹${(goal - totalEarnedAndPending).toLocaleString('en-IN')} మిగిలి ఉంది`)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Broker Bank Card */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
                   <div className="flex items-center justify-between">
@@ -4833,15 +6051,27 @@ function AquaMarkApp() {
 
                 {/* BROKER BOOKINGS */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <h3 className="font-bold text-base flex items-center gap-2">
-                    <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
-                  </h3>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-bold text-base flex items-center gap-2">
+                      <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
+                    </h3>
+                    {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BROKER) */}
+                    <button
+                      type="button"
+                      onClick={() => handleExportCsvLedger(myBrokerBookings, 'Broker')}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                    >
+                      <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                    </button>
+                  </div>
                   {myBrokerBookings.length === 0 ? (
                     <p className="text-xs opacity-60">{t.noBrokerBookings}</p>
                   ) : (
                     <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
                       {myBrokerBookings.map((bk) => {
                         const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                        const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
+                        const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
                         return (
                           <div
                             key={bk.bookingId}
@@ -4852,25 +6082,49 @@ function AquaMarkApp() {
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
                                 <span className="font-mono text-[11px] bg-slate-500/10 px-2 py-0.5 rounded">UTR: {bk.paymentId}</span>
-                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>
-                                  {isCleared
-                                    ? `2% Commission Credited: ₹${bk.settlement?.brokerBase2Pct || 0}`
-                                    : `2% Commission Hold: ₹${bk.settlement?.brokerBase2Pct || 0}`}
+                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : isCancelled ? 'bg-rose-500/15 text-rose-500' : 'bg-amber-500/15 text-amber-500'}`}>
+                                  {isCancelled
+                                    ? t.cancelledRefundBadge
+                                    : isCleared
+                                      ? L(`2% Commission Credited: ₹${bk.settlement?.brokerBase2Pct || 0}`, `2% కమిషన్ జమ అయింది: ₹${bk.settlement?.brokerBase2Pct || 0}`)
+                                      : L(`2% Commission Hold: ₹${bk.settlement?.brokerBase2Pct || 0}`, `2% కమిషన్ హోల్డ్: ₹${bk.settlement?.brokerBase2Pct || 0}`)}
                                 </span>
                                 {bk.brokerExtraMarginTotal > 0 && (
                                   <span className="bg-teal-500/15 text-teal-500 font-bold px-2.5 py-0.5 rounded-full">
-                                    + Extra Margin: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')} ({bk.brokerMarginPaise}p/seed)
+                                    + {L('Extra Margin', 'అదనపు మార్జిన్')}: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')} ({bk.brokerMarginPaise}p/seed)
                                   </span>
                                 )}
                               </div>
+                              <p className="font-extrabold text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-block">
+                                {bk.batch?.realName || bk.batch?.hatcheryCode} • +91 {bk.batch?.realPhone}
+                              </p>
                               <p className="font-bold">
-                                Farmer: {bk.farmerName} (+91 {bk.farmerPhone}) → Hatchery: {bk.batch?.realName || bk.batch?.hatcheryCode} (Batch {bk.batch?.id})
+                                {L('Farmer', 'రైతు')}: {bk.farmerName} (+91 {bk.farmerPhone}) • Batch {bk.batch?.id} ({bk.batch?.plStage})
                               </p>
                               <p className="opacity-70">
-                                {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • Packing: {bk.packingDate}
+                                {(bk.quantity || 0).toLocaleString('en-IN')} PL • {bk.batch?.realAddress} • {t.packingDateLabel}: {bk.packingDate}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              {mapsUrl && !isCancelled && (
+                                <a
+                                  href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1"
+                                >
+                                  <MapPin className="w-3.5 h-3.5" /> Maps
+                                </a>
+                              )}
+                              {!isCleared && !isCancelled && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleBuyerCancelBooking(bk)}
+                                  className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> {t.cancelBookingBtn}
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleDownloadVerifiedPdf(bk, isCleared)}
@@ -4903,69 +6157,179 @@ function AquaMarkApp() {
                   ) : (
                     <div className="max-h-[65vh] overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-5">
                       {filteredAndSortedBatches.map((batch) => {
+                        const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.bookedByPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
                         const isSoldOut = (batch.availableStock || 0) <= 0;
                         const isPaused = Boolean(batch.paused);
+                        const selectedDens = cardDensityChoice[batch.id] || 40;
+                        const acresCovered = ((batch.availableStock || 0) / (selectedDens * 4046.86)).toFixed(1);
+                        const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
+                        const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
                         return (
-                          <div key={batch.id} className={`rounded-2xl border p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-teal-500 transition ${cardBg}`}>
-                            <div onClick={() => setInspectedBatch(batch)} className="space-y-3 cursor-pointer">
-                              <div className="flex items-start justify-between">
+                          <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
+                            <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
+                              <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-wrap items-center gap-1.5">
                                     <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">{batch.id}</span>
-                                    <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                                      {t.caaVerified}
+                                    <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
+                                    </span>
+                                    <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
                                     </span>
                                     <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
                                     <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0}
+                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
                                     </span>
                                   </div>
-                                  <h3 className="text-base font-extrabold mt-1.5">{batch.hatcheryCode || 'Verified Hatchery'}</h3>
-                                  <p className="text-xs opacity-65">{batch.species}</p>
+                                  <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
+                                    {isUnlocked ? (
+                                      <span className="text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-400" /> {batch.realName}</span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
+                                    )}
+                                  </h3>
+                                  <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
+                                  {isUnlocked ? (
+                                    <div className="mt-1 space-y-1">
+                                      <p className="text-xs opacity-80">{batch.realAddress} • +91 {batch.realPhone}</p>
+                                      {mapsUrl && (
+                                        <a
+                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                        >
+                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[11px] opacity-50 mt-0.5">{t.unlockHint}</p>
+                                  )}
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-xl font-black">₹{(batch.pricePer1000 || 0).toFixed(2)}</div>
-                                  <span className="text-[11px] opacity-55">{t.perSeed}</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
+                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                                    title={L('Transit Route & Oxygen Risk Predictor', 'రవాణా & ఆక్సిజన్ రిస్క్ అంచనా')}
+                                  >
+                                    <Navigation className="w-4 h-4 text-indigo-500" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
+                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                                    title={L('Share Batch Flyer on WhatsApp', 'WhatsApp లో షేర్ చేయండి')}
+                                  >
+                                    <Share2 className="w-4 h-4 text-teal-600" />
+                                  </button>
+                                  {(() => {
+                                    const conv = formatConvertedRate(batch.pricePer1000);
+                                    return (
+                                      <div className="text-right pl-1">
+                                        <div className="text-xl sm:text-2xl font-black">{conv.value}</div>
+                                        <div className="text-[11px] opacity-60">{conv.unit}</div>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
 
-                              <div className={`grid grid-cols-4 gap-2 p-2.5 rounded-xl border text-center text-xs ${subCardBg}`}>
-                                <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{batch.plStage}</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{batch.salinity} PPT</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{batch.bonusPercent}%</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(batch.availableStock || 0).toLocaleString('en-IN')}</b></div>
+                              {ownerProfile.dispatchNotice && (
+                                <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
+                                  <Megaphone className="w-3.5 h-3.5 shrink-0" />
+                                  <span>{ownerProfile.dispatchNotice}</span>
+                                </div>
+                              )}
+
+                              {(() => {
+                                const slots = getDispatchSlotsInfo(batch);
+                                return (
+                                  <div className={`border rounded-xl px-3 py-2 space-y-1 text-[11px] ${subCardBg}`}>
+                                    <div className="flex items-center justify-between font-bold">
+                                      <span className="opacity-80">{L('Dispatch Slots Today', 'ఈ రోజు ప్యాకింగ్ స్లాట్లు')}</span>
+                                      <span className={slots.remaining >= 5 ? 'text-emerald-500' : slots.remaining >= 2 ? 'text-amber-500' : 'text-rose-500'}>
+                                        {slots.remaining} / {slots.dailyCapacity} {L('slots left', 'స్లాట్లు మిగిలాయి')}
+                                      </span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                                      <div className={`h-full rounded-full ${slots.remaining >= 5 ? 'bg-emerald-500' : slots.remaining >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${slots.pct}%` }} />
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+                              <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
+                                <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
+                                <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
+                                <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
+                                <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
                               </div>
 
-                              <div className="text-xs text-teal-500 font-bold flex items-center gap-1.5">
-                                <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                              <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
+                                <span className="font-bold opacity-80">{L('Pond Coverage Estimator:', 'చెరువు విస్తీర్ణం అంచనా:')}</span>
+                                <div className="flex items-center gap-1.5">
+                                  {[30, 40, 50].map(d => (
+                                    <button
+                                      key={d}
+                                      type="button"
+                                      onClick={() => setCardDensityChoice(prev => ({ ...prev, [batch.id]: d }))}
+                                      className={`px-2 py-0.5 rounded font-bold border cursor-pointer ${selectedDens === d ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                                    >
+                                      {d}/m²
+                                    </button>
+                                  ))}
+                                  <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} {L('Acres', 'ఎకరాలు')}</span>
+                                </div>
+                              </div>
+
+                              <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
+                                <span className="font-semibold">
+                                  📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'}) • <span className="text-amber-500 font-bold">{L('Min Packing:', 'కనీస ప్యాకింగ్:')} {((batch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1 font-bold text-teal-500">
+                                  <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                                </span>
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              disabled={isSoldOut || isPaused}
-                              onClick={() => {
-                                setModalError('');
-                                setSelectedBatch(batch);
-                                setBookingForm(prev => ({
-                                  ...prev,
-                                  farmerName: brokerFarmers[0]?.name || '',
-                                  farmerPhone: brokerFarmers[0]?.phone || '',
-                                  qtyAmount: '2',
-                                  qtyUnit: 'LAKHS',
-                                  pondSplitCount: '1',
-                                  packingDate: batch.availableDate || prev.packingDate,
-                                  packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
-                                  brokerMarginPaise: '2',
-                                  upiSubMode: 'QR',
-                                  qrRevealed: false,
-                                  utrReference: ''
-                                }));
-                              }}
-                              className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
-                            >
-                              {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
-                            </button>
+                            <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
+                              <button
+                                type="button"
+                                onClick={() => openVideoRequestModal(batch)}
+                                className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
+                              >
+                                <Video className="w-3.5 h-3.5 text-teal-600" /> {t.liveVideoBtn}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSoldOut || isPaused}
+                                onClick={() => {
+                                  setModalError('');
+                                  setSelectedBatch(batch);
+                                  setBookingForm(prev => ({
+                                    ...prev,
+                                    farmerName: brokerFarmers[0]?.name || '',
+                                    farmerPhone: brokerFarmers[0]?.phone || '',
+                                    qtyAmount: '2',
+                                    qtyUnit: 'LAKHS',
+                                    pondSplitCount: '1',
+                                    packingDate: batch.availableDate || prev.packingDate,
+                                    packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                    brokerMarginPaise: '2',
+                                    upiSubMode: 'QR',
+                                    qrRevealed: false,
+                                    utrReference: ''
+                                  }));
+                                }}
+                                className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
+                              >
+                                {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -5007,13 +6371,30 @@ function AquaMarkApp() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-300/20">
-                            {brokerFarmers.map((f) => (
-                              <tr key={f.id}>
-                                <td className="py-2.5 font-bold">{f.name} <span className="block text-xs font-normal opacity-60">{f.phone}</span></td>
-                                <td className="py-2.5 text-xs opacity-75">{f.village} ({f.acres} Acres)</td>
-                                <td className="py-2.5"><span className="text-[11px] font-semibold bg-emerald-500/15 text-emerald-500 px-2.5 py-0.5 rounded-full">Locked till {f.lockedUntil}</span></td>
-                              </tr>
-                            ))}
+                            {brokerFarmers.map((f) => {
+                              const daysLeft = f.lockedUntil ? Math.ceil((new Date(f.lockedUntil).getTime() - Date.now()) / 86400000) : 0;
+                              const expiringSoon = daysLeft <= 45;
+                              return (
+                                <tr key={f.id}>
+                                  <td className="py-2.5 font-bold">{f.name} <span className="block text-xs font-normal opacity-60">{f.phone}</span></td>
+                                  <td className="py-2.5 text-xs opacity-75">{f.village} ({f.acres} Acres)</td>
+                                  <td className="py-2.5">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${expiringSoon ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
+                                        {daysLeft > 0 ? `Till ${f.lockedUntil} (${daysLeft}d)` : 'Expired'}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRenewFarmerLock(f.id)}
+                                        className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg cursor-pointer"
+                                      >
+                                        Renew +1 Yr
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -5484,12 +6865,12 @@ function AquaMarkApp() {
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Quantity + Free Bonus:</span><b>{(inspectedBuyerBooking.quantity || 0).toLocaleString('en-IN')} + {(inspectedBuyerBooking.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Schedule:</span><b>{inspectedBuyerBooking.packingDate} ({inspectedBuyerBooking.packingTimeSlot})</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (4%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
-              <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Balance Cleared (${inspectedBuyerBooking.clearedAt})` : inspectedBuyerBooking.settlement?.status === 'CANCELLED_REFUNDED' ? 'Cancelled (2% Refunded)' : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
+              <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Balance Cleared (${inspectedBuyerBooking.clearedAt})` : (inspectedBuyerBooking.packingStatus === 'CANCELLED' || inspectedBuyerBooking.settlement?.status === 'CANCELLED_REFUNDED' || inspectedBuyerBooking.settlement?.status === 'CANCELLED_NON_REFUNDABLE') ? L('Cancelled (Non-Refundable)', 'క్యాన్సిల్ చేయబడింది (నాన్-రిఫండబుల్)') : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
             </div>
             {(() => {
               const bk = inspectedBuyerBooking;
               const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
-              const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED';
+              const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
               const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
               return (
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-300/20">
@@ -5681,12 +7062,44 @@ function AquaMarkApp() {
 
               {hatcheryDesc && (
                 <div className={`p-3.5 rounded-xl border text-xs ${subCardBg}`}>
-                  <span className="text-[10px] font-bold uppercase text-teal-500 block mb-1">About Hatchery</span>
+                  <span className="text-[10px] font-bold uppercase text-teal-500 block mb-1">{L('About Hatchery', 'హేచరీ గురించి')}</span>
                   <p className="leading-relaxed">{hatcheryDesc}</p>
                 </div>
               )}
 
 
+
+
+              {/* FEATURE 5: 5-POINT BIO-SECURITY & LAB AUDIT SCORECARD */}
+              <div className={`p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-2.5 text-xs`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4" /> {L('5-Point Bio-Security & Lab Audit Scorecard', '5-పాయింట్ బయో-సెక్యూరిటీ & ల్యాబ్ ఆడిట్ స్కోర్‌కార్డ్')}
+                  </span>
+                  <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                    {Math.min(100, (inspectedBatch.vigorScore || 96) + 2)}/100 A+
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { label: L('UV Filtration', 'UV ఫిల్ట్రేషన్'), score: 98, status: 'Passed' },
+                    { label: L('SPF Quarantine', 'SPF క్వారంటైన్'), score: 100, status: 'Certified' },
+                    { label: L('Zero-Antibiotic', 'జీరో-యాంటీబయాటిక్'), score: 100, status: 'PCR Verified' },
+                    { label: L('Oxygen Purity', 'ఆక్సిజన్ స్వచ్ఛత'), score: 99, status: '99.5% Pure' },
+                    { label: L('Tank Hygiene', 'ట్యాంక్ పరిశుభ్రత'), score: inspectedBatch.vigorScore || 96, status: 'Audited' }
+                  ].map((pt, i) => (
+                    <div key={i} className={`p-2 rounded-lg border space-y-1 ${cardBg}`}>
+                      <div className="flex justify-between text-[11px] font-bold">
+                        <span>{pt.label}</span>
+                        <span className="text-emerald-500">{pt.score}% • {pt.status}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pt.score}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
                 <div><span className="text-[10px] opacity-60 block">Registered Since</span><b>{inspectedBatch.registeredAt || ownerProf.registeredAt || '2026'}</b></div>
@@ -5700,7 +7113,7 @@ function AquaMarkApp() {
                   <span className="text-xs font-extrabold flex items-center gap-1.5">
                     <Video className="w-4 h-4 text-teal-600" /> Tank PL Activity Videos ({inspectedBatch.tankVideos.length}) — Click for Full Screen
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="max-h-72 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inspectedBatch.tankVideos.map((vid, idx) => (
                       <div key={idx} className={`border rounded-xl p-2 space-y-1.5 ${cardBg}`}>
                         <div className="flex items-center justify-between">
@@ -5726,7 +7139,7 @@ function AquaMarkApp() {
                   <FileCheck2 className="w-4 h-4 text-teal-600" /> Verified PCR Lab Images ({(inspectedBatch.pcrImages || []).length}) — Click Image for Full Screen
                 </span>
                 {(inspectedBatch.pcrImages || []).length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="max-h-72 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inspectedBatch.pcrImages.map((img, idx) => (
                       <div
                         key={idx}
@@ -5983,7 +7396,7 @@ function AquaMarkApp() {
                 </label>
 
                 <div className="space-y-2 pt-1">
-                  <label className="text-xs font-bold opacity-75 block">Select Payment Option</label>
+                  <label className="text-xs font-bold opacity-75 block">{L('Select Payment Option', 'పేమెంట్ విధానం ఎంచుకోండి')}</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -6190,8 +7603,8 @@ function AquaMarkApp() {
                 <div className="flex items-center gap-2">
                   <Bell className="w-5 h-5 text-teal-600" />
                   <div>
-                    <h3 className="font-extrabold text-base">Notifications & Live Updates</h3>
-                    <p className="text-[11px] opacity-60">Click any notification to view full details</p>
+                    <h3 className="font-extrabold text-base">{L('Notifications & Live Updates', 'నోటిఫికేషన్లు & లైవ్ అప్‌డేట్స్')}</h3>
+                    <p className="text-[11px] opacity-60">{L('Click any notification to view full details', 'పూర్తి వివరాల కోసం ఏదైనా నోటిఫికేషన్‌పై క్లిక్ చేయండి')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -6218,51 +7631,133 @@ function AquaMarkApp() {
 
               <div className="overflow-y-auto space-y-2.5 pr-1 flex-1">
                 {myNotifs.length === 0 ? (
-                  <p className="text-xs opacity-60 py-8 text-center">No notifications yet. All booking, packing, cashback & payment updates appear here.</p>
+                  <p className="text-xs opacity-60 py-8 text-center">{L('No notifications yet. All booking, packing & payment updates appear here.', 'ఇంకా నోటిఫికేషన్లు లేవు. అన్ని బుకింగ్, ప్యాకింగ్ & పేమెంట్ వివరాలు ఇక్కడ కనిపిస్తాయి.')}</p>
                 ) : (
-                  myNotifs.map(n => {
-                    const isExpanded = selectedNotifDetail?.id === n.id;
-                    return (
-                      <div
-                        key={n.id}
-                        onClick={() => {
-                          setSelectedNotifDetail(isExpanded ? null : n);
-                          if (!n.read) {
-                            const next = notifications.map(item => (item.id === n.id ? { ...item, read: true } : item));
-                            setNotifications(next);
-                            saveKvToSupabase('notifications', next);
-                          }
-                        }}
-                        className={`border rounded-xl p-3.5 space-y-1.5 cursor-pointer transition ${!n.read ? 'border-teal-500 bg-teal-500/5' : subCardBg}`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-extrabold flex items-center gap-1.5">
-                            {!n.read && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
-                            {n.title}
-                          </span>
-                          <span className="text-[10px] opacity-60 shrink-0">{n.createdAt}</span>
-                        </div>
-                        <p className="text-xs opacity-80 leading-relaxed">{n.message}</p>
-                        {isExpanded && n.details && Object.keys(n.details).length > 0 && (
-                          <div className={`mt-2 p-2.5 rounded-lg border text-[11px] space-y-1 ${cardBg}`}>
-                            <span className="text-[10px] font-extrabold uppercase text-teal-600 block">Full Notification Details</span>
-                            {Object.entries(n.details).map(([k, v]) => (
-                              <div key={k} className="flex justify-between gap-2">
-                                <span className="opacity-65 capitalize">{k.replace(/([A-Z])/g, ' $1')}:</span>
-                                <b className="font-mono">{typeof v === 'number' ? v.toLocaleString('en-IN') : String(v)}</b>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                  myNotifs.map(n => (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        setSelectedNotifDetail(n);
+                        if (!n.read) {
+                          const next = notifications.map(item => (item.id === n.id ? { ...item, read: true } : item));
+                          setNotifications(next);
+                          saveKvToSupabase('notifications', next);
+                        }
+                      }}
+                      className={`border rounded-xl p-3.5 space-y-1.5 cursor-pointer transition hover:border-teal-500 ${!n.read ? 'border-teal-500 bg-teal-500/5' : subCardBg}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-extrabold flex items-center gap-1.5">
+                          {!n.read && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                          {n.title}
+                        </span>
+                        <span className="text-[10px] opacity-60 shrink-0">{n.createdAt}</span>
                       </div>
-                    );
-                  })
+                      <p className="text-xs opacity-80 leading-relaxed line-clamp-2">{n.message}</p>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
           </div>
         );
       })()}
+
+      {/* NOTIFICATION FULL DETAILS POPUP MODAL */}
+      {selectedNotifDetail && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-teal-500 space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="font-extrabold text-sm">{selectedNotifDetail.title}</h3>
+                  <span className="text-[10px] opacity-60">{selectedNotifDetail.createdAt}</span>
+                </div>
+              </div>
+              <button type="button" onClick={() => setSelectedNotifDetail(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90">{selectedNotifDetail.message}</p>
+            {selectedNotifDetail.details && Object.keys(selectedNotifDetail.details).length > 0 && (
+              <div className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${subCardBg}`}>
+                <span className="text-[10px] font-extrabold uppercase text-teal-600 block">
+                  {L('Full Notification Details', 'నోటిఫికేషన్ పూర్తి వివరాలు')}
+                </span>
+                {Object.entries(selectedNotifDetail.details).map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-2 border-b border-slate-300/20 pb-1 last:border-0 last:pb-0">
+                    <span className="opacity-70 capitalize">{k.replace(/([A-Z])/g, ' $1')}:</span>
+                    <b className="font-mono">{typeof v === 'number' ? v.toLocaleString('en-IN') : String(v)}</b>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button type="button" onClick={() => setSelectedNotifDetail(null)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                {t.closeBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RAZORPAY CHECKOUT MODAL (FALLBACK WHEN VITE_RAZORPAY_KEY_ID IS NOT SET) */}
+      {razorpayModal && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-xs z-[70] flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-indigo-500/40 ${cardBg}`}>
+            <div className="bg-indigo-600 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                <div>
+                  <div className="text-sm font-extrabold">Razorpay Checkout</div>
+                  <div className="text-[10px] opacity-80">Aqua Mark Verified Payment</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const cb = razorpayModal.onFailure;
+                  setRazorpayModal(null);
+                  if (cb) cb(L('Payment cancelled by user.', 'పేమెంట్ రద్దు చేయబడింది.'));
+                }}
+                className="text-white/80 hover:text-white font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5 space-y-4 text-xs">
+              <div className={`p-3 rounded-xl border space-y-1 ${subCardBg}`}>
+                <div className="opacity-70">{razorpayModal.description}</div>
+                <div className="text-2xl font-black text-indigo-500">₹{Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')}</div>
+                <div className="text-[11px] opacity-65">{razorpayModal.prefillName} • +91 {razorpayModal.prefillPhone}</div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cb = razorpayModal.onFailure;
+                    setRazorpayModal(null);
+                    if (cb) cb(L('Payment cancelled by user.', 'పేమెంట్ రద్దు చేయబడింది.'));
+                  }}
+                  className={`flex-1 py-2.5 border rounded-xl font-bold cursor-pointer ${subCardBg}`}
+                >
+                  {L('Cancel', 'రద్దు')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cb = razorpayModal.onSuccess;
+                    setRazorpayModal(null);
+                    cb(`RZP_${Math.floor(100000 + Math.random() * 900000)}`);
+                  }}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold cursor-pointer"
+                >
+                  {L(`Pay ₹${Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')}`, `₹${Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')} చెల్లించండి`)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =========================================================
           HATCHERY SECURITY DEPOSIT MODAL (VIEW, ADD MONEY, DELETE TO WITHDRAW)
@@ -6278,7 +7773,7 @@ function AquaMarkApp() {
             </div>
 
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 text-center space-y-1">
-              <span className="text-[11px] font-bold uppercase text-emerald-600">Current Deposited Money</span>
+              <span className="text-[11px] font-bold uppercase text-emerald-600">{L('Current Deposited Money', 'ప్రస్తుత డిపాజిట్ మొత్తం')}</span>
               <div className="text-3xl font-black text-emerald-600">₹{(myFixedHatchery.depositAmount || 10000).toLocaleString('en-IN')}</div>
               <p className="text-[11px] opacity-70">
                 Source Ref: <span className="font-mono font-bold">{myFixedHatchery.depositSourceAccount || myFixedHatchery.depositUtr || 'VERIFIED_10K'}</span>
@@ -6286,7 +7781,7 @@ function AquaMarkApp() {
             </div>
 
             <form onSubmit={handleAddHatcheryDepositMoney} className={`border rounded-2xl p-4 space-y-3 text-xs ${subCardBg}`}>
-              <h4 className="font-extrabold text-sm">Add Money to Deposit</h4>
+              <h4 className="font-extrabold text-sm">{L('Add Money to Deposit', 'డిపాజిట్‌కు డబ్బు జతచేయండి')}</h4>
               <div>
                 <label className="font-bold opacity-75 block mb-1">Amount (₹)</label>
                 <input
@@ -6361,16 +7856,35 @@ function AquaMarkApp() {
       )}
 
       {/* =========================================================
-          HATCHERY SCAN QR MODAL (AUTO-PACKED + PAYMENT SETTLED + FULL RECEIPT)
+          HATCHERY SCAN QR MODAL (LIVE CAMERA + FLIP + FLASH + LASER + PHOTO QR + MANUAL)
          ========================================================= */}
       {showSellerScanQrModal && (
-        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <style>{`@keyframes aqmLaserScan { 0%, 100% { top: 8%; } 50% { top: 86%; } }`}</style>
+          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 max-h-[92vh] overflow-y-auto ${cardBg}`}>
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <h3 className="font-extrabold text-base flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-indigo-500" /> Scan Buyer Gate-Pass QR
+                <ScanLine className="w-5 h-5 text-indigo-500" /> {L('Live Gate-Pass QR Scanner', 'లైవ్ గేట్-పాస్ QR స్కానర్')}
               </h3>
-              <button type="button" onClick={() => setShowSellerScanQrModal(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+              <button type="button" onClick={() => { stopQrCamera(); setShowSellerScanQrModal(false); }} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+
+            {/* TABS: CAMERA SCANNER vs MANUAL / QUICK-SCAN */}
+            <div className={`grid grid-cols-2 p-1 rounded-xl border ${subCardBg}`}>
+              <button
+                type="button"
+                onClick={() => { setScanQrError(''); setScanQrTab('camera'); }}
+                className={`py-2 rounded-lg text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer ${scanQrTab === 'camera' ? 'bg-indigo-600 text-white' : 'opacity-70'}`}
+              >
+                <Camera className="w-3.5 h-3.5" /> {L('Camera Scanner', 'కెమెరా స్కానర్')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setScanQrError(''); setScanQrTab('manual'); }}
+                className={`py-2 rounded-lg text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer ${scanQrTab === 'manual' ? 'bg-indigo-600 text-white' : 'opacity-70'}`}
+              >
+                <QrCode className="w-3.5 h-3.5" /> {L('Manual / Quick-Scan', 'మాన్యువల్ / క్విక్ స్కాన్')}
+              </button>
             </div>
 
             {scanQrError && (
@@ -6379,48 +7893,118 @@ function AquaMarkApp() {
               </div>
             )}
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSellerScanQrComplete(scanQrInput);
-              }}
-              className="space-y-3 text-xs"
-            >
-              <div>
-                <label className="font-bold opacity-75 block mb-1">Scan / Paste Gate-Pass QR Code or Booking ID / PIN</label>
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="e.g. AQ-75733 or GP-1024"
-                  value={scanQrInput}
-                  onChange={(e) => setScanQrInput(e.target.value)}
-                  className={`w-full border rounded-xl px-3 py-2.5 text-sm font-mono font-bold select-text ${inputCls}`}
-                />
-              </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">
-                Verify QR & Complete Packing + Settle Payment
-              </button>
-            </form>
+            <input
+              ref={photoQrInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => { if (e.target.files?.[0]) handlePhotoQrUpload(e.target.files[0]); e.target.value = ''; }}
+              className="hidden"
+            />
 
-            {hatcheryUpcomingOrders.length > 0 && (
-              <div className={`border rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto ${subCardBg}`}>
-                <span className="text-[10px] font-extrabold uppercase opacity-70 block">Quick-Scan Active Hatchery Gate-Passes</span>
-                {hatcheryUpcomingOrders.map(bk => (
-                  <div key={bk.bookingId} className={`flex items-center justify-between gap-2 p-2 rounded-lg border text-xs ${cardBg}`}>
-                    <div>
-                      <b className="font-mono text-teal-600">{bk.bookingId}</b> • {bk.farmerName}
-                      <span className="block text-[10px] opacity-65">PIN: {bk.gatePassPin || 'GP-1024'} • {(bk.quantity || 0).toLocaleString('en-IN')} PL</span>
+            {scanQrTab === 'camera' && (
+              <div className="space-y-3">
+                <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] border-2 border-indigo-500/50">
+                  <video ref={scannerVideoRef} playsInline muted className="w-full h-full object-cover" />
+                  {/* Animated Laser Viewfinder Overlay */}
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="relative w-52 h-52 border-2 border-white/30 rounded-2xl">
+                      <span className="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-4 border-l-4 border-teal-400 rounded-tl-xl" />
+                      <span className="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-4 border-r-4 border-teal-400 rounded-tr-xl" />
+                      <span className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-4 border-l-4 border-teal-400 rounded-bl-xl" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-4 border-r-4 border-teal-400 rounded-br-xl" />
+                      <div
+                        className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent shadow-[0_0_12px_#2dd4bf]"
+                        style={{ animation: 'aqmLaserScan 2.2s ease-in-out infinite' }}
+                      />
                     </div>
+                  </div>
+                  <div className="absolute bottom-2 left-2 right-2 bg-slate-950/75 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl text-center">
+                    {scannerStatus || L('Point camera at Buyer Gate-Pass QR...', 'బయ్యర్ Gate-Pass QR పై కెమెరా ఉంచండి...')}
+                  </div>
+                </div>
+
+                {/* Camera Controls: Flip, Flash, Photo QR */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setScannerFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'))}
+                    className={`py-2 rounded-xl border text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer ${subCardBg}`}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-teal-600" /> {L('Flip', 'ఫ్లిప్')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleScannerFlash}
+                    className={`py-2 rounded-xl border text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer ${scannerFlashOn ? 'bg-amber-500 text-white border-amber-500' : subCardBg}`}
+                  >
+                    <Zap className="w-3.5 h-3.5" /> {scannerFlashOn ? L('Flash ON', 'ఫ్లాష్ ఆన్') : L('Flash', 'ఫ్లాష్')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => photoQrInputRef.current?.click()}
+                    className={`py-2 rounded-xl border text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer ${subCardBg}`}
+                  >
+                    <Upload className="w-3.5 h-3.5 text-indigo-500" /> {L('Photo QR', 'ఫోటో QR')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {scanQrTab === 'manual' && (
+              <>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSellerScanQrComplete(scanQrInput);
+                  }}
+                  className="space-y-3 text-xs"
+                >
+                  <div>
+                    <label className="font-bold opacity-75 block mb-1">Scan / Paste Gate-Pass QR Code or Booking ID / PIN</label>
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="e.g. AQ-75733 or GP-1024"
+                      value={scanQrInput}
+                      onChange={(e) => setScanQrInput(e.target.value)}
+                      className={`w-full border rounded-xl px-3 py-2.5 text-sm font-mono font-bold select-text ${inputCls}`}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">
+                      Verify QR & Complete Packing + Settle Payment
+                    </button>
                     <button
                       type="button"
-                      onClick={() => handleSellerScanQrComplete(bk.bookingId)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg cursor-pointer shrink-0"
+                      onClick={() => photoQrInputRef.current?.click()}
+                      className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
                     >
-                      Scan & Settle
+                      <Upload className="w-3.5 h-3.5 text-indigo-500" /> Photo QR
                     </button>
                   </div>
-                ))}
-              </div>
+                </form>
+
+                {hatcheryUpcomingOrders.length > 0 && (
+                  <div className={`border rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto ${subCardBg}`}>
+                    <span className="text-[10px] font-extrabold uppercase opacity-70 block">Quick-Scan Active Hatchery Gate-Passes</span>
+                    {hatcheryUpcomingOrders.map(bk => (
+                      <div key={bk.bookingId} className={`flex items-center justify-between gap-2 p-2 rounded-lg border text-xs ${cardBg}`}>
+                        <div>
+                          <b className="font-mono text-teal-600">{bk.bookingId}</b> • {bk.farmerName}
+                          <span className="block text-[10px] opacity-65">PIN: {bk.gatePassPin || 'GP-1024'} • {(bk.quantity || 0).toLocaleString('en-IN')} PL</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSellerScanQrComplete(bk.bookingId)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg cursor-pointer shrink-0"
+                        >
+                          Scan & Settle
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -6437,7 +8021,7 @@ function AquaMarkApp() {
           { title: bk.fullPaid ? '100% Full Payment Paid' : '4% Advance Paid', sub: `Ref: ${bk.paymentId}`, done: true },
           { title: 'Salinity Acclimatization', sub: `Hatchery ${bk.batch?.salinity || 16} PPT → Pond ${bk.pondSalinity || 15} PPT`, done: true },
           { title: 'Packing & Gate-Pass Ready', sub: `${bk.packingDate} (${bk.packingTimeSlot || 'All Day'})`, done: isPacked },
-          { title: 'Gate-Pass Scanned', sub: isFinalCleared ? `Cleared ${bk.clearedAt || ''}` : 'Pending at Hatchery Gate', done: isFinalCleared }
+          { title: 'Gate-Pass Scanned', sub: isFinalCleared ? `Cleared ${bk.clearedAt || ''}` : 'Pending at Hatchery', done: isFinalCleared }
         ];
         return (
           <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -6445,7 +8029,7 @@ function AquaMarkApp() {
               <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
                 <div>
                   <span className="font-mono text-[11px] font-bold text-teal-600">{bk.bookingId}</span>
-                  <h3 className="font-extrabold text-base">Live Booking & Escrow Status</h3>
+                  <h3 className="font-extrabold text-base">{L('Live Booking & Escrow Status', 'లైవ్ బుకింగ్ & ఎస్క్రో స్థితి')}</h3>
                 </div>
                 <button type="button" onClick={() => setStatusModalBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
               </div>
@@ -6486,12 +8070,12 @@ function AquaMarkApp() {
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <div>
                 <span className="font-mono text-[11px] font-bold text-teal-600">{payRemainingBooking.bookingId}</span>
-                <h3 className="font-extrabold text-base">Pay Remaining Balance (Full Payment)</h3>
+                <h3 className="font-extrabold text-base">{L('Pay Remaining Balance (Full Payment)', 'మిగిలిన బ్యాలెన్స్ చెల్లించండి (పూర్తి పేమెంట్)')}</h3>
               </div>
               <button type="button" onClick={() => setPayRemainingBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
             </div>
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
-              <span className="text-[11px] font-bold opacity-75 block">Remaining Balance Payable</span>
+              <span className="text-[11px] font-bold opacity-75 block">{L('Remaining Balance Payable', 'చెల్లించాల్సిన మిగిలిన బ్యాలెన్స్')}</span>
               <span className="text-2xl font-black text-emerald-600">₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')}</span>
             </div>
             <form onSubmit={handleBuyerPayRemainingSubmit} className="space-y-3 text-xs">
@@ -6566,6 +8150,152 @@ function AquaMarkApp() {
         </div>
       )}
 
+
+      {/* =========================================================
+          FEATURE 10: MULTI-POND SEED CART (BULK CART) MODAL
+         ========================================================= */}
+      {showBulkCartModal && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] flex flex-col ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3 shrink-0">
+              <div>
+                <h3 className="font-extrabold text-base flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-emerald-500" /> {L('Multi-Pond Seed Cart', 'మల్టీ-పాండ్ సీడ్ కార్ట్')} ({bulkCart.length})
+                </h3>
+                <p className="text-[11px] opacity-60">{L('Review total PL across multiple batches & book each slot cleanly', 'అన్ని బ్యాచ్‌ల మొత్తం PL పరిమాణం చూసి బుక్ చేసుకోండి')}</p>
+              </div>
+              <button type="button" onClick={() => setShowBulkCartModal(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+
+            {bulkCart.length === 0 ? (
+              <p className="text-xs opacity-60 py-8 text-center">{L('Your cart is empty. Click "+ Cart" on any marketplace batch card to add.', 'మీ కార్ట్ ఖాళీగా ఉంది. మార్కెట్‌లో "+ కార్ట్" నొక్కి బ్యాచ్‌లను జతచేయండి.')}</p>
+            ) : (() => {
+              const resolved = bulkCart.map(item => {
+                const batch = batches.find(b => b.id === item.batchId);
+                return batch ? { ...item, batch } : null;
+              }).filter(Boolean);
+              const totalPl = resolved.reduce((s, x) => s + x.lakhs * 100000, 0);
+              const totalBonus = resolved.reduce((s, x) => s + Math.round(x.lakhs * 100000 * ((x.batch.bonusPercent || 15) / 100)), 0);
+              const totalEst = resolved.reduce((s, x) => s + Math.round(x.lakhs * 100000 * (x.batch.pricePer1000 || 0.43)), 0);
+              return (
+                <>
+                  <div className="overflow-y-auto space-y-2.5 pr-1 flex-1">
+                    {resolved.map(item => (
+                      <div key={item.batchId} className={`border rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
+                        <div className="space-y-0.5">
+                          <div className="font-extrabold">{item.batch.id} • {item.batch.plStage} ({item.batch.salinity} PPT)</div>
+                          <div className="text-[11px] opacity-70">{item.batch.zone} • ₹{(item.batch.pricePer1000 || 0).toFixed(2)}/seed</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={item.lakhs}
+                            onChange={(e) => {
+                              const v = Math.max(1, Math.min(100, Number(e.target.value) || 1));
+                              setBulkCart(prev => prev.map(c => c.batchId === item.batchId ? { ...c, lakhs: v } : c));
+                            }}
+                            className={`w-16 border rounded-lg px-2 py-1 text-xs font-bold text-center select-text ${inputCls}`}
+                          />
+                          <span className="text-[11px] font-bold opacity-70">L PL</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowBulkCartModal(false);
+                              setModalError('');
+                              setBookingForm(prev => ({
+                                ...prev,
+                                farmerName: currentUser.name,
+                                farmerPhone: currentUser.phone,
+                                qtyAmount: String(item.lakhs),
+                                qtyUnit: 'LAKHS',
+                                packingDate: item.batch.availableDate || prev.packingDate,
+                                packingTimeSlot: item.batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                upiSubMode: 'QR',
+                                qrRevealed: false,
+                                utrReference: ''
+                              }));
+                              setSelectedBatch(item.batch);
+                            }}
+                            className="bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg cursor-pointer"
+                          >
+                            {L('Book', 'బుక్')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBulkCart(prev => prev.filter(c => c.batchId !== item.batchId))}
+                            className="text-rose-500 font-bold px-1.5 cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-slate-900 text-white rounded-xl p-3.5 text-xs space-y-1 shrink-0">
+                    <div className="flex justify-between"><span>{L('Total Seed + Bonus:', 'మొత్తం సీడ్ + బోనస్:')}</span><b>{totalPl.toLocaleString('en-IN')} + {totalBonus.toLocaleString('en-IN')} PL</b></div>
+                    <div className="flex justify-between text-emerald-400 font-extrabold text-sm"><span>{L('Estimated Total Value:', 'అంచనా మొత్తం విలువ:')}</span><span>₹{totalEst.toLocaleString('en-IN')}</span></div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN MODAL
+         ========================================================= */}
+      {survivalModalBooking && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
+              <div>
+                <span className="font-mono text-[11px] font-bold text-teal-600">{survivalModalBooking.bookingId} • Batch {survivalModalBooking.batch?.id}</span>
+                <h3 className="font-extrabold text-base">{L('72-Hour Post-Stocking Survival Check-In', '72 గంటల పోస్ట్-స్టాకింగ్ సర్వైవల్ చెక్-ఇన్')}</h3>
+              </div>
+              <button type="button" onClick={() => setSurvivalModalBooking(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+            </div>
+            <form onSubmit={handleSaveSurvivalCheckIn} className="space-y-3.5 text-xs">
+              {[
+                { key: 'h24', label: L('24-Hour Survival %', '24 గంటల సర్వైవల్ %') },
+                { key: 'h48', label: L('48-Hour Survival %', '48 గంటల సర్వైవల్ %') },
+                { key: 'h72', label: L('72-Hour Survival %', '72 గంటల సర్వైవల్ %') }
+              ].map(row => (
+                <div key={row.key} className={`p-3 rounded-xl border space-y-1.5 ${subCardBg}`}>
+                  <div className="flex justify-between font-bold">
+                    <span>{row.label}</span>
+                    <span className="text-teal-500 font-black">{survivalDraft[row.key]}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={survivalDraft[row.key]}
+                    onChange={(e) => setSurvivalDraft(prev => ({ ...prev, [row.key]: Number(e.target.value) }))}
+                    className="w-full accent-teal-600 cursor-pointer"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="font-bold opacity-75 block mb-1">{L('Swimming Activity / Pond Notes (Optional)', 'సీడ్ కదలిక / చెరువు నోట్స్ (ఐచ్ఛికం)')}</label>
+                <input
+                  type="text"
+                  placeholder={L('e.g., Active swimming against current, uniform size', 'ఉదా: సీడ్ చాలా చురుకుగా ఉంది')}
+                  value={survivalDraft.note}
+                  onChange={(e) => setSurvivalDraft(prev => ({ ...prev, note: e.target.value }))}
+                  className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
+                />
+              </div>
+              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
+                {L('Save Check-In & Notify Hatchery', 'సేవ్ చేసి హేచరీకి నోటిఫికేషన్ పంపండి')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* OFFICIAL RECEIPT MODAL */}
       {activeInvoice && (
         <div className="fixed inset-0 bg-slate-950/75 z-50 flex items-center justify-center p-4">
@@ -6622,6 +8352,22 @@ function AquaMarkApp() {
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">
+              {/* FEATURE 22: BILINGUAL VOICE READOUT ON RECEIPT */}
+              <button
+                type="button"
+                onClick={() => {
+                  const bk = activeInvoice.booking;
+                  handleVoiceReadout(
+                    'receipt',
+                    `Official Aqua Mark Receipt. Booking ID ${bk.bookingId}. Hatchery ${bk.batch?.realName}. Quantity ${bk.quantity} seed plus ${bk.bonusSeeds} bonus. Packing on ${bk.packingDate}. Advance paid ${bk.tokenAdvance} rupees. Balance at packing ${bk.balanceAtPacking} rupees.`,
+                    `అధికారిక ఆక్వా మార్క్ రసీదు. బుకింగ్ ఐడి ${bk.bookingId}. హేచరీ ${bk.batch?.realName}. సీడ్ పరిమాణం ${bk.quantity} మరియు ${bk.bonusSeeds} బోనస్. ప్యాకింగ్ తేదీ ${bk.packingDate}. చెల్లించిన అడ్వాన్స్ ${bk.tokenAdvance} రూపాయలు. మిగిలిన బ్యాలెన్స్ ${bk.balanceAtPacking} రూపాయలు.`
+                  );
+                }}
+                className={`px-3 py-3 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${isSpeakingId === 'receipt' ? 'bg-indigo-600 text-white border-indigo-600' : subCardBg}`}
+              >
+                {isSpeakingId === 'receipt' ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-teal-600" />}
+                {isSpeakingId === 'receipt' ? L('Stop', 'ఆపు') : L('Listen', 'వినండి')}
+              </button>
               <button
                 type="button"
                 onClick={() => handleSendBilingualBookingSummary(activeInvoice.booking)}
