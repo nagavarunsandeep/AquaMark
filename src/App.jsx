@@ -54,14 +54,14 @@ class ErrorBoundary extends React.Component {
 const ADMIN_WHATSAPP_NUMBER = '919876543210';
 
 const SHRIMP_SPECIES_OPTIONS = [
-  'Litopenaeus vannamei (SyAqua Line)',
-  'Litopenaeus vannamei (Hard Line / High Survival)',
-  'Litopenaeus vannamei (SPF)',
-  'Litopenaeus vannamei (High Growth)',
-  'Litopenaeus vannamei (Disease Resistant)',
-  'Penaeus monodon (Black Tiger)',
-  'Macrobrachium rosenbergii (Scampi)',
-  'Penaeus indicus (Indian White Prawn)',
+  'Vannamei (SyAqua Line)',
+  'Vannamei (Hard Line / High Survival)',
+  'Vannamei (SPF)',
+  'Vannamei (High Growth)',
+  'Vannamei (Disease Resistant)',
+  'Monodon (Black Tiger)',
+  'Macrobrachium Rosenbergii (Scampi)',
+  'Penaeus Indicus (Indian White Prawn)',
   'OTHER_CUSTOM'
 ];
 
