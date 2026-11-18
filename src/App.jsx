@@ -459,7 +459,7 @@ const DICT = {
     availTimeLabel: 'Available Time Slot',
     pcrUploadBtnLabel: 'Upload PCR Images (≤2MB)',
     videoUploadBtnLabel: 'Upload Tank Videos (≤10MB)',
-    pcrHintLabel: 'Required: At least 1 PCR lab report image (Camera or Files)',
+    pcrHintLabel: 'Required: At least 1 Image (Report or Seed)',
     gpsLockedBtn: 'GPS Locked',
     captureGpsBtn: 'Tag Tank GPS',
     publishBtn: 'Publish Batch Live',
@@ -527,7 +527,7 @@ const DICT = {
       brokerRegComplete: 'Broker Bank & UPI details saved! Broker Portal activated.',
       profileUpdated: 'Profile updated successfully!',
       gpsLocked: 'Tank GPS coordinates locked.',
-      uploadPcrFirst: 'Please upload at least 1 PCR Lab Report image.',
+      uploadPcrFirst: 'Please upload at least 1 image.',
       batchPublished: 'Seed batch published live!',
       batchUpdated: 'Batch details & cloud files updated!',
       batchRemoved: 'Seed batch & storage files deleted completely!',
@@ -1581,7 +1581,7 @@ function AquaMarkApp() {
 
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      setUploadProgress({ active: true, percent: 45, label: `Applying Vivo GPS Stamp & Compressing ${i + 1}/${filesArray.length}...` });
+      setUploadProgress({ active: true, percent: 45, label: `Uploading Video ${i + 1}/${filesArray.length}...` });
 
       const readyFile = await stampAndCompressImage(rawFile, vivoMeta, 2 * 1024 * 1024);
       setUploadProgress({ active: true, percent: 80, label: `Uploading Image ${i + 1}/${filesArray.length} to Cloud...` });
@@ -1630,7 +1630,7 @@ function AquaMarkApp() {
 
     for (let i = 0; i < filesArray.length; i++) {
       const rawFile = filesArray[i];
-      setUploadProgress({ active: true, percent: 45, label: `Stamping & Compressing Video ${i + 1}/${filesArray.length} (≤10MB)...` });
+      setUploadProgress({ active: true, percent: 45, label: `Compressing Video ${i + 1}/${filesArray.length} (≤10MB)...` });
 
       const readyVideo = await stampAndCompressVideo(rawFile, vivoMeta, 10 * 1024 * 1024);
       setUploadProgress({ active: true, percent: 80, label: `Uploading Video ${i + 1}/${filesArray.length} to Cloud...` });
@@ -2448,7 +2448,7 @@ function AquaMarkApp() {
               </thead>
               <tbody>
                 <tr>
-                  <td><strong>${bk.batch?.id} — ${bk.batch?.species}</strong><br/><small style="color:#475569;">PCR Lab Attachments: ${pcrLabels}</small></td>
+                  <td><strong>${bk.batch?.id} — ${bk.batch?.species}</strong><br/><small style="color:#475569;">Image Attachments: ${pcrLabels}</small></td>
                   <td>${bk.batch?.plStage}</td>
                   <td>${srcPpt} PPT</td>
                   <td>${(bk.quantity || 0).toLocaleString('en-IN')} PL</td>
@@ -2484,7 +2484,7 @@ function AquaMarkApp() {
             <div class="checklist-box">
               <strong>Gate Dispatch Verification Checklist:</strong> &nbsp;&nbsp;
               [ ✓ ] CAA License Verified &nbsp;&nbsp;&nbsp;
-              [ ✓ ] PCR Lab Images Attached (${pcrLabels}) &nbsp;&nbsp;&nbsp;
+              [ ✓ ] Images Attached (${pcrLabels}) &nbsp;&nbsp;&nbsp;
               [ ✓ ] ${isPaidFull ? '100% Payment Settled' : '4% Advance Confirmed'} &nbsp;&nbsp;&nbsp;
               [ ${bk.gatePassCleared ? '✓' : '&nbsp;'} ] Oxygen Packing Count Checked at Hatchery
             </div>
@@ -4432,7 +4432,7 @@ function AquaMarkApp() {
                       <div className={`border rounded-xl p-3 flex items-center justify-between gap-2 ${subCardBg}`}>
                         <div>
                           <span className="text-xs font-bold flex items-center gap-1"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
-                          <p className="text-[11px] opacity-60 truncate max-w-[140px]">{gpsLocation || 'Auto Vivo Stamp'}</p>
+                          <p className="text-[11px] opacity-60 truncate max-w-[140px]">{gpsLocation || 'Auto Stamp'}</p>
                         </div>
                         <button type="button" onClick={handleCaptureGps} className="bg-teal-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0">
                           <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
