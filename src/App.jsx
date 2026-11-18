@@ -6437,7 +6437,7 @@ function AquaMarkApp() {
           { title: bk.fullPaid ? '100% Full Payment Paid' : '4% Advance Paid', sub: `Ref: ${bk.paymentId}`, done: true },
           { title: 'Salinity Acclimatization', sub: `Hatchery ${bk.batch?.salinity || 16} PPT → Pond ${bk.pondSalinity || 15} PPT`, done: true },
           { title: 'Packing & Gate-Pass Ready', sub: `${bk.packingDate} (${bk.packingTimeSlot || 'All Day'})`, done: isPacked },
-          { title: 'Gate-Pass Scanned & Payment Settled', sub: isFinalCleared ? `Cleared ${bk.clearedAt || ''}` : 'Pending at Hatchery Gate', done: isFinalCleared }
+          { title: 'Gate-Pass Scanned', sub: isFinalCleared ? `Cleared ${bk.clearedAt || ''}` : 'Pending at Hatchery Gate', done: isFinalCleared }
         ];
         return (
           <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
