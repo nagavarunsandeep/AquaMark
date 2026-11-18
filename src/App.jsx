@@ -438,7 +438,7 @@ const DICT = {
     ifscLabel: 'IFSC Code',
     upiLabel: 'UPI ID',
     completeRegBtn: 'Verify & Register Hatchery + Bank',
-    hatcheryLockedBanner: 'Verified Hatchery Locked to +91',
+    hatcheryLockedBanner: 'Verified Number +91',
     editSellerProfileBtn: 'Edit Profile, Maps & Bank',
     editBrokerProfileBtn: 'Edit Profile & Bank',
     editBuyerProfileBtn: 'Edit Profile',
