@@ -2357,7 +2357,7 @@ function AquaMarkApp() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>AquaMark_Certificate_${bk.bookingId}</title>
+        <title>AquaMark_Receipt_${bk.bookingId}</title>
         <style>
           @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -2401,11 +2401,11 @@ function AquaMarkApp() {
                 </div>
                 <div>
                   <h1 class="brand-title">AQUA MARK</h1>
-                  <p class="brand-sub">Official Aquaculture Seed Booking & Quality Certificate</p>
+                  <p class="brand-sub">Official Aquaculture Quality Seed Booking</p>
                 </div>
               </div>
               <div class="verified-stamp">
-                <strong>${isPaidFull ? '100% PAID & VERIFIED CERTIFICATE' : '100% VERIFIED CERTIFICATE'}</strong><br/>
+                <strong>${isPaidFull ? '100% PAID & VERIFIED RECEIPT' : '100% VERIFIED RECEIPT'}</strong><br/>
                 <span>Date: ${bk.date} • Time: ${issueTime}</span><br/>
                 <span>Hash: ${verifyHash}</span>
               </div>
@@ -4082,7 +4082,7 @@ function AquaMarkApp() {
                           <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
                         </span>
                         <span className="inline-flex items-center gap-1 bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                          <ShieldCheck className="w-3.5 h-3.5" /> ₹10,000 Security Deposit Active
+                          <ShieldCheck className="w-3.5 h-3.5" /> ₹10,000 Security Deposited
                         </span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-teal-600 dark:text-teal-400">
