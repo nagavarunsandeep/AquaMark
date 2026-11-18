@@ -13,7 +13,7 @@ import {
   Sparkles, ShieldAlert, KeyRound, Activity, Navigation, Split,
   Thermometer, Award, Layers as LayersIcon, CheckCircle, Bell, Phone, ScanLine,
   ShoppingCart, Download, Volume2, VolumeX, Zap, RotateCcw, Target, Timer,
-  PhoneCall, Megaphone, CloudSun, Sliders
+  PhoneCall, Megaphone, CloudSun, Sliders, ArrowUp, Wifi, WifiOff, StickyNote, Plus, Minus
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -1139,6 +1139,37 @@ function AquaMarkApp() {
 
   // 22. Bilingual Voice Readout (SpeechSynthesis)
   const [isSpeakingId, setIsSpeakingId] = useState(null);
+
+  // =========================================================================
+  // ROUND-3 PRODUCTION FEATURES STATE (12 NEW FEATURES — ZERO BACKEND CHANGES)
+  // =========================================================================
+  // Feature A: Tank-to-Pond Compatibility Checker inside Batch Inspection Modal
+  const [inspectPondPpt, setInspectPondPpt] = useState(14);
+  // Feature B: Farmer Private Hatchery Notes (localStorage)
+  const [farmerBatchNotes, setFarmerBatchNotes] = useState(() => safeLoadStorage('aqm_v12_batch_notes', {}));
+  // Feature C: Pond Biomass & Weekly Growth Sampling Estimator (Pond Log)
+  const [biomassCalc, setBiomassCalc] = useState({ stockedPl: 200000, survivalPct: 82, abwGrams: 12.5 });
+  // Feature D: Broker Protected Farmer Search Filter
+  const [brokerFarmerSearch, setBrokerFarmerSearch] = useState('');
+  // Feature E: Live Network Online/Offline Status + Scroll-to-Top button
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => { try { localStorage.setItem('aqm_v12_batch_notes', JSON.stringify(farmerBatchNotes)); } catch { } }, [farmerBatchNotes]);
+
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    const onScroll = () => setShowScrollTop(window.scrollY > 360);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   useEffect(() => { try { localStorage.setItem('aqm_v12_matchmaker', JSON.stringify(matchmaker)); } catch { } }, [matchmaker]);
   useEffect(() => { try { localStorage.setItem('aqm_v12_watchlist_price', JSON.stringify(watchlistPrice)); } catch { } }, [watchlistPrice]);
@@ -3454,6 +3485,76 @@ function AquaMarkApp() {
     }
   };
 
+  // Round-3 Feature: Seller 1-Click Stock Quick-Adjust (-1L / +1L / +5L)
+  const handleQuickAdjustStock = async (batch, deltaLakhs) => {
+    const nextStock = Math.max(0, (Number(batch.availableStock) || 0) + deltaLakhs * 100000);
+    const updatedObj = { ...batch, availableStock: nextStock };
+    setBatches(prev => prev.map(b => (b.id === batch.id ? updatedObj : b)));
+    await saveBatchToSupabase(updatedObj);
+    showToast(L(`Stock updated for ${batch.id}: ${nextStock.toLocaleString('en-IN')} PL`, `${batch.id} స్టాక్ అప్‌డేట్ అయింది: ${nextStock.toLocaleString('en-IN')} PL`));
+  };
+
+  // Round-3 Feature: Broker 1-Click WhatsApp Top Live Rates Broadcast
+  const handleBrokerBroadcastTopRates = () => {
+    const topLive = batches.filter(b => !b.paused && (b.availableStock || 0) > 0).slice(0, 5);
+    if (topLive.length === 0) {
+      showToast(L('No active live batches available to broadcast.', 'బ్రాడ్‌కాస్ట్ చేయడానికి యాక్టివ్ బ్యాచ్‌లు లేవు.'));
+      return;
+    }
+    const header = lang === 'te'
+      ? `🦐 *నేటి Aqua Mark ధృవీకరించబడిన హేచరీ సీడ్ ధరలు*\n`
+      : `🦐 *Today's Aqua Mark CAA-Verified Seed Rates*\n`;
+    const lines = topLive.map((b, i) =>
+      `${i + 1}. *${b.plStage}* (${b.species}) — ₹${(b.pricePer1000 || 0).toFixed(2)}/seed | +${b.bonusPercent}% Bonus | ${b.salinity} PPT | ${b.zone}`
+    ).join('\n');
+    const footer = lang === 'te'
+      ? `\n\n📞 బుకింగ్ కోసం సంప్రదించండి: ${currentUser?.name} (+91 ${currentUser?.phone})`
+      : `\n\n📞 Book via Broker: ${currentUser?.name} (+91 ${currentUser?.phone})`;
+    const msg = `${header}${lines}${footer}`;
+    if (navigator.clipboard) navigator.clipboard.writeText(msg).catch(() => { });
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    showToast(L('Top rates broadcast opened in WhatsApp!', 'టాప్ ధరల మెసేజ్ WhatsApp లో ఓపెన్ అయింది!'));
+  };
+
+  // Round-3 Feature: Printable A4 Pond Stocking & Acclimatization SOP Checklist
+  const handlePrintStockingSop = () => {
+    const win = window.open('', '_blank', 'width=800,height=950');
+    if (!win) return;
+    const pptDiff = Math.abs((acclimCalc.hatcheryPpt || 18) - (acclimCalc.pondPpt || 10));
+    win.document.write(`<!DOCTYPE html><html><head><title>AquaMark_Stocking_SOP</title>
+      <style>
+        @page { size: A4; margin: 14mm; }
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; color: #0f172a; line-height: 1.55; }
+        .card { border: 2px solid #0f766e; border-radius: 14px; padding: 20px; }
+        h1 { color: #0f766e; margin: 0 0 4px; font-size: 20px; }
+        .sub { font-size: 12px; color: #475569; margin-bottom: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 12px; margin-bottom: 14px; }
+        ul { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+        li { padding: 7px 0; border-bottom: 1px dashed #cbd5e1; }
+      </style></head><body>
+      <div class="card">
+        <h1>AQUA MARK — POND STOCKING & ACCLIMATIZATION SOP</h1>
+        <div class="sub">Prepared for: ${currentUser?.name || 'Farmer'} (+91 ${currentUser?.phone || ''}) • Date: ${new Date().toLocaleDateString('en-IN')}</div>
+        <div class="grid">
+          <div><b>Pond pH:</b> ${waterTest.ph} (Target 7.5–8.3)</div>
+          <div><b>Dissolved Oxygen:</b> ${waterTest.doLevel} ppm (Target ≥ 5.0)</div>
+          <div><b>Alkalinity:</b> ${waterTest.alkalinity} ppm | <b>Ammonia:</b> ${waterTest.ammonia} ppm</div>
+          <div><b>Salinity Gap:</b> ${pptDiff} PPT (Acclimatize ${pptDiff * 4} hrs)</div>
+        </div>
+        <ul>
+          <li>☐ <b>Step 1 (Pre-Arrival):</b> Run all aerators for 6 hours before seed arrival; verify water pH & DO.</li>
+          <li>☐ <b>Step 2 (Temperature Float):</b> Float sealed oxygen bags in pond water for 25–30 minutes until temperatures equalize.</li>
+          <li>☐ <b>Step 3 (Salinity Drip):</b> Mix pond water gradually into seed tubs (1 PPT adjustment every 4 hours if gap &gt; 4 PPT).</li>
+          <li>☐ <b>Step 4 (Stress & Vigor Check):</b> Swirl 100 PL in a white bowl — healthy PL swim strongly against current.</li>
+          <li>☐ <b>Step 5 (Gentle Release):</b> Release PL slowly on the downwind side during cool morning hours (05:00 – 07:30 AM).</li>
+          <li>☐ <b>Step 6 (72h Survival Check-In):</b> Place 2 survival hapas (100 PL each) and log 24h / 48h / 72h survival in Aqua Mark.</li>
+        </ul>
+      </div>
+      <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
+      </body></html>`);
+    win.document.close();
+  };
+
   const resetAllMarketplaceFilters = () => {
     setSearchQuery('');
     setZoneFilter('ALL');
@@ -4071,6 +4172,15 @@ function AquaMarkApp() {
               </button>
             )}
 
+            {/* LIVE NETWORK ONLINE/OFFLINE STATUS PILL */}
+            <span
+              className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border ${isOnline ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : 'bg-rose-500/15 text-rose-500 border-rose-500/40'}`}
+              title={isOnline ? 'Connected to Cloud' : 'Offline Mode'}
+            >
+              {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+              {isOnline ? 'Live' : 'Offline'}
+            </span>
+
             {/* LIVE CLOUD SYNC REFRESH BUTTON */}
             <button
               type="button"
@@ -4509,6 +4619,9 @@ function AquaMarkApp() {
                                     </button>
                                   ))}
                                   <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} Acres</span>
+                                  <span className="bg-teal-500/15 text-teal-600 font-extrabold px-2 py-0.5 rounded-lg">
+                                    ₹{Math.round(4046.86 * selectedDens * (batch.pricePer1000 || 0.43)).toLocaleString('en-IN')}/Acre
+                                  </span>
                                 </div>
                               </div>
 
@@ -4870,15 +4983,75 @@ function AquaMarkApp() {
                                 </div>
                               )}
                             </div>
-                            <div className="text-right">
+                            <div className="text-right space-y-0.5">
                               <span className="font-bold block">Daily Feed: {p.dailyFeedKg} kg</span>
-                              <span className="text-[11px] text-emerald-500 font-semibold">Tray: {p.trayLeftover}</span>
+                              <span className="text-[11px] text-emerald-500 font-semibold block">Tray: {p.trayLeftover}</span>
+                              {(() => {
+                                const harvestDate = new Date(new Date(p.stockingDate).getTime() + 100 * 86400000);
+                                const daysToHarvest = Math.max(0, 100 - daysElapsed);
+                                const phase = daysElapsed <= 30 ? 'Nursery' : daysElapsed <= 65 ? 'Growout' : daysElapsed < 95 ? 'Peak Growth' : 'Harvest Ready';
+                                return (
+                                  <span className="inline-block text-[10px] font-bold bg-indigo-500/15 text-indigo-500 px-2 py-0.5 rounded-full">
+                                    {phase} • {daysToHarvest > 0 ? `${daysToHarvest}d to DOC 100 (${harvestDate.toLocaleDateString('en-IN')})` : 'Ready for Harvest!'}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
+                </div>
+
+
+                {/* ROUND-3 FEATURE: POND BIOMASS & WEEKLY GROWTH SAMPLING ESTIMATOR */}
+                <div className={`lg:col-span-3 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-indigo-500">
+                    <Scale className="w-4 h-4" /> {L('Pond Standing Biomass & Weekly Growth Sampling Estimator', 'చెరువు బయోమాస్ & వారపు పెరుగుదల అంచనా')}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
+                      <input type="number" step="10000" value={biomassCalc.stockedPl} onChange={(e) => setBiomassCalc({ ...biomassCalc, stockedPl: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Est. Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
+                      <input type="number" min="20" max="100" value={biomassCalc.survivalPct} onChange={(e) => setBiomassCalc({ ...biomassCalc, survivalPct: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Current Avg Body Weight (g)', 'ప్రస్తుత సగటు బరువు (గ్రాములు)')}</label>
+                      <input type="number" step="0.5" min="0.5" value={biomassCalc.abwGrams} onChange={(e) => setBiomassCalc({ ...biomassCalc, abwGrams: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    </div>
+                  </div>
+                  {(() => {
+                    const livePrawns = Math.round((Number(biomassCalc.stockedPl) || 0) * ((Number(biomassCalc.survivalPct) || 80) / 100));
+                    const abw = Math.max(0.5, Number(biomassCalc.abwGrams) || 10);
+                    const biomassKg = Math.round((livePrawns * abw) / 1000);
+                    const countPerKg = Math.round(1000 / abw);
+                    const feedPct = abw < 5 ? 5.5 : abw < 12 ? 3.5 : abw < 20 ? 2.6 : 2.0;
+                    const recDailyFeed = Math.round(biomassKg * (feedPct / 100));
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                          <span className="text-[10px] opacity-60 block">{L('Live Standing Biomass', 'చెరువులో ఉన్న మొత్తం బరువు')}</span>
+                          <b className="text-base text-indigo-500">{biomassKg.toLocaleString('en-IN')} kg</b>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                          <span className="text-[10px] opacity-60 block">{L('Current Harvest Count', 'ప్రస్తుత రొయ్యల కౌంట్')}</span>
+                          <b className="text-base">{countPerKg} Count / kg</b>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                          <span className="text-[10px] opacity-60 block">{L('Recommended Feed Rate', 'సూచించిన ఫీడ్ %')}</span>
+                          <b className="text-base text-teal-500">{feedPct}% Biomass</b>
+                        </div>
+                        <div className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-500">
+                          <span className="text-[10px] opacity-80 block">{L('Recommended Daily Feed', 'రోజువారీ కావాల్సిన ఫీడ్')}</span>
+                          <b className="text-base">{recDailyFeed.toLocaleString('en-IN')} kg / day</b>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* FEATURE 16: INTERACTIVE "WHAT-IF" FCR FEED OPTIMIZER (10-TON HARVEST) */}
@@ -5229,6 +5402,13 @@ function AquaMarkApp() {
                     >
                       <PhoneCall className="w-4 h-4" /> {L('AP Fisheries SOS (1800-425-1660)', 'AP ఫిషరీస్ SOS కాల్')}
                     </a>
+                    <button
+                      type="button"
+                      onClick={handlePrintStockingSop}
+                      className={`px-4 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
+                    >
+                      <Printer className="w-4 h-4 text-teal-600" /> {L('Print Stocking SOP', 'స్టాకింగ్ SOP ప్రింట్')}
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -5721,6 +5901,37 @@ Please advise immediate treatment protocol.`;
                   )}
                 </div>
 
+
+                {/* ROUND-3 FEATURE: HATCHERY TODAY'S PACKING SUMMARY & OXYGEN BOXES PREP WIDGET */}
+                {(() => {
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const todayOrds = hatcheryUpcomingOrders.filter(o => o.packingDate === todayStr);
+                  const totalPlToday = todayOrds.reduce((s, o) => s + (o.quantity || 0) + (o.bonusSeeds || 0), 0);
+                  const bagsToday = Math.ceil(totalPlToday / 2500);
+                  const boxesToday = Math.ceil(bagsToday / 2);
+                  const valToday = todayOrds.reduce((s, o) => s + (o.hatcheryFixedTotal || 0), 0);
+                  return (
+                    <div className={`rounded-2xl p-4 border shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs ${cardBg}`}>
+                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                        <span className="text-[10px] opacity-60 block">{L("Today's Packing Orders", 'నేటి ప్యాకింగ్ ఆర్డర్లు')}</span>
+                        <b className="text-lg text-teal-600">{todayOrds.length}</b>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                        <span className="text-[10px] opacity-60 block">{L('Total PL + Bonus Today', 'నేటి మొత్తం PL + బోనస్')}</span>
+                        <b className="text-lg">{totalPlToday.toLocaleString('en-IN')}</b>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                        <span className="text-[10px] opacity-60 block">{L('Prep Oxygen Bags / Boxes', 'ఆక్సిజన్ బ్యాగ్స్ / బాక్సులు')}</span>
+                        <b className="text-lg text-indigo-500">{bagsToday} / {boxesToday}</b>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                        <span className="text-[10px] opacity-60 block">{L("Today's Dispatch Value", 'నేటి డిస్పాచ్ విలువ')}</span>
+                        <b className="text-lg text-emerald-500">₹{valToday.toLocaleString('en-IN')}</b>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* FEATURE 13: HATCHERY PACKING BAY SHIFT QUEUE BOARD */}
                 <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -5875,117 +6086,181 @@ Please advise immediate treatment protocol.`;
                     </div>
 
                     {/* PCR REPORTS (AI ANALYZED) + SEED PHOTOS + TANK VIDEOS + GPS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
-                      <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                      {/* 1. PCR LAB REPORTS (AI ANALYZED) */}
+                      <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
                         <button
                           type="button"
                           disabled={uploadProgress.active}
                           onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_PCR' ? null : 'NEW_PCR')}
-                          className={`w-full border border-teal-500/40 text-teal-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
+                          className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
                         >
                           <FileCheck2 className="w-4 h-4" /> {L('Upload PCR Reports (AI)', 'PCR రిపోర్ట్స్ అప్‌లోడ్ (AI)')}
                         </button>
                         {mediaPickerTarget === 'NEW_PCR' && (
-                          <div className="grid grid-cols-2 gap-1.5 pt-1">
-                            <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 text-white text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer">
-                              <Camera className="w-3.5 h-3.5" /> Camera
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                              <Camera className="w-4 h-4" /> Camera
                             </button>
-                            <button type="button" onClick={() => pcrFileRef.current?.click()} className={`border text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer ${cardBg}`}>
-                              <FolderOpen className="w-3.5 h-3.5 text-teal-600" /> Files
+                            <button type="button" onClick={() => pcrFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                              <FolderOpen className="w-4 h-4" /> Files
                             </button>
                           </div>
                         )}
                         {pcrImages.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="grid grid-cols-2 gap-2.5 pt-1">
                             {pcrImages.map((img, i) => {
                               const isBad = img.aiPcrStatus === 'NOT_A_PCR_REPORT';
                               return (
-                                <span
-                                  key={i}
-                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer inline-flex items-center gap-1 ${isBad ? 'bg-rose-500/20 text-rose-500 border border-rose-500/40' : 'bg-emerald-500/20 text-emerald-500'}`}
-                                >
-                                  {img.label} {isBad ? '✕ Not a PCR Report' : `✓ AI PCR (${img.aiConfidence || 92}%)`}
-                                </span>
+                                <div key={i} className={`relative rounded-xl border overflow-hidden ${isBad ? 'border-rose-500/60' : 'border-teal-500/30'} ${cardBg}`}>
+                                  <button
+                                    type="button"
+                                    title={L('Delete image', 'ఫోటో తొలగించు')}
+                                    onClick={() => {
+                                      deleteStorageFilesByUrls([img.url]);
+                                      setPcrImages(prev => prev.filter((_, idx) => idx !== i));
+                                      showToast(L('PCR image removed.', 'PCR ఫోటో తొలగించబడింది.'));
+                                    }}
+                                    className="absolute top-1.5 right-1.5 z-10 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shadow cursor-pointer"
+                                  >
+                                    ✕
+                                  </button>
+                                  <img
+                                    src={img.url}
+                                    alt={img.label}
+                                    onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                    className="w-full h-24 object-cover cursor-pointer hover:opacity-90 transition"
+                                  />
+                                  <div className="p-1.5 text-[10px] font-bold flex items-center justify-between gap-1">
+                                    <span className="truncate">{img.label}</span>
+                                    <span className={isBad ? 'text-rose-500' : 'text-emerald-500'}>
+                                      {isBad ? '✕ Not PCR' : `✓ ${img.aiConfidence || 92}%`}
+                                    </span>
+                                  </div>
+                                </div>
                               );
                             })}
                           </div>
                         ) : (
-                          <span className="text-[10px] opacity-60 block text-center">{L('Required: Lab PCR Report (AI checked)', 'తప్పనిసరి: ల్యాబ్ PCR రిపోర్ట్ (AI తనిఖీ)')}</span>
+                          <span className="text-[11px] opacity-65 block text-center">{L('Required: Lab PCR Report (AI checked)', 'తప్పనిసరి: ల్యాబ్ PCR రిపోర్ట్ (AI తనిఖీ)')}</span>
                         )}
                       </div>
 
-                      {/* DEDICATED SEED / PL PHOTOS UPLOAD */}
-                      <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
+                      {/* 2. DEDICATED SEED / PL PHOTOS UPLOAD (UNIFIED TEAL BORDER) */}
+                      <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
                         <button
                           type="button"
                           disabled={uploadProgress.active}
                           onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_SEED' ? null : 'NEW_SEED')}
-                          className={`w-full border border-emerald-500/40 text-emerald-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
+                          className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
                         >
                           <Camera className="w-4 h-4" /> {L('Upload Seed / PL Images', 'సీడ్ / PL ఫోటోలు అప్‌లోడ్')}
                         </button>
                         {mediaPickerTarget === 'NEW_SEED' && (
-                          <div className="grid grid-cols-2 gap-1.5 pt-1">
-                            <button type="button" onClick={() => seedCamRef.current?.click()} className="bg-emerald-600 text-white text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer">
-                              <Camera className="w-3.5 h-3.5" /> Camera
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => seedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                              <Camera className="w-4 h-4" /> Camera
                             </button>
-                            <button type="button" onClick={() => seedFileRef.current?.click()} className={`border text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer ${cardBg}`}>
-                              <FolderOpen className="w-3.5 h-3.5 text-emerald-600" /> Files
+                            <button type="button" onClick={() => seedFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                              <FolderOpen className="w-4 h-4" /> Files
                             </button>
                           </div>
                         )}
                         {seedImages.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="grid grid-cols-2 gap-2.5 pt-1">
                             {seedImages.map((img, i) => (
-                              <span key={i} onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })} className="bg-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer">
-                                {img.label} ✓
-                              </span>
+                              <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
+                                <button
+                                  type="button"
+                                  title={L('Delete image', 'ఫోటో తొలగించు')}
+                                  onClick={() => {
+                                    deleteStorageFilesByUrls([img.url]);
+                                    setSeedImages(prev => prev.filter((_, idx) => idx !== i));
+                                    showToast(L('Seed image removed.', 'సీడ్ ఫోటో తొలగించబడింది.'));
+                                  }}
+                                  className="absolute top-1.5 right-1.5 z-10 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shadow cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                                <img
+                                  src={img.url}
+                                  alt={img.label}
+                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                  className="w-full h-24 object-cover cursor-pointer hover:opacity-90 transition"
+                                />
+                                <div className="p-1.5 text-[10px] font-bold flex items-center justify-between">
+                                  <span className="truncate">{img.label}</span>
+                                  <span className="text-emerald-500">✓ Seed</span>
+                                </div>
+                              </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[10px] opacity-60 block text-center">{L('Optional: Live PL / Tank Seed Photos', 'ఐచ్ఛికం: లైవ్ సీడ్ / ట్యాంక్ ఫోటోలు')}</span>
+                          <span className="text-[11px] opacity-65 block text-center">{L('Optional: Live PL / Tank Seed Photos', 'ఐచ్ఛికం: లైవ్ సీడ్ / ట్యాంక్ ఫోటోలు')}</span>
                         )}
                       </div>
 
-                      <div className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
+                      {/* 3. TANK VIDEOS UPLOAD (UNIFIED TEAL BORDER + DELETE) */}
+                      <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
                         <button
                           type="button"
                           disabled={uploadProgress.active}
                           onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_VID' ? null : 'NEW_VID')}
-                          className={`w-full border border-teal-500/40 text-teal-600 text-xs font-bold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer ${cardBg}`}
+                          className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
                         >
                           <Video className="w-4 h-4" /> {t.videoUploadBtnLabel}
                         </button>
                         {mediaPickerTarget === 'NEW_VID' && (
-                          <div className="grid grid-cols-2 gap-1.5 pt-1">
-                            <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 text-white text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer">
-                              <Camera className="w-3.5 h-3.5" /> Camera
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                              <Camera className="w-4 h-4" /> Camera
                             </button>
-                            <button type="button" onClick={() => vidFileRef.current?.click()} className={`border text-[11px] font-bold py-1.5 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer ${cardBg}`}>
-                              <FolderOpen className="w-3.5 h-3.5 text-teal-600" /> Files
+                            <button type="button" onClick={() => vidFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                              <FolderOpen className="w-4 h-4" /> Files
                             </button>
                           </div>
                         )}
                         {tankVideos.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="grid grid-cols-2 gap-2.5 pt-1">
                             {tankVideos.map((vid, i) => (
-                              <span key={i} onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })} className="bg-teal-500/20 text-teal-500 text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer">
-                                {vid.label} ✓
-                              </span>
+                              <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
+                                <button
+                                  type="button"
+                                  title={L('Delete video', 'వీడియో తొలగించు')}
+                                  onClick={() => {
+                                    deleteStorageFilesByUrls([vid.url]);
+                                    setTankVideos(prev => prev.filter((_, idx) => idx !== i));
+                                    showToast(L('Tank video removed.', 'ట్యాంక్ వీడియో తొలగించబడింది.'));
+                                  }}
+                                  className="absolute top-1.5 right-1.5 z-10 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shadow cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                                <video
+                                  src={vid.url}
+                                  muted
+                                  onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                  className="w-full h-24 object-cover bg-black cursor-pointer"
+                                />
+                                <div className="p-1.5 text-[10px] font-bold flex items-center justify-between">
+                                  <span className="truncate">{vid.label}</span>
+                                  <span className="text-teal-500">▶ Video</span>
+                                </div>
+                              </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[10px] opacity-60 block text-center">Optional: Tank PL activity videos</span>
+                          <span className="text-[11px] opacity-65 block text-center">Optional: Tank PL activity videos</span>
                         )}
                       </div>
 
-                      <div className={`border rounded-xl p-3 flex items-center justify-between gap-2 ${subCardBg}`}>
+                      {/* 4. TANK GPS STAMP */}
+                      <div className={`border rounded-2xl p-3.5 flex items-center justify-between gap-2 ${subCardBg}`}>
                         <div>
-                          <span className="text-xs font-bold flex items-center gap-1"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
-                          <p className="text-[11px] opacity-60 truncate max-w-[140px]">{gpsLocation || 'Auto Stamp'}</p>
+                          <span className="text-xs font-extrabold flex items-center gap-1.5"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
+                          <p className="text-[11px] opacity-65 truncate max-w-[180px] mt-0.5">{gpsLocation || 'Auto Stamp'}</p>
                         </div>
-                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer shrink-0">
+                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0">
                           <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
                         </button>
                       </div>
@@ -6127,89 +6402,134 @@ Please advise immediate treatment protocol.`;
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-300/20">
-                                  <div className="space-y-1.5">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-3 border-t border-slate-300/20">
+                                  {/* EDIT PCR REPORTS */}
+                                  <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
                                     <div className="flex items-center justify-between">
-                                      <span className="text-[11px] font-bold">PCR Reports ({(editBatchValues.pcrImages || []).length})</span>
-                                      <div className="flex items-center gap-2">
-                                        <button type="button" onClick={() => editPcrCamRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Camera</button>
-                                        <button type="button" onClick={() => editPcrFileRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Files</button>
+                                      <span className="text-xs font-extrabold text-teal-600 flex items-center gap-1.5">
+                                        <FileCheck2 className="w-3.5 h-3.5" /> PCR Reports ({(editBatchValues.pcrImages || []).length})
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <Camera className="w-3.5 h-3.5" /> Camera
+                                      </button>
+                                      <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                        <FolderOpen className="w-3.5 h-3.5" /> Files
+                                      </button>
+                                    </div>
+                                    {(editBatchValues.pcrImages || []).length > 0 && (
+                                      <div className="grid grid-cols-2 gap-2 pt-1">
+                                        {(editBatchValues.pcrImages || []).map((img, i) => (
+                                          <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                            <button
+                                              type="button"
+                                              onClick={() => setEditBatchValues(prev => ({
+                                                ...prev,
+                                                removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
+                                                pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
+                                              }))}
+                                              className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                            >
+                                              ✕
+                                            </button>
+                                            <img
+                                              src={img.url}
+                                              alt={img.label}
+                                              onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                              className="w-full h-20 object-cover cursor-pointer"
+                                            />
+                                            <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                          </div>
+                                        ))}
                                       </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {(editBatchValues.pcrImages || []).map((img, i) => (
-                                        <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
-                                          <span onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })} className="cursor-pointer underline">{img.label}</span>
-                                          <button
-                                            type="button"
-                                            onClick={() => setEditBatchValues(prev => ({
-                                              ...prev,
-                                              removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
-                                              pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
-                                            }))}
-                                            className="text-rose-500 ml-1 cursor-pointer"
-                                          >
-                                            ✕
-                                          </button>
-                                        </span>
-                                      ))}
-                                    </div>
+                                    )}
                                   </div>
 
-                                  <div className="space-y-1.5">
+                                  {/* EDIT SEED IMAGES */}
+                                  <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
                                     <div className="flex items-center justify-between">
-                                      <span className="text-[11px] font-bold">Seed Images ({(editBatchValues.seedImages || []).length})</span>
-                                      <div className="flex items-center gap-2">
-                                        <button type="button" onClick={() => editSeedCamRef.current?.click()} className="text-[11px] font-bold text-emerald-500 underline cursor-pointer">+ Camera</button>
-                                        <button type="button" onClick={() => editSeedFileRef.current?.click()} className="text-[11px] font-bold text-emerald-500 underline cursor-pointer">+ Files</button>
+                                      <span className="text-xs font-extrabold text-teal-600 flex items-center gap-1.5">
+                                        <Camera className="w-3.5 h-3.5" /> Seed Images ({(editBatchValues.seedImages || []).length})
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <Camera className="w-3.5 h-3.5" /> Camera
+                                      </button>
+                                      <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                        <FolderOpen className="w-3.5 h-3.5" /> Files
+                                      </button>
+                                    </div>
+                                    {(editBatchValues.seedImages || []).length > 0 && (
+                                      <div className="grid grid-cols-2 gap-2 pt-1">
+                                        {(editBatchValues.seedImages || []).map((img, i) => (
+                                          <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                            <button
+                                              type="button"
+                                              onClick={() => setEditBatchValues(prev => ({
+                                                ...prev,
+                                                removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
+                                                seedImages: prev.seedImages.filter((_, idx) => idx !== i)
+                                              }))}
+                                              className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                            >
+                                              ✕
+                                            </button>
+                                            <img
+                                              src={img.url}
+                                              alt={img.label}
+                                              onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                              className="w-full h-20 object-cover cursor-pointer"
+                                            />
+                                            <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                          </div>
+                                        ))}
                                       </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {(editBatchValues.seedImages || []).map((img, i) => (
-                                        <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
-                                          <span onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })} className="cursor-pointer underline">{img.label}</span>
-                                          <button
-                                            type="button"
-                                            onClick={() => setEditBatchValues(prev => ({
-                                              ...prev,
-                                              removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
-                                              seedImages: prev.seedImages.filter((_, idx) => idx !== i)
-                                            }))}
-                                            className="text-rose-500 ml-1 cursor-pointer"
-                                          >
-                                            ✕
-                                          </button>
-                                        </span>
-                                      ))}
-                                    </div>
+                                    )}
                                   </div>
 
-                                  <div className="space-y-1.5">
+                                  {/* EDIT TANK VIDEOS */}
+                                  <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
                                     <div className="flex items-center justify-between">
-                                      <span className="text-[11px] font-bold">Tank Videos ({(editBatchValues.tankVideos || []).length})</span>
-                                      <div className="flex items-center gap-2">
-                                        <button type="button" onClick={() => editVidCamRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Camera</button>
-                                        <button type="button" onClick={() => editVidFileRef.current?.click()} className="text-[11px] font-bold text-teal-500 underline cursor-pointer">+ Files</button>
+                                      <span className="text-xs font-extrabold text-teal-600 flex items-center gap-1.5">
+                                        <Video className="w-3.5 h-3.5" /> Tank Videos ({(editBatchValues.tankVideos || []).length})
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <Camera className="w-3.5 h-3.5" /> Camera
+                                      </button>
+                                      <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                        <FolderOpen className="w-3.5 h-3.5" /> Files
+                                      </button>
+                                    </div>
+                                    {(editBatchValues.tankVideos || []).length > 0 && (
+                                      <div className="grid grid-cols-2 gap-2 pt-1">
+                                        {(editBatchValues.tankVideos || []).map((vid, i) => (
+                                          <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                            <button
+                                              type="button"
+                                              onClick={() => setEditBatchValues(prev => ({
+                                                ...prev,
+                                                removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
+                                                tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
+                                              }))}
+                                              className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                            >
+                                              ✕
+                                            </button>
+                                            <video
+                                              src={vid.url}
+                                              muted
+                                              onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                              className="w-full h-20 object-cover bg-black cursor-pointer"
+                                            />
+                                            <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
+                                          </div>
+                                        ))}
                                       </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {(editBatchValues.tankVideos || []).map((vid, i) => (
-                                        <span key={i} className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-bold ${cardBg}`}>
-                                          <span onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })} className="cursor-pointer underline">{vid.label}</span>
-                                          <button
-                                            type="button"
-                                            onClick={() => setEditBatchValues(prev => ({
-                                              ...prev,
-                                              removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
-                                              tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
-                                            }))}
-                                            className="text-rose-500 ml-1 cursor-pointer"
-                                          >
-                                            ✕
-                                          </button>
-                                        </span>
-                                      ))}
-                                    </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -6220,6 +6540,22 @@ Please advise immediate treatment protocol.`;
                                 <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
+                              </div>
+                            )}
+                            {!isEditing && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                                <span className="opacity-65 font-semibold">{L('Quick Stock Adjust:', 'త్వరిత స్టాక్ మార్పు:')}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <button type="button" onClick={() => handleQuickAdjustStock(b, -1)} className="px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                    <Minus className="w-3 h-3" /> 1L
+                                  </button>
+                                  <button type="button" onClick={() => handleQuickAdjustStock(b, 1)} className="px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                    <Plus className="w-3 h-3" /> 1L
+                                  </button>
+                                  <button type="button" onClick={() => handleQuickAdjustStock(b, 5)} className="px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-600 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                    <Plus className="w-3 h-3" /> 5L
+                                  </button>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -6486,14 +6822,24 @@ Please advise immediate treatment protocol.`;
                     <h3 className="font-bold text-base flex items-center gap-2">
                       <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
                     </h3>
-                    {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BROKER) */}
-                    <button
-                      type="button"
-                      onClick={() => handleExportCsvLedger(myBrokerBookings, 'Broker')}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
-                    >
-                      <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* ROUND-3 FEATURE: 1-CLICK WHATSAPP TOP RATES BROADCAST */}
+                      <button
+                        type="button"
+                        onClick={handleBrokerBroadcastTopRates}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" /> {L('Broadcast Top Rates', 'టాప్ ధరలు షేర్')}
+                      </button>
+                      {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BROKER) */}
+                      <button
+                        type="button"
+                        onClick={() => handleExportCsvLedger(myBrokerBookings, 'Broker')}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                      >
+                        <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                      </button>
+                    </div>
                   </div>
                   {myBrokerBookings.length === 0 ? (
                     <p className="text-xs opacity-60">{t.noBrokerBookings}</p>
@@ -6734,6 +7080,9 @@ Please advise immediate treatment protocol.`;
                                     </button>
                                   ))}
                                   <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} {L('Acres', 'ఎకరాలు')}</span>
+                                  <span className="bg-teal-500/15 text-teal-600 font-extrabold px-2 py-0.5 rounded-lg">
+                                    ₹{Math.round(4046.86 * selectedDens * (batch.pricePer1000 || 0.43)).toLocaleString('en-IN')}/{L('Acre', 'ఎకరం')}
+                                  </span>
                                 </div>
                               </div>
 
@@ -6806,9 +7155,22 @@ Please advise immediate treatment protocol.`;
                   </form>
 
                   <div className={`lg:col-span-2 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                    <h3 className="font-bold text-base flex items-center gap-2">
-                      <Users className="w-5 h-5 text-teal-600" /> {t.myFarmersTitle}
-                    </h3>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-bold text-base flex items-center gap-2">
+                        <Users className="w-5 h-5 text-teal-600" /> {t.myFarmersTitle} ({brokerFarmers.length})
+                      </h3>
+                      {/* ROUND-3 FEATURE: FARMER NETWORK QUICK-SEARCH */}
+                      <div className="relative w-52">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                        <input
+                          type="text"
+                          placeholder={L('Search farmer / village...', 'రైతు / గ్రామం వెతకండి...')}
+                          value={brokerFarmerSearch}
+                          onChange={(e) => setBrokerFarmerSearch(e.target.value)}
+                          className={`w-full border rounded-xl pl-8 pr-2.5 py-1 text-xs select-text ${inputCls}`}
+                        />
+                      </div>
+                    </div>
                     {brokerFarmers.length === 0 ? (
                       <p className="text-xs opacity-60">No farmers locked yet. Add your farmers on the left.</p>
                     ) : (
@@ -6822,7 +7184,10 @@ Please advise immediate treatment protocol.`;
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-300/20">
-                            {brokerFarmers.map((f) => {
+                            {brokerFarmers.filter(f => {
+                              const q = brokerFarmerSearch.toLowerCase().trim();
+                              return !q || (f.name || '').toLowerCase().includes(q) || (f.village || '').toLowerCase().includes(q) || (f.phone || '').includes(q);
+                            }).map((f) => {
                               const daysLeft = f.lockedUntil ? Math.ceil((new Date(f.lockedUntil).getTime() - Date.now()) / 86400000) : 0;
                               const expiringSoon = daysLeft <= 45;
                               return (
@@ -7521,6 +7886,54 @@ Please advise immediate treatment protocol.`;
 
 
 
+
+              {/* ROUND-3 FEATURE: TANK-TO-POND COMPATIBILITY CHECKER & PRIVATE FARMER NOTES */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className={`p-3.5 rounded-xl border space-y-2 ${subCardBg}`}>
+                  <span className="font-extrabold text-teal-600 inline-flex items-center gap-1.5">
+                    <Thermometer className="w-3.5 h-3.5" /> {L('Tank-to-Pond Compatibility Check', 'ట్యాంక్-టు-చెరువు సెలైనిటీ తనిఖీ')}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] opacity-75">{L('Your Pond PPT:', 'మీ చెరువు PPT:')}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="45"
+                      value={inspectPondPpt}
+                      onChange={(e) => setInspectPondPpt(Number(e.target.value))}
+                      className={`w-16 border rounded-lg px-2 py-1 text-xs font-bold select-text ${inputCls}`}
+                    />
+                    <span className="text-[11px] font-bold text-teal-500">
+                      Δ {Math.abs((inspectedBatch.salinity || 16) - inspectPondPpt)} PPT
+                    </span>
+                  </div>
+                  {(() => {
+                    const diff = Math.abs((inspectedBatch.salinity || 16) - inspectPondPpt);
+                    return (
+                      <div className="text-[11px] font-semibold">
+                        Acclimatize: <b>{diff * 4} hrs</b> • Risk:{' '}
+                        <b className={diff <= 3 ? 'text-emerald-500' : diff <= 6 ? 'text-amber-500' : 'text-rose-500'}>
+                          {diff <= 3 ? 'LOW (Ideal)' : diff <= 6 ? 'MODERATE' : 'HIGH (Gradual Drip Required)'}
+                        </b>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className={`p-3.5 rounded-xl border space-y-2 ${subCardBg}`}>
+                  <span className="font-extrabold text-indigo-500 inline-flex items-center gap-1.5">
+                    <StickyNote className="w-3.5 h-3.5" /> {L('My Private Note on This Batch', 'ఈ బ్యాచ్‌పై నా ప్రైవేట్ నోట్')}
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={L('e.g., Good survival last crop, ask 20% bonus...', 'ఉదా: గత పంటలో మంచి సర్వైవల్ వచ్చింది...')}
+                    value={farmerBatchNotes[inspectedBatch.id] || ''}
+                    onChange={(e) => setFarmerBatchNotes(prev => ({ ...prev, [inspectedBatch.id]: e.target.value }))}
+                    className={`w-full border rounded-lg px-2.5 py-1.5 text-xs select-text ${inputCls}`}
+                  />
+                </div>
+              </div>
+
               {/* FEATURE 5: 5-POINT BIO-SECURITY & LAB AUDIT SCORECARD */}
               <div className={`p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-2.5 text-xs`}>
                 <div className="flex items-center justify-between">
@@ -8064,6 +8477,24 @@ Please advise immediate treatment protocol.`;
                         <span>{t.balanceAtPacking}:</span>
                         <span className="font-bold text-white">₹{(total - payNowAmt).toLocaleString('en-IN')}</span>
                       </div>
+                      {/* ROUND-3 FEATURE: EFFECTIVE NET RATE & OXYGEN LOGISTICS PREVIEW */}
+                      {(() => {
+                        const bonusPl = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
+                        const totalPl = qty + bonusPl;
+                        const effRate = totalPl > 0 ? (total / totalPl).toFixed(3) : '0.000';
+                        const bags = Math.ceil(totalPl / 2500);
+                        const boxes = Math.ceil(bags / 2);
+                        const splitCnt = Math.max(1, Number(bookingForm.pondSplitCount) || 1);
+                        return (
+                          <div className="border-t border-white/10 pt-2 mt-1 grid grid-cols-2 gap-1.5 text-[11px] text-teal-300">
+                            <span>Effective Rate (+{selectedBatch.bonusPercent}%): <b>₹{effRate}/seed</b></span>
+                            <span className="text-right">Est. Packing: <b>{bags} Bags / {boxes} Boxes</b></span>
+                            {splitCnt > 1 && (
+                              <span className="col-span-2 text-amber-300">Split Across {splitCnt} Ponds: <b>{Math.round(totalPl / splitCnt).toLocaleString('en-IN')} PL / Pond</b></span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     {!isBelowMin ? (
                       <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
@@ -8788,6 +9219,18 @@ Please advise immediate treatment protocol.`;
             </form>
           </div>
         </div>
+      )}
+
+      {/* ROUND-3 FEATURE: FLOATING SCROLL-TO-TOP BUTTON */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="Back to Top"
+          className="fixed bottom-5 left-5 z-40 bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-full shadow-xl border border-teal-400/40 cursor-pointer transition"
+        >
+          <ArrowUp className="w-4 h-4" />
+        </button>
       )}
 
       {/* OFFICIAL RECEIPT MODAL */}
