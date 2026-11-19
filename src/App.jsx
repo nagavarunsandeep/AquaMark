@@ -672,7 +672,7 @@ const DICT = {
     caaVerified: 'CAA Certified',
     soldOutBadge: 'SOLD OUT',
     pausedBadge: 'PAUSED BY HATCHERY',
-    unlockHint: 'Hatchery name, contact & Google Maps link unlock after 4% advance booking',
+    unlockHint: 'Hatchery name, contact & Google Maps link unlock after 5% advance booking (+2% Extra App Bonus PL)',
     inspectBtn: 'View Hatchery Lineage, Reviews, Videos & PCR Images',
     perSeed: 'per seed',
     stage: 'Seed / PL Stage',
@@ -685,10 +685,10 @@ const DICT = {
     bookSlotBtn: 'Book Packing Slot',
     myBookingsTitle: 'Your Bookings, Escrow Timeline & Gate-Passes',
     noBookingsYet: 'No bookings placed yet.',
-    paidLabel: 'Advance Paid (4%)',
-    balancePackingLabel: 'Balance at Packing (96%)',
+    paidLabel: 'Advance Paid (5%)',
+    balancePackingLabel: 'Balance at Packing (95%)',
     packingReadyAlert: '📦 Hatchery Marked Packing Complete! Complete remaining payment at packing.',
-    pendingSettlementBadge: '4% Advance Paid • Non-Refundable',
+    pendingSettlementBadge: '5% Advance Paid • Non-Refundable',
     clearedSettlementBadge: '✅ Packing Complete • Payment Settled',
     cancelledRefundBadge: '❌ Cancelled • Non-Refundable',
     cancelBookingBtn: 'Cancel Booking (Non-Refundable)',
@@ -776,13 +776,13 @@ const DICT = {
     packingTimeLabel: 'Packing Time Slot',
     brokerMarginLabel: 'Extra Margin (Paise / Seed)',
     transportAddonLabel: 'Include Oxygen Van Delivery (+₹1,500)',
-    paymentMethodLabel: 'Select 4% Advance Payment Method',
+    paymentMethodLabel: 'Select 5% Advance Payment Method',
     utrPlaceholder: 'Enter 12-Digit UPI / Bank UTR Reference Number',
     salinityWarn: 'Salinity variance exceeds 4 PPT. Hatchery will perform gradual acclimatization.',
     totalSeedValue: 'Total Hatchery Value',
-    advancePaidLabel: 'Advance Paid Now (4%)',
-    balanceAtPacking: 'Balance Payable at Packing (96%)',
-    payNowBtn: 'Confirm & Pay 4% Advance',
+    advancePaidLabel: 'Advance Paid Now (5%)',
+    balanceAtPacking: 'Balance Payable at Packing (95%)',
+    payNowBtn: 'Confirm & Pay 5% Advance',
     receiptTitle: 'OFFICIAL SEED BOOKING RECEIPT',
     finalReceiptTitle: 'FINAL BALANCE CLEARED RECEIPT',
     sellerDetailsHeading: 'Hatchery (Seller) Details',
@@ -812,7 +812,7 @@ const DICT = {
       paymentReceivedDone: 'Payment Received confirmed! Final Cleared Receipt generated.',
       bookingCancelled: 'Booking cancelled! Advance is non-refundable & stock restored.',
       farmerLocked: 'Farmer locked to your Broker ID for 365 days!',
-      paymentSuccess: '4% Advance paid! Gate-Pass & Receipt ready.',
+      paymentSuccess: '5% Advance paid (+2% App Bonus PL locked)! Gate-Pass & Receipt ready.',
       enterUtr: 'Please enter the 12-digit UPI / Bank UTR Transaction Reference.',
       calcUpdated: 'Harvest, Feed & Net Profit estimates recalculated!',
       cloudSynced: 'Live Cloud Database synced!'
@@ -865,7 +865,7 @@ const DICT = {
     caaVerified: 'CAA సర్టిఫైడ్',
     soldOutBadge: 'స్టాక్ పూర్తయింది (SOLD OUT)',
     pausedBadge: 'తాత్కాలికంగా నిలిపివేయబడింది',
-    unlockHint: '4% అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు, ఫోన్ & Google Maps లింక్ అన్‌లాక్ అవుతాయి',
+    unlockHint: '5% అడ్వాన్స్ బుకింగ్ పూర్తయిన వెంటనే హేచరీ పేరు, ఫోన్ & Google Maps లింక్ అన్‌లాక్ అవుతాయి (+2% అదనపు యాప్ బోనస్)',
     inspectBtn: 'హేచరీ చరిత్ర, రివ్యూలు, వీడియోలు & PCR ఫోటోలు చూడండి',
     perSeed: 'ఒక్క సీడ్ ధర',
     stage: 'సీడ్ / PL దశ',
@@ -878,10 +878,10 @@ const DICT = {
     bookSlotBtn: 'ప్యాకింగ్ స్లాట్ బుక్ చేయండి',
     myBookingsTitle: 'మీ బుకింగ్స్, Gate-Pass & రసీదులు',
     noBookingsYet: 'మీరు ఇంకా ఎటువంటి సీడ్ బుకింగ్ చేయలేదు.',
-    paidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
-    balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (96%)',
+    paidLabel: 'చెల్లించిన అడ్వాన్స్ (5%)',
+    balancePackingLabel: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సినది (95%)',
     packingReadyAlert: '📦 హేచరీ వారు ప్యాకింగ్ పూర్తయినట్లు తెలిపారు! ప్యాకింగ్ వద్ద బ్యాలెన్స్ చెల్లించండి.',
-    pendingSettlementBadge: '4% అడ్వాన్స్ చెల్లించబడింది • నాన్-రిఫండబుల్',
+    pendingSettlementBadge: '5% అడ్వాన్స్ చెల్లించబడింది • నాన్-రిఫండబుల్',
     clearedSettlementBadge: '✅ ప్యాకింగ్ పూర్తయింది • పేమెంట్ సెటిల్ అయింది',
     cancelledRefundBadge: '❌ క్యాన్సిల్ చేయబడింది • నాన్-రిఫండబుల్',
     cancelBookingBtn: 'బుకింగ్ క్యాన్సిల్ (నాన్-రిఫండబుల్)',
@@ -969,13 +969,13 @@ const DICT = {
     packingTimeLabel: 'ప్యాకింగ్ సమయం (Time Slot)',
     brokerMarginLabel: 'Extra Margin (Paise / Seed)',
     transportAddonLabel: 'ఆక్సిజన్ వ్యాన్ రవాణా జతచేయండి (+₹1,500)',
-    paymentMethodLabel: '4% అడ్వాన్స్ పేమెంట్ విధానం ఎంచుకోండి',
+    paymentMethodLabel: '5% అడ్వాన్స్ పేమెంట్ విధానం ఎంచుకోండి',
     utrPlaceholder: '12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి',
     salinityWarn: 'హేచరీ నీటికి మరియు చెరువు నీటికి మధ్య 4 PPT కంటే ఎక్కువ తేడా ఉంది.',
     totalSeedValue: 'హేచరీ ఆర్డర్ విలువ',
-    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (4%)',
-    balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (96%)',
-    payNowBtn: '4% అడ్వాన్స్ చెల్లించి బుక్ చేయండి',
+    advancePaidLabel: 'చెల్లించిన అడ్వాన్స్ (5%)',
+    balanceAtPacking: 'ప్యాకింగ్ సమయంలో చెల్లించాల్సిన బ్యాలెన్స్ (95%)',
+    payNowBtn: '5% అడ్వాన్స్ చెల్లించి బుక్ చేయండి',
     receiptTitle: 'అధికారిక సీడ్ బుకింగ్ రసీదు (RECEIPT)',
     finalReceiptTitle: 'ఫైనల్ బ్యాలెన్స్ క్లియర్డ్ రసీదు (FINAL RECEIPT)',
     sellerDetailsHeading: 'Hatchery (Seller) Details',
@@ -1005,7 +1005,7 @@ const DICT = {
       paymentReceivedDone: 'Payment Received నిర్ధారించబడింది! Final Receipt సిద్ధం.',
       bookingCancelled: 'బుకింగ్ క్యాన్సిల్ చేయబడింది! అడ్వాన్స్ నాన్-రిఫండబుల్, స్టాక్ పునరుద్ధరించబడింది.',
       farmerLocked: 'రైతు 365 రోజుల పాటు మీ ID కి లాక్ చేయబడ్డారు!',
-      paymentSuccess: '4% అడ్వాన్స్ పేమెంట్ పూర్తయింది! Gate-Pass & రసీదు సిద్ధం.',
+      paymentSuccess: '5% అడ్వాన్స్ పేమెంట్ పూర్తయింది (+2% యాప్ బోనస్)! Gate-Pass & రసీదు సిద్ధం.',
       enterUtr: 'దయచేసి 12-అంకెల UPI / Bank UTR రిఫరెన్స్ నంబర్ ఎంటర్ చేయండి.',
       calcUpdated: 'దిగుబడి & లాభాల లెక్కలు అప్‌డేట్ అయ్యాయి!',
       cloudSynced: 'లైవ్ డేటాబేస్ సింక్ పూర్తయింది!'
@@ -1062,6 +1062,14 @@ function AquaMarkApp() {
   // Unified Upload Images/Videos toggle states for Publish Batch & Edit Batch
   const [showNewMediaPanel, setShowNewMediaPanel] = useState(false);
   const [showEditMediaPanel, setShowEditMediaPanel] = useState(false);
+  // Grouped Clean UI Toolbars (zero clutter on mobile & laptop)
+  const [showBuyerSmartTools, setShowBuyerSmartTools] = useState(false);
+  const [showRatesAdvisory, setShowRatesAdvisory] = useState(false);
+  const [showSellerDispatchTools, setShowSellerDispatchTools] = useState(false);
+  const [showBrokerMarginCalc, setShowBrokerMarginCalc] = useState(false);
+  const [brokerCalcInput, setBrokerCalcInput] = useState({ lakhs: 5, rate: 0.42, extraPaise: 2 });
+  // Owner Crate QR Preview Modal (shows QR first, then Save PDF button)
+  const [crateQrBatch, setCrateQrBatch] = useState(null);
   // Network offline / error popup state
   const [networkError, setNetworkError] = useState(false);
   const [isRetryingNetwork, setIsRetryingNetwork] = useState(false);
@@ -2454,19 +2462,26 @@ function AquaMarkApp() {
   // =========================================================================
   // BOOKING & PAYMENT FLOW (WITH BLURRED-TO-REVEAL QR GENERATOR)
   // =========================================================================
-  const finalizeBookingRecord = async (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment = false) => {
-    const bonusSeeds = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
+  const finalizeBookingRecord = async (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance5Pct, isFullPayment = false) => {
+    // App-Exclusive +2% Extra Bonus PL so Farmer ALWAYS gets cheaper effective rate on Aqua Mark than offline!
+    const appExtraBonusPct = 2;
+    const totalBonusPct = (selectedBatch.bonusPercent || 15) + appExtraBonusPct;
+    const bonusSeeds = Math.round(qty * (totalBonusPct / 100));
     const matchedBrokerFarmer = brokerFarmers.find(
       (f) => (f.phone || '').slice(-10) === (bookingForm.farmerPhone || '').slice(-10)
     );
     const isBrokerLinked = Boolean(matchedBrokerFarmer) || currentUser?.role === 'mediator';
 
+    // Smart 5% Advance Finance Split (Zero loss to Buyer, High Net to Owner, Clean 2% to AquaMark):
+    // Direct: 2% AquaMark + 3% Owner Advance | Broker: 2% AquaMark + 2% Broker + 1% Owner Advance
     const silentPlatform2Pct = Math.round(hatcheryFixedCost * 0.02);
-    const hold2Pct = Math.max(0, advance4Pct - silentPlatform2Pct);
+    const brokerBase2Pct = isBrokerLinked ? Math.round(hatcheryFixedCost * 0.02) : 0;
+    const ownerAdvanceShare = Math.max(0, advance5Pct - silentPlatform2Pct - brokerBase2Pct);
+    const hold2Pct = isBrokerLinked ? brokerBase2Pct : ownerAdvanceShare;
     const brokerExtraMarginTotal = isBrokerLinked ? Math.round(qty * (marginPaiseNum / 100)) : 0;
     const totalFarmerPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
-    const paidNow = isFullPayment ? totalFarmerPayable : advance4Pct;
-    const balanceAtPacking = isFullPayment ? 0 : (totalFarmerPayable - advance4Pct);
+    const paidNow = isFullPayment ? totalFarmerPayable : advance5Pct;
+    const balanceAtPacking = isFullPayment ? 0 : (totalFarmerPayable - advance5Pct);
 
     const now = new Date();
     const issueDateStr = now.toLocaleDateString('en-IN');
@@ -2504,11 +2519,12 @@ function AquaMarkApp() {
       tokenAdvance: paidNow,
       balanceAtPacking,
       clearedAt: isFullPayment ? `${issueDateStr} ${issueTimeStr}` : undefined,
+      appExtraBonusPct,
       settlement: {
         hold2PctAmount: hold2Pct,
         platform2Pct: silentPlatform2Pct,
-        ownerDirect2Pct: !isBrokerLinked ? hold2Pct : 0,
-        brokerBase2Pct: isBrokerLinked ? hold2Pct : 0,
+        ownerDirect2Pct: ownerAdvanceShare,
+        brokerBase2Pct,
         farmerRefundable2Pct: 0,
         status: isFullPayment ? 'BALANCE_CLEARED' : 'ADVANCE_HOLD'
       },
@@ -2532,7 +2548,7 @@ function AquaMarkApp() {
       selectedBatch.ownerPhone,
       'seller',
       `New Seed Booking (${newBooking.bookingId})`,
-      `${bookingForm.farmerName} booked ${qty.toLocaleString('en-IN')} PL (${isFullPayment ? '100% Full Paid' : '4% Advance Paid'}).`,
+      `${bookingForm.farmerName} booked ${qty.toLocaleString('en-IN')} PL (${isFullPayment ? '100% Full Paid' : '5% Advance Paid'}).`,
       { bookingId: newBooking.bookingId, batchId: selectedBatch.id, farmerName: bookingForm.farmerName, farmerPhone: bookingForm.farmerPhone, amount: paidNow, packingDate: bookingForm.packingDate }
     );
     await pushAppNotification(
@@ -2585,9 +2601,9 @@ function AquaMarkApp() {
     const transportCost = bookingForm.includeTransport ? 1500 : 0;
     const brokerExtraMarginTotal = currentUser?.role === 'mediator' ? Math.round(requestedQty * (marginPaiseNum / 100)) : 0;
     const totalPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
-    const advance4Pct = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
+    const advance5Pct = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
     const isFullPayment = bookingForm.paymentOption === 'FULL';
-    const chargeNow = isFullPayment ? totalPayable : advance4Pct;
+    const chargeNow = isFullPayment ? totalPayable : advance5Pct;
 
     if (bookingForm.paymentMethod === 'DIRECT_UPI' || bookingForm.paymentMethod === 'BANK_TO_BANK') {
       if (!bookingForm.utrReference.trim()) {
@@ -2601,7 +2617,7 @@ function AquaMarkApp() {
         hatcheryFixedCost,
         marginPaiseNum,
         transportCost,
-        advance4Pct,
+        advance5Pct,
         isFullPayment
       );
       return;
@@ -2609,10 +2625,10 @@ function AquaMarkApp() {
 
     launchRazorpayPayment({
       amountInr: chargeNow,
-      description: `${selectedBatch.plStage} Seed ${isFullPayment ? '100% Full Payment' : '4% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
+      description: `${selectedBatch.plStage} Seed ${isFullPayment ? '100% Full Payment' : '5% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
       prefillName: bookingForm.farmerName || 'Farmer',
       prefillPhone: bookingForm.farmerPhone,
-      onSuccess: (rzpId) => finalizeBookingRecord(rzpId, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance4Pct, isFullPayment),
+      onSuccess: (rzpId) => finalizeBookingRecord(rzpId, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance5Pct, isFullPayment),
       onFailure: (msg) => setModalError(msg)
     });
   };
@@ -3179,8 +3195,8 @@ function AquaMarkApp() {
               <div class="totals-box">
                 <div class="totals-row"><span>Unit Seed Rate:</span><span>₹${(bk.hatcheryFixedRate || bk.batch?.pricePer1000 || 0.43).toFixed(2)} / seed</span></div>
                 <div class="totals-row"><span>Total Order Value:</span><span><b>₹${(bk.totalSeedCost || 0).toLocaleString('en-IN')}</b></span></div>
-                <div class="totals-row totals-highlight"><span>${isPaidFull ? 'Total Paid (100% Settled):' : '4% Advance Paid:'}</span><span>₹${(isPaidFull ? bk.totalSeedCost : bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
-                <div class="totals-row"><span>${isPaidFull ? 'Remaining Balance:' : '96% Balance at Hatchery:'}</span><span><b>₹${(isPaidFull ? 0 : bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span></div>
+                <div class="totals-row totals-highlight"><span>${isPaidFull ? 'Total Paid (100% Settled):' : '5% Advance Paid:'}</span><span>₹${(isPaidFull ? bk.totalSeedCost : bk.tokenAdvance || 0).toLocaleString('en-IN')}</span></div>
+                <div class="totals-row"><span>${isPaidFull ? 'Remaining Balance:' : '95% Balance at Hatchery:'}</span><span><b>₹${(isPaidFull ? 0 : bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span></div>
               </div>
             </div>
 
@@ -3195,7 +3211,7 @@ function AquaMarkApp() {
               <strong>Gate Dispatch Verification Checklist:</strong> &nbsp;&nbsp;
               [ ✓ ] CAA License Verified &nbsp;&nbsp;&nbsp;
               [ ✓ ] Images Attached (${pcrLabels}) &nbsp;&nbsp;&nbsp;
-              [ ✓ ] ${isPaidFull ? '100% Payment Settled' : '4% Advance Confirmed'} &nbsp;&nbsp;&nbsp;
+              [ ✓ ] ${isPaidFull ? '100% Payment Settled' : '5% Advance Confirmed'} &nbsp;&nbsp;&nbsp;
               [ ${bk.gatePassCleared ? '✓' : '&nbsp;'} ] Oxygen Packing Count Checked at Hatchery
             </div>
           </div>
@@ -3752,90 +3768,83 @@ function AquaMarkApp() {
   ]));
 
   const renderFilterSortBar = (isBuyerView = false) => (
-    <div className={`rounded-2xl p-3.5 border flex flex-wrap items-center justify-between gap-3 ${cardBg}`}>
-      <div className="relative flex-1 min-w-[200px]">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-        <input
-          type="text"
-          placeholder={t.searchPlaceholder}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full border rounded-xl pl-9 pr-3 py-1.5 text-xs select-text focus:outline-none ${inputCls}`}
-        />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <select value={zoneFilter} onChange={(e) => setZoneFilter(e.target.value)} className={`border rounded-xl px-3 py-1.5 text-xs font-semibold ${inputCls}`}>
-          <option value="ALL">{t.allZones}</option>
-          {availableZones.map(z => <option key={z} value={z}>{z}</option>)}
-        </select>
-        <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={`border rounded-xl px-3 py-1.5 text-xs font-semibold ${inputCls}`}>
-          <option value="ALL">{t.allStages}</option>
-          {SEED_STAGE_OPTIONS.filter(s => s !== 'OTHER_CUSTOM').map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <div className={`inline-flex items-center gap-1 border rounded-xl px-2.5 py-1.5 ${subCardBg}`}>
-          <ArrowUpDown className="w-3.5 h-3.5 text-teal-600" />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent text-xs font-bold focus:outline-none">
-            <option value="RATING">{t.sortRating}</option>
-            {isBuyerView && <option value="MATCH_HIGH">{L('Best Match %', 'బెస్ట్ మ్యాచ్ %')}</option>}
-            <option value="PRICE_LOW">{t.sortPriceLow}</option>
-            <option value="SALINITY_LOW">{t.sortSalinity}</option>
-            <option value="BONUS_HIGH">{t.sortBonus}</option>
+    <div className={`rounded-2xl p-3 border space-y-2.5 ${cardBg}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <input
+            type="text"
+            placeholder={t.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs select-text focus:outline-none ${inputCls}`}
+          />
+        </div>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+          <select value={zoneFilter} onChange={(e) => setZoneFilter(e.target.value)} className={`border rounded-xl px-2.5 py-2 text-xs font-semibold ${inputCls}`}>
+            <option value="ALL">{t.allZones}</option>
+            {availableZones.map(z => <option key={z} value={z}>{z}</option>)}
+          </select>
+          <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={`border rounded-xl px-2.5 py-2 text-xs font-semibold ${inputCls}`}>
+            <option value="ALL">{t.allStages}</option>
+            {SEED_STAGE_OPTIONS.filter(s => s !== 'OTHER_CUSTOM').map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
-        {/* FEATURE 19: RATE CONVERTER PILL */}
-        <div className={`inline-flex items-center rounded-xl border p-0.5 text-[11px] font-bold ${subCardBg}`}>
-          {[
-            { id: 'SEED', label: '₹/Seed' },
-            { id: 'LAKH', label: '₹/Lakh' },
-            { id: 'MILLION', label: '₹/Million' }
-          ].map(u => (
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className={`inline-flex items-center gap-1 border rounded-xl px-2.5 py-1.5 ${subCardBg}`}>
+            <ArrowUpDown className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent text-xs font-bold focus:outline-none">
+              <option value="RATING">{t.sortRating}</option>
+              {isBuyerView && <option value="MATCH_HIGH">{L('Best Match %', 'బెస్ట్ మ్యాచ్ %')}</option>}
+              <option value="PRICE_LOW">{t.sortPriceLow}</option>
+              <option value="SALINITY_LOW">{t.sortSalinity}</option>
+              <option value="BONUS_HIGH">{t.sortBonus}</option>
+            </select>
+          </div>
+          {isBuyerView && (
             <button
-              key={u.id}
               type="button"
-              onClick={() => setRateUnit(u.id)}
-              className={`px-2 py-1 rounded-lg cursor-pointer transition ${rateUnit === u.id ? 'bg-teal-600 text-white' : 'opacity-70 hover:opacity-100'}`}
+              onClick={() => setShowBuyerSmartTools(prev => !prev)}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition ${showBuyerSmartTools || matchmaker.enabled || watchlistFilterOnly ? 'bg-indigo-600 text-white border-indigo-600' : subCardBg}`}
             >
-              {u.label}
+              <Sliders className="w-3.5 h-3.5" /> {L('Smart Tools', 'స్మార్ట్ టూల్స్')}
+              {(watchlistActive && watchlistMatches.length > 0) && (
+                <span className="bg-emerald-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">{watchlistMatches.length}</span>
+              )}
             </button>
-          ))}
+          )}
+          {isBuyerView && (
+            <button
+              type="button"
+              onClick={() => setOnlySavedFilter(!onlySavedFilter)}
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${onlySavedFilter ? 'bg-rose-500/15 border-rose-400 text-rose-500' : subCardBg}`}
+            >
+              <Heart className={`w-3.5 h-3.5 ${onlySavedFilter ? 'fill-rose-500 text-rose-500' : ''}`} /> {t.onlySaved}
+            </button>
+          )}
+          {isBuyerView && (
+            <button
+              type="button"
+              onClick={() => setShowBulkCartModal(true)}
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${bulkCart.length > 0 ? 'bg-emerald-600 text-white border-emerald-600' : subCardBg}`}
+            >
+              <ShoppingCart className="w-3.5 h-3.5" /> {L('Cart', 'కార్ట్')} ({bulkCart.length})
+            </button>
+          )}
+          {isBuyerView && compareIds.length >= 2 && (
+            <button
+              type="button"
+              onClick={() => setShowCompareModal(true)}
+              className="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+            >
+              <Scale className="w-3.5 h-3.5" /> {t.compareBtn} ({compareIds.length})
+            </button>
+          )}
         </div>
-        {isBuyerView && (
-          <button
-            type="button"
-            onClick={() => setMatchmakerOpen(!matchmakerOpen)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${matchmaker.enabled ? 'bg-indigo-600 text-white border-indigo-600' : subCardBg}`}
-          >
-            <Sparkles className="w-3.5 h-3.5" /> {L('Matchmaker', 'మ్యాచ్‌మేకర్')}
-          </button>
-        )}
-        {isBuyerView && (
-          <button
-            type="button"
-            onClick={() => setOnlySavedFilter(!onlySavedFilter)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${onlySavedFilter ? 'bg-rose-500/15 border-rose-400 text-rose-500' : subCardBg}`}
-          >
-            <Heart className={`w-3.5 h-3.5 ${onlySavedFilter ? 'fill-rose-500 text-rose-500' : ''}`} /> {t.onlySaved}
-          </button>
-        )}
-        {isBuyerView && (
-          <button
-            type="button"
-            onClick={() => setShowBulkCartModal(true)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${bulkCart.length > 0 ? 'bg-emerald-600 text-white border-emerald-600' : subCardBg}`}
-          >
-            <ShoppingCart className="w-3.5 h-3.5" /> {L('Cart', 'కార్ట్')} ({bulkCart.length})
-          </button>
-        )}
-        {isBuyerView && compareIds.length >= 2 && (
-          <button
-            type="button"
-            onClick={() => setShowCompareModal(true)}
-            className="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <Scale className="w-3.5 h-3.5" /> {t.compareBtn} ({compareIds.length})
-          </button>
-        )}
-        {/* FEATURE 22: RESET CHIP */}
+
         {(searchQuery || zoneFilter !== 'ALL' || stageFilter !== 'ALL' || onlySavedFilter || sortBy !== 'RATING' || watchlistFilterOnly || rateUnit !== 'SEED' || matchmaker.enabled) && (
           <button
             type="button"
@@ -4258,7 +4267,7 @@ function AquaMarkApp() {
     : 0;
 
   return (
-    <div className={`min-h-screen font-sans select-none transition-colors ${pageBg}`}>
+    <div className={`min-h-screen font-sans select-none transition-colors overflow-x-hidden ${pageBg}`}>
       {/* HIDDEN INPUTS FOR CAMERA vs FILES */}
       <input ref={pcrFileRef} type="file" multiple accept="image/*" onChange={(e) => handleMultiplePcrUpload(e.target.files, false)} className="hidden" />
       <input ref={pcrCamRef} type="file" accept="image/*" capture="environment" onChange={(e) => handleMultiplePcrUpload(e.target.files, false)} className="hidden" />
@@ -4350,14 +4359,7 @@ function AquaMarkApp() {
               </button>
             )}
 
-            {/* LIVE NETWORK ONLINE/OFFLINE STATUS PILL */}
-            <span
-              className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border ${isOnline ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : 'bg-rose-500/15 text-rose-500 border-rose-500/40'}`}
-              title={isOnline ? 'Connected to Cloud' : 'Offline Mode'}
-            >
-              {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              {isOnline ? 'Live' : 'Offline'}
-            </span>
+
 
             {/* LIVE CLOUD SYNC REFRESH BUTTON */}
             <button
@@ -4424,48 +4426,53 @@ function AquaMarkApp() {
            ========================================================= */}
         {currentUser.role === 'buyer' && (
           <>
-            <div className="bg-slate-900 text-white rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className="font-bold text-emerald-400 inline-flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4" /> {t.tickerTitle}
-              </span>
-              <div className="flex flex-wrap gap-4 font-mono text-[11px]">
-                <span>30 Count: <b className="text-emerald-300">₹395/kg</b></span>
-                <span>40 Count: <b className="text-emerald-300">₹340/kg</b></span>
-                <span>50 Count: <b className="text-emerald-300">₹305/kg</b></span>
-                <span>60 Count: <b className="text-emerald-300">₹275/kg</b></span>
-              </div>
-            </div>
-
-            {/* FEATURE 9 & 22: DYNAMIC COASTAL WEATHER & PACKING ADVISORY + NEXT ARROW + LISTEN */}
-            {(() => {
-              const adv = currentAquaTip;
-              return (
-                <div className={`rounded-2xl px-4 py-2.5 border border-sky-500/30 bg-sky-500/10 flex flex-wrap items-center justify-between gap-2 text-xs`}>
-                  <div className="flex items-center gap-2 flex-1 min-w-[220px]">
-                    <CloudSun className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span className="font-semibold leading-snug">{lang === 'te' ? adv.te : adv.en}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleVoiceReadout('weather', adv.en, adv.te)}
-                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer ${isSpeakingId === 'weather' ? 'bg-sky-600 text-white border-sky-600' : cardBg}`}
-                    >
-                      {isSpeakingId === 'weather' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-sky-500" />}
-                      {isSpeakingId === 'weather' ? L('Stop', 'ఆపు') : L('Listen', 'వినండి')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleNextFreshTip}
-                      title={L('Generate Next Fresh Tip', 'కొత్త టిప్ చూడండి')}
-                      className={`p-1.5 rounded-lg border border-sky-500/40 text-sky-600 hover:bg-sky-500 hover:text-white transition cursor-pointer ${cardBg}`}
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+            {/* GROUPED COMPACT MARKET RATES & AQUA ADVISORY BAR (ZERO CLUTTER ON MOBILE) */}
+            <div className={`rounded-2xl border overflow-hidden ${cardBg}`}>
+              <div className="bg-slate-900 text-white px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-bold text-emerald-400 inline-flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4 shrink-0" /> {L('AP Rates:', 'AP ధరలు:')}
+                  </span>
+                  <span className="font-mono text-[11px]">30C <b className="text-emerald-300">₹395</b></span>
+                  <span className="font-mono text-[11px]">40C <b className="text-emerald-300">₹340</b></span>
+                  <span className="font-mono text-[11px]">50C <b className="text-emerald-300">₹305</b></span>
+                  <span className="font-mono text-[11px] hidden sm:inline">60C <b className="text-emerald-300">₹275</b></span>
                 </div>
-              );
-            })()}
+                <button
+                  type="button"
+                  onClick={() => setShowRatesAdvisory(prev => !prev)}
+                  className="bg-white/10 hover:bg-white/20 text-sky-300 text-[11px] font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <CloudSun className="w-3.5 h-3.5" /> {showRatesAdvisory ? L('Hide Tip', 'దాచు') : L('Aqua Tip', 'ఆక్వా టిప్')}
+                </button>
+              </div>
+              {showRatesAdvisory && (() => {
+                const adv = currentAquaTip;
+                return (
+                  <div className="px-3.5 py-2.5 bg-sky-500/10 border-t border-sky-500/20 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold leading-snug flex-1 min-w-[200px]">{lang === 'te' ? adv.te : adv.en}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleVoiceReadout('weather', adv.en, adv.te)}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer ${isSpeakingId === 'weather' ? 'bg-sky-600 text-white border-sky-600' : cardBg}`}
+                      >
+                        {isSpeakingId === 'weather' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-sky-500" />}
+                        {isSpeakingId === 'weather' ? L('Stop', 'ఆపు') : L('Listen', 'వినండి')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNextFreshTip}
+                        title={L('Generate Next Fresh Tip', 'కొత్త టిప్ చూడండి')}
+                        className={`p-1.5 rounded-lg border border-sky-500/40 text-sky-600 hover:bg-sky-500 hover:text-white transition cursor-pointer ${cardBg}`}
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
 
 
             <div className={`flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl border w-full sm:w-fit overflow-x-auto ${cardBg}`}>
@@ -4516,110 +4523,99 @@ function AquaMarkApp() {
                 </div>
                 {renderFilterSortBar(true)}
 
-                {/* FEATURE 4: PRICE DROP WATCHLIST & ALERT */}
-                <div className={`rounded-2xl p-3.5 border flex flex-wrap items-center justify-between gap-3 text-xs ${watchlistActive && watchlistMatches.length > 0 ? 'border-emerald-500/50 bg-emerald-500/10' : cardBg}`}>
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 font-extrabold text-emerald-600">
-                      <Bell className="w-4 h-4" /> {L('Price Drop Watchlist', 'ధర తగ్గింపు అలర్ట్')}
-                    </span>
-                    <div className="inline-flex items-center gap-1.5">
-                      <span className="opacity-70">{L('Alert if ≤', 'ధర ≤')} ₹</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0.10"
-                        max="2.00"
-                        value={watchlistPrice}
-                        onChange={(e) => setWatchlistPrice(Number(e.target.value))}
-                        className={`w-20 border rounded-lg px-2 py-1 text-xs font-mono font-bold select-text ${inputCls}`}
-                      />
-                      <span className="opacity-70">/seed</span>
+                {/* GROUPED BUYER SMART TOOLS PANEL (RATE CONVERTER + PRICE WATCHLIST + MATCHMAKER) */}
+                {showBuyerSmartTools && (
+                  <div className={`rounded-2xl p-4 border-2 border-indigo-500/30 space-y-4 text-xs ${cardBg}`}>
+                    {/* 1. RATE CONVERTER */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-300/20">
+                      <span className="font-extrabold text-teal-600">{L('Display Rate Unit', 'ధర చూపే విధానం')}</span>
+                      <div className={`inline-flex items-center rounded-xl border p-0.5 text-[11px] font-bold ${subCardBg}`}>
+                        {[
+                          { id: 'SEED', label: '₹/Seed' },
+                          { id: 'LAKH', label: '₹/Lakh' },
+                          { id: 'MILLION', label: '₹/Million' }
+                        ].map(u => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => setRateUnit(u.id)}
+                            className={`px-2.5 py-1 rounded-lg cursor-pointer transition ${rateUnit === u.id ? 'bg-teal-600 text-white' : 'opacity-70 hover:opacity-100'}`}
+                          >
+                            {u.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setWatchlistActive(!watchlistActive)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border cursor-pointer ${watchlistActive ? 'bg-emerald-600 text-white border-emerald-600' : subCardBg}`}
-                    >
-                      {watchlistActive ? L('Alert ON', 'అలర్ట్ ఆన్') : L('Alert OFF', 'అలర్ట్ ఆఫ్')}
-                    </button>
-                  </div>
-                  {watchlistActive && watchlistMatches.length > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-emerald-600">
-                        🔥 {watchlistMatches.length} {L('batch(es) available ≤', 'బ్యాచ్‌లు అందుబాటులో ఉన్నాయి ≤')} ₹{Number(watchlistPrice).toFixed(2)}/seed!
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setWatchlistFilterOnly(!watchlistFilterOnly)}
-                        className={`px-3 py-1 rounded-lg text-[11px] font-bold cursor-pointer ${watchlistFilterOnly ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
-                      >
-                        {watchlistFilterOnly ? L('Show All', 'అన్నీ చూడు') : L('View Matches', 'మ్యాచ్‌లు చూడు')}
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-[11px] opacity-65">
-                      {L('Set your target seed rate to get instant top-banner alerts.', 'మీకు కావాల్సిన ధర సెట్ చేస్తే ఆ ధరలో బ్యాచ్ రాగానే అలర్ట్ వస్తుంది.')}
-                    </span>
-                  )}
-                </div>
 
-                {/* FEATURE 3: SMART SEED MATCHMAKER PANEL */}
-                {matchmakerOpen && (
-                  <div className={`rounded-2xl p-4 border-2 border-indigo-500/30 space-y-3 text-xs ${cardBg}`}>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-extrabold text-indigo-500 inline-flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4" /> {L('Smart Seed Matchmaker (Auto Match % Score)', 'స్మార్ట్ సీడ్ మ్యాచ్‌మేకర్ (ఆటో మ్యాచ్ % స్కోర్)')}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextEnabled = !matchmaker.enabled;
-                          setMatchmaker(prev => ({ ...prev, enabled: nextEnabled }));
-                          if (nextEnabled) setSortBy('MATCH_HIGH');
-                        }}
-                        className={`px-3 py-1 rounded-xl font-bold text-xs cursor-pointer ${matchmaker.enabled ? 'bg-indigo-600 text-white' : 'bg-teal-600 text-white'}`}
-                      >
-                        {matchmaker.enabled ? L('Match Scoring Active ✓', 'మ్యాచ్ స్కోర్ ఆన్ ✓') : L('Activate Match % Score', 'మ్యాచ్ % స్కోర్ ఆన్ చేయండి')}
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Your Pond Salinity (PPT)', 'మీ చెరువు ఉప్పదనం (PPT)')}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="45"
-                          value={matchmaker.pondPpt}
-                          onChange={(e) => setMatchmaker(prev => ({ ...prev, pondPpt: Number(e.target.value), enabled: true }))}
-                          className={`w-full border rounded-xl px-3 py-1.5 text-xs font-bold select-text ${inputCls}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond Area (Acres)', 'చెరువు విస్తీర్ణం (ఎకరాలు)')}</label>
-                        <input
-                          type="number"
-                          step="0.5"
-                          min="0.5"
-                          value={matchmaker.acres}
-                          onChange={(e) => setMatchmaker(prev => ({ ...prev, acres: Number(e.target.value), enabled: true }))}
-                          className={`w-full border rounded-xl px-3 py-1.5 text-xs font-bold select-text ${inputCls}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Max Budget (₹ / Seed)', 'గరిష్ట బడ్జెట్ (₹ / సీడ్)')}</label>
+                    {/* 2. PRICE DROP WATCHLIST */}
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-300/20">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 font-extrabold text-emerald-600">
+                          <Bell className="w-4 h-4" /> {L('Price Alert ≤ ₹', 'ధర అలర్ట్ ≤ ₹')}
+                        </span>
                         <input
                           type="number"
                           step="0.01"
                           min="0.10"
-                          value={matchmaker.maxBudget}
-                          onChange={(e) => setMatchmaker(prev => ({ ...prev, maxBudget: Number(e.target.value), enabled: true }))}
-                          className={`w-full border rounded-xl px-3 py-1.5 text-xs font-bold select-text ${inputCls}`}
+                          max="2.00"
+                          value={watchlistPrice}
+                          onChange={(e) => setWatchlistPrice(Number(e.target.value))}
+                          className={`w-20 border rounded-lg px-2 py-1 text-xs font-mono font-bold select-text ${inputCls}`}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setWatchlistActive(!watchlistActive)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border cursor-pointer ${watchlistActive ? 'bg-emerald-600 text-white border-emerald-600' : subCardBg}`}
+                        >
+                          {watchlistActive ? L('ON', 'ఆన్') : L('OFF', 'ఆఫ్')}
+                        </button>
+                      </div>
+                      {watchlistActive && watchlistMatches.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setWatchlistFilterOnly(!watchlistFilterOnly)}
+                          className={`px-3 py-1 rounded-lg text-[11px] font-bold cursor-pointer ${watchlistFilterOnly ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                        >
+                          {watchlistFilterOnly ? L('Show All', 'అన్నీ చూడు') : `🔥 ${L('View', 'చూడు')} ${watchlistMatches.length} ${L('Matches', 'మ్యాచ్‌లు')}`}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* 3. SMART SEED MATCHMAKER */}
+                    <div className="space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-extrabold text-indigo-500 inline-flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4" /> {L('Smart Seed Matchmaker (Pond Match %)', 'స్మార్ట్ సీడ్ మ్యాచ్‌మేకర్ (మ్యాచ్ %)')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextEnabled = !matchmaker.enabled;
+                            setMatchmaker(prev => ({ ...prev, enabled: nextEnabled }));
+                            if (nextEnabled) setSortBy('MATCH_HIGH');
+                          }}
+                          className={`px-3 py-1 rounded-xl font-bold text-xs cursor-pointer ${matchmaker.enabled ? 'bg-indigo-600 text-white' : 'bg-teal-600 text-white'}`}
+                        >
+                          {matchmaker.enabled ? L('Active ✓', 'ఆన్ ✓') : L('Activate', 'ఆన్ చేయండి')}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Pond PPT', 'చెరువు PPT')}</label>
+                          <input type="number" min="0" max="45" value={matchmaker.pondPpt} onChange={(e) => setMatchmaker(prev => ({ ...prev, pondPpt: Number(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Acres', 'ఎకరాలు')}</label>
+                          <input type="number" step="0.5" min="0.5" value={matchmaker.acres} onChange={(e) => setMatchmaker(prev => ({ ...prev, acres: Number(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Max ₹/Seed', 'గరిష్ట ₹/సీడ్')}</label>
+                          <input type="number" step="0.01" min="0.10" value={matchmaker.maxBudget} onChange={(e) => setMatchmaker(prev => ({ ...prev, maxBudget: Number(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
-
 
                 {filteredAndSortedBatches.length === 0 ? (
                   <div className={`rounded-2xl border p-12 text-center space-y-2 ${cardBg}`}>
@@ -4793,7 +4789,27 @@ function AquaMarkApp() {
                                 <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
                               </div>
 
-                              {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
+                              {/* GROUPED SELLER DISPATCH, PREP & NOTICE TOOLS (CLEAN COLLAPSIBLE) */}
+                              <div className={`rounded-2xl border overflow-hidden ${cardBg}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowSellerDispatchTools(prev => !prev)}
+                                  className="w-full px-4 py-3.5 flex items-center justify-between gap-2 text-xs font-extrabold cursor-pointer"
+                                >
+                                  <span className="inline-flex items-center gap-2 text-teal-600">
+                                    <Sliders className="w-4 h-4 shrink-0" />
+                                    {L('Dispatch, Shift Queue & Holiday Notice Tools', 'ప్యాకింగ్ షిఫ్ట్, ఆక్సిజన్ ప్రెప్ & సెలవు నోటీసు టూల్స్')}
+                                  </span>
+                                  <span className="inline-flex items-center gap-2 shrink-0">
+                                    <span className="bg-teal-500/15 text-teal-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                      {hatcheryUpcomingOrders.length} {L('Queued', 'క్యూలో')}
+                                    </span>
+                                    <ChevronRight className={`w-4 h-4 transition-transform ${showSellerDispatchTools ? 'rotate-90' : ''}`} />
+                                  </span>
+                                </button>
+                                {showSellerDispatchTools && (
+                    <div className="p-4 pt-1 space-y-4 border-t border-slate-300/20">
+                {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
                               {ownerProfile.dispatchNotice && (
                                 <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
                                   <Megaphone className="w-3.5 h-3.5 shrink-0" />
@@ -4842,6 +4858,19 @@ function AquaMarkApp() {
                                   </span>
                                 </div>
                               </div>
+
+                              {/* APP-EXCLUSIVE EFFECTIVE RATE SAVINGS BADGE */}
+                              {(() => {
+                                const baseRate = Number(batch.pricePer1000 || 0.43);
+                                const appBonusTotal = (Number(batch.bonusPercent || 15) + 2);
+                                const netEff = (baseRate / (1 + appBonusTotal / 100)).toFixed(2);
+                                return (
+                                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-1.5 flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    <span>✨ {L(`App Deal: +${batch.bonusPercent}% + 2% Free App Bonus`, `యాప్ ఆఫర్: +${batch.bonusPercent}% + 2% అదనపు ఫ్రీ బోనస్`)}</span>
+                                    <span>{L('Net', 'నెట్')}: ₹{netEff}/seed</span>
+                                  </div>
+                                );
+                              })()}
 
                               <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
                                 <span className="font-semibold">
@@ -4908,1214 +4937,1224 @@ function AquaMarkApp() {
                               </button>
                             </div>
                           </div>
-                        );
+                              );
                       })}
-                    </div>
-                  </div>
-                )}
+                            </div>
+                          </div>
+                        )
+                      }
               </>
             )}
 
-            {/* TAB 2: BUYER BOOKINGS, DIGITAL ESCROW TIMELINE & GATE-PASSES */}
-            {buyerTab === 'bookings' && (
-              <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-base font-bold flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-teal-600" /> {t.myBookingsTitle}
-                  </h3>
-                  {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BUYER) */}
-                  <button
-                    type="button"
-                    onClick={() => handleExportCsvLedger(bookings.filter(b => b.farmerPhone === currentUser.phone), 'Buyer')}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
-                  >
-                    <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
-                  </button>
-                </div>
-                {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
-                  <p className="text-xs opacity-60">{t.noBookingsYet}</p>
-                ) : (
-                  <div className="max-h-[68vh] overflow-y-auto pr-1 space-y-4">
-                    {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
-                      const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
-                      const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
-                      const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
-                      const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
-                      const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
+                    {/* TAB 2: BUYER BOOKINGS, DIGITAL ESCROW TIMELINE & GATE-PASSES */}
+                    {buyerTab === 'bookings' && (
+                      <div className={`rounded-2xl p-3.5 sm:p-6 border shadow-xs space-y-4 overflow-hidden ${cardBg}`}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm sm:text-base font-bold flex items-center gap-2 min-w-0">
+                            <FileText className="w-5 h-5 text-teal-600 shrink-0" />
+                            <span className="truncate sm:whitespace-normal">{t.myBookingsTitle}</span>
+                          </h3>
+                          {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BUYER) */}
+                          <button
+                            type="button"
+                            onClick={() => handleExportCsvLedger(bookings.filter(b => b.farmerPhone === currentUser.phone), 'Buyer')}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shrink-0 ${subCardBg}`}
+                          >
+                            <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                          </button>
+                        </div>
+                        {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
+                          <p className="text-xs opacity-60">{t.noBookingsYet}</p>
+                        ) : (
+                          <div className="max-h-[68vh] overflow-y-auto overflow-x-hidden pr-0.5 space-y-4">
+                            {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
+                              const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
+                              const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                              const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
+                              const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
+                              const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
 
-                      return (
-                        <div
-                          key={bk.bookingId}
-                          onClick={() => setInspectedBuyerBooking(bk)}
-                          className={`border hover:border-teal-500 rounded-2xl p-4 space-y-3 transition cursor-pointer ${subCardBg}`}
-                        >
-                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
-                            <div className="bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-bold">
-                              {t.packingReadyAlert}
+                              return (
+                                <div
+                                  key={bk.bookingId}
+                                  onClick={() => setInspectedBuyerBooking(bk)}
+                                  className={`border hover:border-teal-500 rounded-2xl p-3.5 sm:p-4 space-y-3 transition cursor-pointer overflow-hidden ${subCardBg}`}
+                                >
+                                  {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
+                                    <div className="bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold">
+                                      {t.packingReadyAlert}
+                                    </div>
+                                  )}
+
+                                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                                    <div className="space-y-1.5 min-w-0 flex-1">
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/30">{bk.bookingId}</span>
+                                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
+                                          ? 'bg-emerald-500/15 text-emerald-500'
+                                          : isCancelled
+                                            ? 'bg-rose-500/15 text-rose-500'
+                                            : 'bg-amber-500/15 text-amber-500'
+                                          }`}>
+                                          {isFinalCleared
+                                            ? t.clearedSettlementBadge
+                                            : isCancelled
+                                              ? t.cancelledRefundBadge
+                                              : t.pendingSettlementBadge}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400 break-words leading-snug">
+                                        {bk.batch?.realName} • +91 {bk.batch?.realPhone}
+                                      </p>
+                                      <p className="text-xs opacity-80 leading-relaxed break-words">
+                                        Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
+                                      </p>
+                                      <p className="text-[11px] opacity-70 leading-relaxed break-words">
+                                        {isFinalCleared
+                                          ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
+                                          : isCancelled
+                                            ? <span className="text-rose-500 font-bold">Cancelled • Non-Refundable</span>
+                                            : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
+                                        {' '}• <span className="text-teal-500 underline font-semibold">Tap card for full details & receipts</span>
+                                      </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto" onClick={(e) => e.stopPropagation()}>
+                                      {/* STATUS ANIMATION BUTTON */}
+                                      {!isCancelled && (
+                                        <button
+                                          type="button"
+                                          onClick={() => openAnimatedStatusModal(bk)}
+                                          className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${cardBg}`}
+                                        >
+                                          <Activity className="w-3.5 h-3.5 shrink-0" /> Status
+                                        </button>
+                                      )}
+
+                                      {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
+                                      {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                                            setPayRemainingBooking(bk);
+                                          }}
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                        >
+                                          <CreditCard className="w-3.5 h-3.5 shrink-0" /> Full Payment
+                                        </button>
+                                      )}
+
+                                      {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
+                                      {!isCancelled && (
+                                        bk.gatePassCleared ? (
+                                          <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap">
+                                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Gate-Pass Cleared
+                                          </span>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => setGatePassBooking(bk)}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                          >
+                                            <QrCode className="w-3.5 h-3.5 shrink-0" /> Gate-Pass QR
+                                          </button>
+                                        )
+                                      )}
+
+                                      {/* FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN */}
+                                      {!isCancelled && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const existing = survivalLogs[bk.bookingId];
+                                            setSurvivalDraft(existing ? { h24: existing.h24, h48: existing.h48, h72: existing.h72, note: existing.note || '' } : { h24: 96, h48: 92, h72: 88, note: '' });
+                                            setSurvivalModalBooking(bk);
+                                          }}
+                                          className={`border text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${survivalLogs[bk.bookingId] ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600' : cardBg}`}
+                                        >
+                                          <CheckCircle className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                          {survivalLogs[bk.bookingId]
+                                            ? `72h: ${survivalLogs[bk.bookingId].h72}% ✓`
+                                            : L('72h Survival', '72h సర్వైవల్')}
+                                        </button>
+                                      )}
+
+                                      {/* FEATURE 15: 1-CLICK QUICK REORDER */}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuickReorder(bk)}
+                                        className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                      >
+                                        <RefreshCw className="w-3.5 h-3.5 shrink-0" /> {L('Reorder', 'రీఆర్డర్')}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {isFinalCleared && (
+                                    <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
+                                      {!bk.rated ? (
+                                        <div className={`flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
+                                          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
+                                            <span className="text-xs font-bold">{t.rateSeedLabel}</span>
+                                            <div className="flex items-center gap-1">
+                                              {[1, 2, 3, 4, 5].map(star => (
+                                                <button
+                                                  key={star}
+                                                  type="button"
+                                                  onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
+                                                  className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
+                                                >
+                                                  {star}★
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:flex-1">
+                                            <input
+                                              type="text"
+                                              placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
+                                              value={draft.comment}
+                                              onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
+                                              className={`w-full sm:flex-1 border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
+                                              className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer whitespace-nowrap"
+                                            >
+                                              {t.submitReviewBtn}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-emerald-500 font-bold">
+                                          ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* TAB 3: MULTI-POND STOCKING */}
+                    {buyerTab === 'pondlog' && (
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <form onSubmit={handleAddPondLog} className={`rounded-2xl p-5 border shadow-xs space-y-3.5 ${cardBg}`}>
+                          <h3 className="font-bold text-sm flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4 text-teal-600" />
+                            {lang === 'te' ? 'చెరువు స్టాకింగ్ & రోజువారీ ఫీడ్ నమోదు' : 'Log Pond Stocking & Check-Tray Feed'}
+                          </h3>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond Name', 'చెరువు పేరు')}</label>
+                              <input required type="text" value={newPondForm.pondName} onChange={(e) => setNewPondForm({ ...newPondForm, pondName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                             </div>
-                          )}
-
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="space-y-1 flex-1 min-w-[230px]">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/30">{bk.bookingId}</span>
-                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
-                                  ? 'bg-emerald-500/15 text-emerald-500'
-                                  : isCancelled
-                                    ? 'bg-rose-500/15 text-rose-500'
-                                    : 'bg-amber-500/15 text-amber-500'
-                                  }`}>
-                                  {isFinalCleared
-                                    ? t.clearedSettlementBadge
-                                    : isCancelled
-                                      ? t.cancelledRefundBadge
-                                      : t.pendingSettlementBadge}
-                                </span>
-                              </div>
-                              <p className="text-sm font-extrabold text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-block">
-                                {bk.batch?.realName} • +91 {bk.batch?.realPhone}
-                              </p>
-                              <p className="text-xs opacity-75">
-                                Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
-                              </p>
-                              <p className="text-[11px] opacity-65">
-                                {isFinalCleared
-                                  ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
-                                  : isCancelled
-                                    ? <span className="text-rose-500 font-bold">Cancelled • 2% Refunded ✓</span>
-                                    : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
-                                {' '}• <span className="text-teal-500 underline font-semibold">Click Hatchery for all details & receipts</span>
-                              </p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                              {/* STATUS ANIMATION BUTTON */}
-                              {!isCancelled && (
-                                <button
-                                  type="button"
-                                  onClick={() => openAnimatedStatusModal(bk)}
-                                  className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
-                                >
-                                  <Activity className="w-3.5 h-3.5" /> Status
-                                </button>
-                              )}
-
-                              {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
-                              {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
-                                    setPayRemainingBooking(bk);
-                                  }}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
-                                >
-                                  <CreditCard className="w-3.5 h-3.5" /> Full Payment
-                                </button>
-                              )}
-
-                              {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
-                              {!isCancelled && (
-                                bk.gatePassCleared ? (
-                                  <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1">
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> Gate-Pass Cleared
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => setGatePassBooking(bk)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <QrCode className="w-3.5 h-3.5" /> Gate-Pass QR
-                                  </button>
-                                )
-                              )}
-
-                              {/* FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN */}
-                              {!isCancelled && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const existing = survivalLogs[bk.bookingId];
-                                    setSurvivalDraft(existing ? { h24: existing.h24, h48: existing.h48, h72: existing.h72, note: existing.note || '' } : { h24: 96, h48: 92, h72: 88, note: '' });
-                                    setSurvivalModalBooking(bk);
-                                  }}
-                                  className={`border text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer ${survivalLogs[bk.bookingId] ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600' : cardBg}`}
-                                >
-                                  <CheckCircle className="w-3.5 h-3.5 text-teal-600" />
-                                  {survivalLogs[bk.bookingId]
-                                    ? `72h: ${survivalLogs[bk.bookingId].h72}% ✓`
-                                    : L('72h Survival', '72h సర్వైవల్')}
-                                </button>
-                              )}
-
-                              {/* FEATURE 15: 1-CLICK QUICK REORDER */}
-                              <button
-                                type="button"
-                                onClick={() => handleQuickReorder(bk)}
-                                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" /> {L('Reorder', 'రీఆర్డర్')}
-                              </button>
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Acres', 'ఎకరాలు')}</label>
+                              <input required type="number" step="0.5" value={newPondForm.acres} onChange={(e) => setNewPondForm({ ...newPondForm, acres: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                             </div>
                           </div>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
+                              <input required type="number" step="10000" value={newPondForm.stockedQty} onChange={(e) => setNewPondForm({ ...newPondForm, stockedQty: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocking Date', 'సీడ్ వదిలిన తేదీ')}</label>
+                              <input required type="date" value={newPondForm.stockingDate} onChange={(e) => setNewPondForm({ ...newPondForm, stockingDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Today Feed (kg)', 'నేటి ఫీడ్ (కేజీలు)')}</label>
+                              <input required type="number" step="0.5" value={newPondForm.dailyFeedKg} onChange={(e) => setNewPondForm({ ...newPondForm, dailyFeedKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Check-Tray Leftover', 'చెక్-ట్రే మిగులు')}</label>
+                              <select value={newPondForm.trayLeftover} onChange={(e) => setNewPondForm({ ...newPondForm, trayLeftover: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                                <option>0% (Clean — Increase 5%)</option>
+                                <option>10% (Normal — Keep Same)</option>
+                                <option>25% (Reduce Next Meal 20%)</option>
+                              </select>
+                            </div>
+                          </div>
+                          {/* FEATURE 20: POND CHECK-TRAY JOURNAL (MOLTING / GUT / ANTENNA) */}
+                          <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-300/20">
+                            <div>
+                              <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Molting %', 'మోల్టింగ్ %')}</label>
+                              <input type="number" min="0" max="100" value={newPondForm.moltingPct ?? 12} onChange={(e) => setNewPondForm({ ...newPondForm, moltingPct: Number(e.target.value) })} className={`w-full border rounded-xl px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Gut Status', 'గట్ స్థితి')}</label>
+                              <select value={newPondForm.gutStatus || 'Full & Dark (Healthy)'} onChange={(e) => setNewPondForm({ ...newPondForm, gutStatus: e.target.value })} className={`w-full border rounded-xl px-2 py-1.5 text-[11px] font-bold ${inputCls}`}>
+                                <option>Full & Dark (Healthy)</option>
+                                <option>Half-Full (Monitor)</option>
+                                <option>Empty / White Gut Alert</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Antenna', 'యాంటెన్నా')}</label>
+                              <select value={newPondForm.antennaStatus || 'Intact & Long'} onChange={(e) => setNewPondForm({ ...newPondForm, antennaStatus: e.target.value })} className={`w-full border rounded-xl px-2 py-1.5 text-[11px] font-bold ${inputCls}`}>
+                                <option>Intact & Long</option>
+                                <option>Slightly Cut</option>
+                                <option>Broken / Necrosis</option>
+                              </select>
+                            </div>
+                          </div>
+                          <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer">
+                            {L('+ Save Pond Feed & Journal', '+ చెరువు ఫీడ్ & జర్నల్ సేవ్ చేయండి')}
+                          </button>
+                        </form>
 
-                          {isFinalCleared && (
-                            <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
-                              {!bk.rated ? (
-                                <div className={`flex flex-wrap items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
-                                  <span className="text-xs font-bold">{t.rateSeedLabel}</span>
-                                  <div className="flex items-center gap-1">
-                                    {[1, 2, 3, 4, 5].map(star => (
-                                      <button
-                                        key={star}
-                                        type="button"
-                                        onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
-                                        className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
-                                      >
-                                        {star}★
-                                      </button>
-                                    ))}
+                        <div className={`lg:col-span-2 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                          <h3 className="font-bold text-base flex items-center gap-2">
+                            <Gauge className="w-5 h-5 text-teal-600" />
+                            {lang === 'te' ? 'మీ చెరువుల DOC & చెక్-ట్రే రికార్డులు' : 'Active Pond DOC & Check-Tray Records'}
+                          </h3>
+                          {farmerPonds.length === 0 ? (
+                            <p className="text-xs opacity-60">{L('No pond records added yet. Log your pond stocking and daily feed on the left.', 'ఇంకా చెరువు రికార్డులు లేవు. ఎడమవైపు మీ చెరువు స్టాకింగ్ & రోజువారీ ఫీడ్ నమోదు చేయండి.')}</p>
+                          ) : (
+                            <div className="max-h-80 overflow-y-auto pr-1 space-y-2.5">
+                              {farmerPonds.map((p) => {
+                                const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(p.stockingDate).getTime()) / 86400000));
+                                return (
+                                  <div key={p.id} className={`border rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs ${subCardBg}`}>
+                                    <div>
+                                      <span className="font-extrabold text-sm text-teal-500">{p.pondName}</span> ({p.acres} Acres) • <span className="font-bold">DOC {daysElapsed}</span>
+                                      <p className="opacity-75 mt-0.5">Stocked: {Number(p.stockedQty).toLocaleString('en-IN')} PL on {p.stockingDate}</p>
+                                      {(p.moltingPct !== undefined || p.gutStatus || p.antennaStatus) && (
+                                        <div className="flex flex-wrap gap-1.5 mt-1.5 text-[10px] font-bold">
+                                          <span className="bg-sky-500/15 text-sky-500 px-2 py-0.5 rounded-full">Molting: {p.moltingPct ?? 0}%</span>
+                                          <span className={`px-2 py-0.5 rounded-full ${(p.gutStatus || '').includes('Empty') ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-500'}`}>Gut: {p.gutStatus || 'Full'}</span>
+                                          <span className={`px-2 py-0.5 rounded-full ${(p.antennaStatus || '').includes('Broken') ? 'bg-rose-500/15 text-rose-500' : 'bg-teal-500/15 text-teal-500'}`}>Antenna: {p.antennaStatus || 'Intact'}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="text-right space-y-0.5">
+                                      <span className="font-bold block">Daily Feed: {p.dailyFeedKg} kg</span>
+                                      <span className="text-[11px] text-emerald-500 font-semibold block">Tray: {p.trayLeftover}</span>
+                                      {(() => {
+                                        const harvestDate = new Date(new Date(p.stockingDate).getTime() + 100 * 86400000);
+                                        const daysToHarvest = Math.max(0, 100 - daysElapsed);
+                                        const phase = daysElapsed <= 30 ? 'Nursery' : daysElapsed <= 65 ? 'Growout' : daysElapsed < 95 ? 'Peak Growth' : 'Harvest Ready';
+                                        return (
+                                          <span className="inline-block text-[10px] font-bold bg-indigo-500/15 text-indigo-500 px-2 py-0.5 rounded-full">
+                                            {phase} • {daysToHarvest > 0 ? `${daysToHarvest}d to DOC 100 (${harvestDate.toLocaleDateString('en-IN')})` : 'Ready for Harvest!'}
+                                          </span>
+                                        );
+                                      })()}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+
+                        {/* ROUND-3 FEATURE: POND BIOMASS & WEEKLY GROWTH SAMPLING ESTIMATOR */}
+                        <div className={`lg:col-span-3 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                          <h3 className="font-extrabold text-sm flex items-center gap-2 text-indigo-500">
+                            <Scale className="w-4 h-4" /> {L('Pond Standing Biomass & Weekly Growth Sampling Estimator', 'చెరువు బయోమాస్ & వారపు పెరుగుదల అంచనా')}
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
+                              <input type="number" step="10000" value={biomassCalc.stockedPl} onChange={(e) => setBiomassCalc({ ...biomassCalc, stockedPl: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Est. Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
+                              <input type="number" min="20" max="100" value={biomassCalc.survivalPct} onChange={(e) => setBiomassCalc({ ...biomassCalc, survivalPct: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Current Avg Body Weight (g)', 'ప్రస్తుత సగటు బరువు (గ్రాములు)')}</label>
+                              <input type="number" step="0.5" min="0.5" value={biomassCalc.abwGrams} onChange={(e) => setBiomassCalc({ ...biomassCalc, abwGrams: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                            </div>
+                          </div>
+                          {(() => {
+                            const livePrawns = Math.round((Number(biomassCalc.stockedPl) || 0) * ((Number(biomassCalc.survivalPct) || 80) / 100));
+                            const abw = Math.max(0.5, Number(biomassCalc.abwGrams) || 10);
+                            const biomassKg = Math.round((livePrawns * abw) / 1000);
+                            const countPerKg = Math.round(1000 / abw);
+                            const feedPct = abw < 5 ? 5.5 : abw < 12 ? 3.5 : abw < 20 ? 2.6 : 2.0;
+                            const recDailyFeed = Math.round(biomassKg * (feedPct / 100));
+                            return (
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                  <span className="text-[10px] opacity-60 block">{L('Live Standing Biomass', 'చెరువులో ఉన్న మొత్తం బరువు')}</span>
+                                  <b className="text-base text-indigo-500">{biomassKg.toLocaleString('en-IN')} kg</b>
+                                </div>
+                                <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                  <span className="text-[10px] opacity-60 block">{L('Current Harvest Count', 'ప్రస్తుత రొయ్యల కౌంట్')}</span>
+                                  <b className="text-base">{countPerKg} Count / kg</b>
+                                </div>
+                                <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                  <span className="text-[10px] opacity-60 block">{L('Recommended Feed Rate', 'సూచించిన ఫీడ్ %')}</span>
+                                  <b className="text-base text-teal-500">{feedPct}% Biomass</b>
+                                </div>
+                                <div className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-500">
+                                  <span className="text-[10px] opacity-80 block">{L('Recommended Daily Feed', 'రోజువారీ కావాల్సిన ఫీడ్')}</span>
+                                  <b className="text-base">{recDailyFeed.toLocaleString('en-IN')} kg / day</b>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* FEATURE 16: INTERACTIVE "WHAT-IF" FCR FEED OPTIMIZER (10-TON HARVEST) */}
+                        <div className={`lg:col-span-3 rounded-2xl p-5 border shadow-xs space-y-4 ${cardBg}`}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="font-extrabold text-sm flex items-center gap-2 text-teal-500">
+                              <Sliders className="w-4 h-4" /> {L('Interactive "What-If" FCR Feed Optimizer (For 10-Ton Harvest)', 'ఇంటరాక్టివ్ "What-If" FCR ఫీడ్ ఆప్టిమైజర్ (10 టన్నుల దిగుబడికి)')}
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="opacity-70 font-bold">{L('25kg Bag Price (₹):', '25kg బస్తా ధర (₹):')}</span>
+                              <input
+                                type="number"
+                                step="50"
+                                value={whatIfBagPrice}
+                                onChange={(e) => setWhatIfBagPrice(Math.max(500, Number(e.target.value) || 2200))}
+                                className={`w-24 border rounded-lg px-2 py-1 text-xs font-bold select-text ${inputCls}`}
+                              />
+                            </div>
+                          </div>
+                          {(() => {
+                            const harvestKg = 10000; // 10 Tons
+                            const baseFcr = 1.50;
+                            const baseBags = Math.ceil((harvestKg * baseFcr) / 25);
+                            const currBags = Math.ceil((harvestKg * whatIfFcr) / 25);
+                            const bagsDiff = baseBags - currBags;
+                            const moneyDiff = bagsDiff * whatIfBagPrice;
+                            const totalCost = currBags * whatIfBagPrice;
+                            return (
+                              <div className="space-y-3">
+                                <div>
+                                  <div className="flex justify-between text-xs font-bold mb-1">
+                                    <span>{L('Target FCR:', 'లక్ష్య FCR:')} <b className="text-teal-500 text-sm">{whatIfFcr.toFixed(2)}</b></span>
+                                    <span className="opacity-60">{L('Baseline Standard FCR: 1.50', 'సాధారణ బేస్‌లైన్ FCR: 1.50')}</span>
                                   </div>
                                   <input
-                                    type="text"
-                                    placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
-                                    value={draft.comment}
-                                    onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
-                                    className={`flex-1 min-w-[180px] border rounded-xl px-3 py-1.5 text-xs select-text ${inputCls}`}
+                                    type="range"
+                                    min="1.10"
+                                    max="2.00"
+                                    step="0.05"
+                                    value={whatIfFcr}
+                                    onChange={(e) => setWhatIfFcr(Number(e.target.value))}
+                                    className="w-full accent-teal-600 cursor-pointer"
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
-                                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl cursor-pointer"
-                                  >
-                                    {t.submitReviewBtn}
-                                  </button>
                                 </div>
-                              ) : (
-                                <div className="text-xs text-emerald-500 font-bold">
-                                  ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                  <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                    <span className="text-[10px] opacity-60 block">{L('Feed Needed (10 Tons)', 'కావాల్సిన ఫీడ్ (10 టన్నులకు)')}</span>
+                                    <b className="text-base">{currBags.toLocaleString('en-IN')} {L('Bags', 'బస్తాలు')}</b>
+                                  </div>
+                                  <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                    <span className="text-[10px] opacity-60 block">{L('Total Feed Spend', 'మొత్తం ఫీడ్ ఖర్చు')}</span>
+                                    <b className="text-base">₹{totalCost.toLocaleString('en-IN')}</b>
+                                  </div>
+                                  <div className={`p-3 rounded-xl border ${bagsDiff >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-rose-500/10 border-rose-500/30 text-rose-500'}`}>
+                                    <span className="text-[10px] opacity-80 block">{bagsDiff >= 0 ? L('Bags Saved vs 1.50 FCR', 'ఆదా అయ్యే బస్తాలు') : L('Extra Bags vs 1.50 FCR', 'అదనపు బస్తాలు')}</span>
+                                    <b className="text-base">{bagsDiff >= 0 ? `+${bagsDiff}` : bagsDiff} {L('Bags', 'బస్తాలు')}</b>
+                                  </div>
+                                  <div className={`p-3 rounded-xl border ${moneyDiff >= 0 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-rose-600 text-white border-rose-600'}`}>
+                                    <span className="text-[10px] opacity-90 block">{moneyDiff >= 0 ? L('Net Cost Saved', 'నికర ఖర్చు ఆదా') : L('Extra Cost Impact', 'అదనపు ఖర్చు')}</span>
+                                    <b className="text-base">{moneyDiff >= 0 ? '₹' : '-₹'}{Math.abs(moneyDiff).toLocaleString('en-IN')}</b>
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          )}
+                              </div>
+                            );
+                          })()}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+                      </div>
+                    )}
 
-            {/* TAB 3: MULTI-POND STOCKING */}
-            {buyerTab === 'pondlog' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <form onSubmit={handleAddPondLog} className={`rounded-2xl p-5 border shadow-xs space-y-3.5 ${cardBg}`}>
-                  <h3 className="font-bold text-sm flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4 text-teal-600" />
-                    {lang === 'te' ? 'చెరువు స్టాకింగ్ & రోజువారీ ఫీడ్ నమోదు' : 'Log Pond Stocking & Check-Tray Feed'}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond Name', 'చెరువు పేరు')}</label>
-                      <input required type="text" value={newPondForm.pondName} onChange={(e) => setNewPondForm({ ...newPondForm, pondName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Acres', 'ఎకరాలు')}</label>
-                      <input required type="number" step="0.5" value={newPondForm.acres} onChange={(e) => setNewPondForm({ ...newPondForm, acres: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
-                      <input required type="number" step="10000" value={newPondForm.stockedQty} onChange={(e) => setNewPondForm({ ...newPondForm, stockedQty: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocking Date', 'సీడ్ వదిలిన తేదీ')}</label>
-                      <input required type="date" value={newPondForm.stockingDate} onChange={(e) => setNewPondForm({ ...newPondForm, stockingDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Today Feed (kg)', 'నేటి ఫీడ్ (కేజీలు)')}</label>
-                      <input required type="number" step="0.5" value={newPondForm.dailyFeedKg} onChange={(e) => setNewPondForm({ ...newPondForm, dailyFeedKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Check-Tray Leftover', 'చెక్-ట్రే మిగులు')}</label>
-                      <select value={newPondForm.trayLeftover} onChange={(e) => setNewPondForm({ ...newPondForm, trayLeftover: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
-                        <option>0% (Clean — Increase 5%)</option>
-                        <option>10% (Normal — Keep Same)</option>
-                        <option>25% (Reduce Next Meal 20%)</option>
-                      </select>
-                    </div>
-                  </div>
-                  {/* FEATURE 20: POND CHECK-TRAY JOURNAL (MOLTING / GUT / ANTENNA) */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-300/20">
-                    <div>
-                      <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Molting %', 'మోల్టింగ్ %')}</label>
-                      <input type="number" min="0" max="100" value={newPondForm.moltingPct ?? 12} onChange={(e) => setNewPondForm({ ...newPondForm, moltingPct: Number(e.target.value) })} className={`w-full border rounded-xl px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Gut Status', 'గట్ స్థితి')}</label>
-                      <select value={newPondForm.gutStatus || 'Full & Dark (Healthy)'} onChange={(e) => setNewPondForm({ ...newPondForm, gutStatus: e.target.value })} className={`w-full border rounded-xl px-2 py-1.5 text-[11px] font-bold ${inputCls}`}>
-                        <option>Full & Dark (Healthy)</option>
-                        <option>Half-Full (Monitor)</option>
-                        <option>Empty / White Gut Alert</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Antenna', 'యాంటెన్నా')}</label>
-                      <select value={newPondForm.antennaStatus || 'Intact & Long'} onChange={(e) => setNewPondForm({ ...newPondForm, antennaStatus: e.target.value })} className={`w-full border rounded-xl px-2 py-1.5 text-[11px] font-bold ${inputCls}`}>
-                        <option>Intact & Long</option>
-                        <option>Slightly Cut</option>
-                        <option>Broken / Necrosis</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer">
-                    {L('+ Save Pond Feed & Journal', '+ చెరువు ఫీడ్ & జర్నల్ సేవ్ చేయండి')}
-                  </button>
-                </form>
+                    {/* TAB 4: HARVEST & PROFIT ESTIMATOR + FEATURE 8 SENSITIVITY MATRIX */}
+                    {buyerTab === 'analytics' && (
+                      <div className={`rounded-2xl p-6 shadow-xs border space-y-6 ${cardBg}`}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-base font-extrabold flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 text-teal-600" /> {t.tabAnalytics}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={handleRunEstimatorCalculate}
+                            className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Calculator className="w-4 h-4" /> {t.calculateBtn}
+                          </button>
+                        </div>
 
-                <div className={`lg:col-span-2 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                  <h3 className="font-bold text-base flex items-center gap-2">
-                    <Gauge className="w-5 h-5 text-teal-600" />
-                    {lang === 'te' ? 'మీ చెరువుల DOC & చెక్-ట్రే రికార్డులు' : 'Active Pond DOC & Check-Tray Records'}
-                  </h3>
-                  {farmerPonds.length === 0 ? (
-                    <p className="text-xs opacity-60">{L('No pond records added yet. Log your pond stocking and daily feed on the left.', 'ఇంకా చెరువు రికార్డులు లేవు. ఎడమవైపు మీ చెరువు స్టాకింగ్ & రోజువారీ ఫీడ్ నమోదు చేయండి.')}</p>
-                  ) : (
-                    <div className="max-h-80 overflow-y-auto pr-1 space-y-2.5">
-                      {farmerPonds.map((p) => {
-                        const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(p.stockingDate).getTime()) / 86400000));
-                        return (
-                          <div key={p.id} className={`border rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs ${subCardBg}`}>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Number of Ponds', 'చెరువుల సంఖ్య')}</label>
+                            <input type="number" min="1" value={calcInputs.ponds} onChange={(e) => setCalcInputs({ ...calcInputs, ponds: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Acres per Pond', 'ఒక్కో చెరువు విస్తీర్ణం (ఎకరాలు)')}</label>
+                            <input type="number" step="0.5" min="0.5" value={calcInputs.acresPerPond} onChange={(e) => setCalcInputs({ ...calcInputs, acresPerPond: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Stocking Density (/m²)', 'స్టాకింగ్ సాంద్రత (/m²)')}</label>
+                            <select value={calcInputs.density} onChange={(e) => setCalcInputs({ ...calcInputs, density: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
+                              <option value={30}>30 / m²</option>
+                              <option value={40}>40 / m²</option>
+                              <option value={50}>50 / m²</option>
+                              <option value={60}>60 / m²</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Expected Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
+                            <input type="number" min="40" max="100" value={calcInputs.survival} onChange={(e) => setCalcInputs({ ...calcInputs, survival: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Target Count (/kg)', 'లక్ష్య కౌంట్ (/kg)')}</label>
+                            <select value={calcInputs.targetCount} onChange={(e) => setCalcInputs({ ...calcInputs, targetCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
+                              <option value={25}>25 Count</option>
+                              <option value={30}>30 Count</option>
+                              <option value={40}>40 Count</option>
+                              <option value={50}>50 Count</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('FCR (Feed Ratio)', 'FCR (ఫీడ్ నిష్పత్తి)')}</label>
+                            <input type="number" step="0.1" min="1.0" max="2.5" value={calcInputs.fcr} onChange={(e) => setCalcInputs({ ...calcInputs, fcr: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Market Price (₹ / kg)', 'మార్కెట్ ధర (₹ / kg)')}</label>
+                            <input type="number" value={calcInputs.marketRatePerKg} onChange={(e) => setCalcInputs({ ...calcInputs, marketRatePerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Feed Cost (₹ / kg)', 'ఫీడ్ ధర (₹ / kg)')}</label>
+                            <input type="number" value={calcInputs.feedCostPerKg} onChange={(e) => setCalcInputs({ ...calcInputs, feedCostPerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{L('Power & Probiotics (/Acre)', 'కరెంట్ & ప్రోబయోటిక్స్ (/ఎకరానికి)')}</label>
+                            <input type="number" value={calcInputs.powerProbioticCostPerAcre} onChange={(e) => setCalcInputs({ ...calcInputs, powerProbioticCostPerAcre: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                          <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
+                            <span className="text-[11px] opacity-60 font-bold block">{L(`Total Seed (${calcResult.totalAcres} Acres)`, `మొత్తం సీడ్ (${calcResult.totalAcres} ఎకరాలు)`)}</span>
+                            <span className="text-lg font-black">{calcResult.totalSeedsNeeded.toLocaleString('en-IN')} PL</span>
+                          </div>
+                          <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5">
+                            <span className="text-[11px] text-teal-600 font-bold block">{L('Projected Harvest', 'అంచనా దిగుబడి')}</span>
+                            <span className="text-lg font-black">{calcResult.harvestTons} {L('Tons', 'టన్నులు')} ({calcResult.harvestKg.toLocaleString('en-IN')} kg)</span>
+                          </div>
+                          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5">
+                            <span className="text-[11px] text-amber-600 font-bold block">{L('Total Feed Required', 'మొత్తం కావాల్సిన ఫీడ్')}</span>
+                            <span className="text-lg font-black">{calcResult.totalFeedBags} {L('Bags', 'బస్తాలు')} ({calcResult.totalFeedKg.toLocaleString('en-IN')} kg)</span>
+                          </div>
+                          <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
+                            <span className="text-[11px] opacity-60 font-bold block">{L('Break-Even Cost / kg', 'బ్రేక్-ఈవెన్ ఖర్చు / kg')}</span>
+                            <span className="text-lg font-black">₹{calcResult.breakEvenPerKg} / kg</span>
+                          </div>
+                          <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
+                            <span className="text-[11px] opacity-60 font-bold block">{L('Gross Crop Revenue', 'మొత్తం పంట ఆదాయం')}</span>
+                            <span className="text-lg font-black">₹{calcResult.grossRevenue.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5">
+                            <span className="text-[11px] text-rose-500 font-bold block">{L('Total Production Cost', 'మొత్తం సాగు ఖర్చు')}</span>
+                            <span className="text-lg font-black">₹{calcResult.totalExpenses.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5">
+                            <span className="text-[11px] text-emerald-500 font-bold block">{L('Net Profit / Acre', 'నికర లాభం / ఎకరం')}</span>
+                            <span className="text-lg font-black">₹{calcResult.profitPerAcre.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="bg-emerald-600 text-white rounded-xl p-3.5">
+                            <span className="text-[11px] text-emerald-100 font-bold block">{L('Total Net Crop Profit', 'మొత్తం నికర లాభం')}</span>
+                            <span className="text-lg font-black">₹{calcResult.netProfit.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+
+                        {/* FEATURE 8: HARVEST COUNT & MARKET RATE SENSITIVITY MATRIX */}
+                        <div className={`p-4 rounded-2xl border space-y-2 ${subCardBg}`}>
+                          <h4 className="text-xs font-extrabold uppercase text-teal-500">{L(`Count-Wise Profit Sensitivity Matrix (At ${calcInputs.survival}% Survival)`, `కౌంట్ వారీగా లాభాల అంచనా (${calcInputs.survival}% సర్వైవల్ వద్ద)`)}</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            {[
+                              { count: 30, rate: 395 },
+                              { count: 40, rate: 340 },
+                              { count: 50, rate: 305 }
+                            ].map(sc => {
+                              const surv = Math.round(calcResult.totalSeedsNeeded * (calcInputs.survival / 100));
+                              const kg = Math.round(surv / sc.count);
+                              const prof = (kg * sc.rate) - calcResult.totalExpenses;
+                              return (
+                                <div key={sc.count} className={`p-3 rounded-xl border ${cardBg}`}>
+                                  <div className="font-extrabold">{sc.count} {L('Count', 'కౌంట్')} @ ₹{sc.rate}/kg</div>
+                                  <div className="text-[11px] opacity-70">{L('Harvest:', 'దిగుబడి:')} {kg.toLocaleString('en-IN')} kg</div>
+                                  <div className={`font-black mt-1 ${prof >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                    {L('Net Profit:', 'నికర లాభం:')} ₹{prof.toLocaleString('en-IN')}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 5: POND WATER, VIBRIO DISEASE EARLY-WARNING & OXYGEN CALCULATOR */}
+                    {buyerTab === 'waterlab' && (
+                      <div className="space-y-6">
+                        <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                          <h3 className="text-base font-extrabold flex items-center gap-2">
+                            <Droplets className="w-5 h-5 text-teal-600" /> {L('Pond Water & Vibrio/WSSV Disease Early-Warning Matrix', 'చెరువు నీటి పరీక్ష & విబ్రియో/WSSV వ్యాధి ముందస్తు హెచ్చరిక')}
+                          </h3>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                             <div>
-                              <span className="font-extrabold text-sm text-teal-500">{p.pondName}</span> ({p.acres} Acres) • <span className="font-bold">DOC {daysElapsed}</span>
-                              <p className="opacity-75 mt-0.5">Stocked: {Number(p.stockedQty).toLocaleString('en-IN')} PL on {p.stockingDate}</p>
-                              {(p.moltingPct !== undefined || p.gutStatus || p.antennaStatus) && (
-                                <div className="flex flex-wrap gap-1.5 mt-1.5 text-[10px] font-bold">
-                                  <span className="bg-sky-500/15 text-sky-500 px-2 py-0.5 rounded-full">Molting: {p.moltingPct ?? 0}%</span>
-                                  <span className={`px-2 py-0.5 rounded-full ${(p.gutStatus || '').includes('Empty') ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-500'}`}>Gut: {p.gutStatus || 'Full'}</span>
-                                  <span className={`px-2 py-0.5 rounded-full ${(p.antennaStatus || '').includes('Broken') ? 'bg-rose-500/15 text-rose-500' : 'bg-teal-500/15 text-teal-500'}`}>Antenna: {p.antennaStatus || 'Intact'}</span>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{L('Water pH (7.5 - 8.3)', 'నీటి pH (7.5 - 8.3)')}</label>
+                              <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{L('Dissolved Oxygen (ppm)', 'కరిగిన ఆక్సిజన్ / DO (ppm)')}</label>
+                              <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{L('Alkalinity (ppm)', 'ఆల్కలీనిటీ (ppm)')}</label>
+                              <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{L('Ammonia (ppm)', 'అమ్మోనియా (ppm)')}</label>
+                              <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{L('Pond Salinity (PPT)', 'చెరువు ఉప్పదనం (PPT)')}</label>
+                              <input type="number" value={waterTest.salinity} onChange={(e) => setWaterTest({ ...waterTest, salinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                            </div>
+                          </div>
+                          {(() => {
+                            const isSafe = waterTest.ph >= 7.5 && waterTest.ph <= 8.4 && waterTest.doLevel >= 4.5 && waterTest.ammonia <= 0.1;
+                            const vibrioRisk = waterTest.ph > 8.4 && waterTest.salinity > 20 ? 'HIGH' : waterTest.ammonia > 0.08 ? 'MODERATE' : 'LOW';
+                            return (
+                              <div className="space-y-2">
+                                <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
+                                  {isSafe
+                                    ? L('✅ Pond water parameters are OPTIMAL for immediate PL stocking!', '✅ చెరువు నీటి నాణ్యత సీడ్ వదలడానికి అనుకూలంగా ఉంది!')
+                                    : L('⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.', '⚠️ హెచ్చరిక: సీడ్ వదిలే ముందు pH (7.5-8.3), DO (4.5 ppm పైన), మరియు అమ్మోనియా (0.1 ppm లోపు) సరిచేయండి.')}
                                 </div>
-                              )}
-                            </div>
-                            <div className="text-right space-y-0.5">
-                              <span className="font-bold block">Daily Feed: {p.dailyFeedKg} kg</span>
-                              <span className="text-[11px] text-emerald-500 font-semibold block">Tray: {p.trayLeftover}</span>
-                              {(() => {
-                                const harvestDate = new Date(new Date(p.stockingDate).getTime() + 100 * 86400000);
-                                const daysToHarvest = Math.max(0, 100 - daysElapsed);
-                                const phase = daysElapsed <= 30 ? 'Nursery' : daysElapsed <= 65 ? 'Growout' : daysElapsed < 95 ? 'Peak Growth' : 'Harvest Ready';
-                                return (
-                                  <span className="inline-block text-[10px] font-bold bg-indigo-500/15 text-indigo-500 px-2 py-0.5 rounded-full">
-                                    {phase} • {daysToHarvest > 0 ? `${daysToHarvest}d to DOC 100 (${harvestDate.toLocaleDateString('en-IN')})` : 'Ready for Harvest!'}
+                                {/* FEATURE 7: VIBRIO / PATHOGEN RISK BADGE */}
+                                <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-between ${subCardBg}`}>
+                                  <span>{L('Luminescent Vibrio & EHP Susceptibility Risk:', 'విబ్రియో & EHP వ్యాధి రిస్క్ అంచనా:')}</span>
+                                  <span className={vibrioRisk === 'LOW' ? 'text-emerald-500' : vibrioRisk === 'MODERATE' ? 'text-amber-500' : 'text-rose-500'}>
+                                    {vibrioRisk} RISK ({vibrioRisk === 'LOW' ? 'Safe Bio-floc Balance' : 'Apply Gut Probiotics & Minerals'})
                                   </span>
-                                );
-                              })()}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                            <h4 className="font-bold text-sm text-teal-500">{L('Salinity Acclimatization Time Calculator', 'ఉప్పదనం అలవాటు (Acclimatization) కాలిక్యులేటర్')}</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Hatchery PPT', 'హేచరీ PPT')}</label>
+                                <input type="number" value={acclimCalc.hatcheryPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, hatcheryPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                              </div>
+                              <div>
+                                <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond PPT', 'చెరువు PPT')}</label>
+                                <input type="number" value={acclimCalc.pondPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, pondPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                              </div>
                             </div>
+                            <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
+                              Salinity Variance: <b>{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt)} PPT</b> • Required Acclimatization Time: <b className="text-teal-500">{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4} Hours</b> (1 PPT every 4 hrs).
+                            </div>
+                            {/* FEATURE 6: LIVE SALINITY ACCLIMATIZATION COUNTDOWN TIMER */}
+                            {(() => {
+                              const totalSecs = Math.max(1, Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
+                              const hrs = String(Math.floor(acclimTimerSec / 3600)).padStart(2, '0');
+                              const mins = String(Math.floor((acclimTimerSec % 3600) / 60)).padStart(2, '0');
+                              const secs = String(acclimTimerSec % 60).padStart(2, '0');
+                              const pctDone = Math.min(100, Math.max(0, Math.round(((totalSecs - acclimTimerSec) / totalSecs) * 100)));
+                              return (
+                                <div className={`p-3.5 rounded-xl border border-teal-500/30 space-y-2.5 ${subCardBg}`}>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-extrabold text-teal-500 inline-flex items-center gap-1.5">
+                                      <Timer className="w-3.5 h-3.5" /> {L('Live Acclimatization Countdown', 'లైవ్ అక్లైమటైజేషన్ టైమర్')}
+                                    </span>
+                                    <span className="font-mono text-lg font-black text-teal-600">{hrs}:{mins}:{secs}</span>
+                                  </div>
+                                  <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                                    <div className="h-full bg-teal-500 transition-all" style={{ width: `${pctDone}%` }} />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (acclimTimerSec <= 0) setAcclimTimerSec(Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
+                                        setAcclimTimerRunning(!acclimTimerRunning);
+                                      }}
+                                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer ${acclimTimerRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'}`}
+                                    >
+                                      {acclimTimerRunning ? L('Pause', 'పాజ్') : L('Start Timer', 'ప్రారంభించు')}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setAcclimTimerRunning(false);
+                                        setAcclimTimerSec(Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
+                                      }}
+                                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer ${cardBg}`}
+                                    >
+                                      {L('Reset', 'రీసెట్')}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
 
-
-                {/* ROUND-3 FEATURE: POND BIOMASS & WEEKLY GROWTH SAMPLING ESTIMATOR */}
-                <div className={`lg:col-span-3 rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-indigo-500">
-                    <Scale className="w-4 h-4" /> {L('Pond Standing Biomass & Weekly Growth Sampling Estimator', 'చెరువు బయోమాస్ & వారపు పెరుగుదల అంచనా')}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
-                      <input type="number" step="10000" value={biomassCalc.stockedPl} onChange={(e) => setBiomassCalc({ ...biomassCalc, stockedPl: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Est. Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
-                      <input type="number" min="20" max="100" value={biomassCalc.survivalPct} onChange={(e) => setBiomassCalc({ ...biomassCalc, survivalPct: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Current Avg Body Weight (g)', 'ప్రస్తుత సగటు బరువు (గ్రాములు)')}</label>
-                      <input type="number" step="0.5" min="0.5" value={biomassCalc.abwGrams} onChange={(e) => setBiomassCalc({ ...biomassCalc, abwGrams: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                    </div>
-                  </div>
-                  {(() => {
-                    const livePrawns = Math.round((Number(biomassCalc.stockedPl) || 0) * ((Number(biomassCalc.survivalPct) || 80) / 100));
-                    const abw = Math.max(0.5, Number(biomassCalc.abwGrams) || 10);
-                    const biomassKg = Math.round((livePrawns * abw) / 1000);
-                    const countPerKg = Math.round(1000 / abw);
-                    const feedPct = abw < 5 ? 5.5 : abw < 12 ? 3.5 : abw < 20 ? 2.6 : 2.0;
-                    const recDailyFeed = Math.round(biomassKg * (feedPct / 100));
-                    return (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                        <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                          <span className="text-[10px] opacity-60 block">{L('Live Standing Biomass', 'చెరువులో ఉన్న మొత్తం బరువు')}</span>
-                          <b className="text-base text-indigo-500">{biomassKg.toLocaleString('en-IN')} kg</b>
-                        </div>
-                        <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                          <span className="text-[10px] opacity-60 block">{L('Current Harvest Count', 'ప్రస్తుత రొయ్యల కౌంట్')}</span>
-                          <b className="text-base">{countPerKg} Count / kg</b>
-                        </div>
-                        <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                          <span className="text-[10px] opacity-60 block">{L('Recommended Feed Rate', 'సూచించిన ఫీడ్ %')}</span>
-                          <b className="text-base text-teal-500">{feedPct}% Biomass</b>
-                        </div>
-                        <div className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-500">
-                          <span className="text-[10px] opacity-80 block">{L('Recommended Daily Feed', 'రోజువారీ కావాల్సిన ఫీడ్')}</span>
-                          <b className="text-base">{recDailyFeed.toLocaleString('en-IN')} kg / day</b>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* FEATURE 16: INTERACTIVE "WHAT-IF" FCR FEED OPTIMIZER (10-TON HARVEST) */}
-                <div className={`lg:col-span-3 rounded-2xl p-5 border shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-extrabold text-sm flex items-center gap-2 text-teal-500">
-                      <Sliders className="w-4 h-4" /> {L('Interactive "What-If" FCR Feed Optimizer (For 10-Ton Harvest)', 'ఇంటరాక్టివ్ "What-If" FCR ఫీడ్ ఆప్టిమైజర్ (10 టన్నుల దిగుబడికి)')}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="opacity-70 font-bold">{L('25kg Bag Price (₹):', '25kg బస్తా ధర (₹):')}</span>
-                      <input
-                        type="number"
-                        step="50"
-                        value={whatIfBagPrice}
-                        onChange={(e) => setWhatIfBagPrice(Math.max(500, Number(e.target.value) || 2200))}
-                        className={`w-24 border rounded-lg px-2 py-1 text-xs font-bold select-text ${inputCls}`}
-                      />
-                    </div>
-                  </div>
-                  {(() => {
-                    const harvestKg = 10000; // 10 Tons
-                    const baseFcr = 1.50;
-                    const baseBags = Math.ceil((harvestKg * baseFcr) / 25);
-                    const currBags = Math.ceil((harvestKg * whatIfFcr) / 25);
-                    const bagsDiff = baseBags - currBags;
-                    const moneyDiff = bagsDiff * whatIfBagPrice;
-                    const totalCost = currBags * whatIfBagPrice;
-                    return (
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-xs font-bold mb-1">
-                            <span>{L('Target FCR:', 'లక్ష్య FCR:')} <b className="text-teal-500 text-sm">{whatIfFcr.toFixed(2)}</b></span>
-                            <span className="opacity-60">{L('Baseline Standard FCR: 1.50', 'సాధారణ బేస్‌లైన్ FCR: 1.50')}</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="1.10"
-                            max="2.00"
-                            step="0.05"
-                            value={whatIfFcr}
-                            onChange={(e) => setWhatIfFcr(Number(e.target.value))}
-                            className="w-full accent-teal-600 cursor-pointer"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                          <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                            <span className="text-[10px] opacity-60 block">{L('Feed Needed (10 Tons)', 'కావాల్సిన ఫీడ్ (10 టన్నులకు)')}</span>
-                            <b className="text-base">{currBags.toLocaleString('en-IN')} {L('Bags', 'బస్తాలు')}</b>
-                          </div>
-                          <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                            <span className="text-[10px] opacity-60 block">{L('Total Feed Spend', 'మొత్తం ఫీడ్ ఖర్చు')}</span>
-                            <b className="text-base">₹{totalCost.toLocaleString('en-IN')}</b>
-                          </div>
-                          <div className={`p-3 rounded-xl border ${bagsDiff >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-rose-500/10 border-rose-500/30 text-rose-500'}`}>
-                            <span className="text-[10px] opacity-80 block">{bagsDiff >= 0 ? L('Bags Saved vs 1.50 FCR', 'ఆదా అయ్యే బస్తాలు') : L('Extra Bags vs 1.50 FCR', 'అదనపు బస్తాలు')}</span>
-                            <b className="text-base">{bagsDiff >= 0 ? `+${bagsDiff}` : bagsDiff} {L('Bags', 'బస్తాలు')}</b>
-                          </div>
-                          <div className={`p-3 rounded-xl border ${moneyDiff >= 0 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-rose-600 text-white border-rose-600'}`}>
-                            <span className="text-[10px] opacity-90 block">{moneyDiff >= 0 ? L('Net Cost Saved', 'నికర ఖర్చు ఆదా') : L('Extra Cost Impact', 'అదనపు ఖర్చు')}</span>
-                            <b className="text-base">{moneyDiff >= 0 ? '₹' : '-₹'}{Math.abs(moneyDiff).toLocaleString('en-IN')}</b>
+                          <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                            <h4 className="font-bold text-sm text-teal-500">{L('Oxygen Packing Bags & Van Size Estimator', 'ఆక్సిజన్ ప్యాకింగ్ బ్యాగ్‌లు & వ్యాన్ అంచనా')}</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Total Seed (PL)', 'మొత్తం సీడ్ (PL)')}</label>
+                                <input type="number" step="50000" value={oxygenCalc.seedCount} onChange={(e) => setOxygenCalc({ ...oxygenCalc, seedCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                              </div>
+                              <div>
+                                <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Transit Hours', 'ప్రయాణ సమయం (గంటలు)')}</label>
+                                <input type="number" value={oxygenCalc.travelHours} onChange={(e) => setOxygenCalc({ ...oxygenCalc, travelHours: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                              </div>
+                            </div>
+                            {(() => {
+                              const plPerBag = oxygenCalc.travelHours > 5 ? 2000 : 3000;
+                              const bags = Math.ceil((oxygenCalc.seedCount || 100000) / plPerBag);
+                              const boxes = Math.ceil(bags / 2);
+                              return (
+                                <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
+                                  Required Oxygen Bags: <b>{bags} Bags</b> ({plPerBag} PL/bag) • Cartons: <b>{boxes} Boxes</b> • Vehicle: <b className="text-emerald-500">{boxes > 60 ? 'Bolero Pickup / Mini Truck' : 'Tata Ace AC Van'}</b>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
 
-            {/* TAB 4: HARVEST & PROFIT ESTIMATOR + FEATURE 8 SENSITIVITY MATRIX */}
-            {buyerTab === 'analytics' && (
-              <div className={`rounded-2xl p-6 shadow-xs border space-y-6 ${cardBg}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-base font-extrabold flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-teal-600" /> {t.tabAnalytics}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={handleRunEstimatorCalculate}
-                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Calculator className="w-4 h-4" /> {t.calculateBtn}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Number of Ponds', 'చెరువుల సంఖ్య')}</label>
-                    <input type="number" min="1" value={calcInputs.ponds} onChange={(e) => setCalcInputs({ ...calcInputs, ponds: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Acres per Pond', 'ఒక్కో చెరువు విస్తీర్ణం (ఎకరాలు)')}</label>
-                    <input type="number" step="0.5" min="0.5" value={calcInputs.acresPerPond} onChange={(e) => setCalcInputs({ ...calcInputs, acresPerPond: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Stocking Density (/m²)', 'స్టాకింగ్ సాంద్రత (/m²)')}</label>
-                    <select value={calcInputs.density} onChange={(e) => setCalcInputs({ ...calcInputs, density: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
-                      <option value={30}>30 / m²</option>
-                      <option value={40}>40 / m²</option>
-                      <option value={50}>50 / m²</option>
-                      <option value={60}>60 / m²</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Expected Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
-                    <input type="number" min="40" max="100" value={calcInputs.survival} onChange={(e) => setCalcInputs({ ...calcInputs, survival: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Target Count (/kg)', 'లక్ష్య కౌంట్ (/kg)')}</label>
-                    <select value={calcInputs.targetCount} onChange={(e) => setCalcInputs({ ...calcInputs, targetCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold ${inputCls}`}>
-                      <option value={25}>25 Count</option>
-                      <option value={30}>30 Count</option>
-                      <option value={40}>40 Count</option>
-                      <option value={50}>50 Count</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('FCR (Feed Ratio)', 'FCR (ఫీడ్ నిష్పత్తి)')}</label>
-                    <input type="number" step="0.1" min="1.0" max="2.5" value={calcInputs.fcr} onChange={(e) => setCalcInputs({ ...calcInputs, fcr: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Market Price (₹ / kg)', 'మార్కెట్ ధర (₹ / kg)')}</label>
-                    <input type="number" value={calcInputs.marketRatePerKg} onChange={(e) => setCalcInputs({ ...calcInputs, marketRatePerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Feed Cost (₹ / kg)', 'ఫీడ్ ధర (₹ / kg)')}</label>
-                    <input type="number" value={calcInputs.feedCostPerKg} onChange={(e) => setCalcInputs({ ...calcInputs, feedCostPerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold opacity-75 block mb-1">{L('Power & Probiotics (/Acre)', 'కరెంట్ & ప్రోబయోటిక్స్ (/ఎకరానికి)')}</label>
-                    <input type="number" value={calcInputs.powerProbioticCostPerAcre} onChange={(e) => setCalcInputs({ ...calcInputs, powerProbioticCostPerAcre: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-                  <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
-                    <span className="text-[11px] opacity-60 font-bold block">{L(`Total Seed (${calcResult.totalAcres} Acres)`, `మొత్తం సీడ్ (${calcResult.totalAcres} ఎకరాలు)`)}</span>
-                    <span className="text-lg font-black">{calcResult.totalSeedsNeeded.toLocaleString('en-IN')} PL</span>
-                  </div>
-                  <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-teal-600 font-bold block">{L('Projected Harvest', 'అంచనా దిగుబడి')}</span>
-                    <span className="text-lg font-black">{calcResult.harvestTons} {L('Tons', 'టన్నులు')} ({calcResult.harvestKg.toLocaleString('en-IN')} kg)</span>
-                  </div>
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-amber-600 font-bold block">{L('Total Feed Required', 'మొత్తం కావాల్సిన ఫీడ్')}</span>
-                    <span className="text-lg font-black">{calcResult.totalFeedBags} {L('Bags', 'బస్తాలు')} ({calcResult.totalFeedKg.toLocaleString('en-IN')} kg)</span>
-                  </div>
-                  <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
-                    <span className="text-[11px] opacity-60 font-bold block">{L('Break-Even Cost / kg', 'బ్రేక్-ఈవెన్ ఖర్చు / kg')}</span>
-                    <span className="text-lg font-black">₹{calcResult.breakEvenPerKg} / kg</span>
-                  </div>
-                  <div className={`border rounded-xl p-3.5 ${subCardBg}`}>
-                    <span className="text-[11px] opacity-60 font-bold block">{L('Gross Crop Revenue', 'మొత్తం పంట ఆదాయం')}</span>
-                    <span className="text-lg font-black">₹{calcResult.grossRevenue.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-rose-500 font-bold block">{L('Total Production Cost', 'మొత్తం సాగు ఖర్చు')}</span>
-                    <span className="text-lg font-black">₹{calcResult.totalExpenses.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5">
-                    <span className="text-[11px] text-emerald-500 font-bold block">{L('Net Profit / Acre', 'నికర లాభం / ఎకరం')}</span>
-                    <span className="text-lg font-black">₹{calcResult.profitPerAcre.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="bg-emerald-600 text-white rounded-xl p-3.5">
-                    <span className="text-[11px] text-emerald-100 font-bold block">{L('Total Net Crop Profit', 'మొత్తం నికర లాభం')}</span>
-                    <span className="text-lg font-black">₹{calcResult.netProfit.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-
-                {/* FEATURE 8: HARVEST COUNT & MARKET RATE SENSITIVITY MATRIX */}
-                <div className={`p-4 rounded-2xl border space-y-2 ${subCardBg}`}>
-                  <h4 className="text-xs font-extrabold uppercase text-teal-500">{L(`Count-Wise Profit Sensitivity Matrix (At ${calcInputs.survival}% Survival)`, `కౌంట్ వారీగా లాభాల అంచనా (${calcInputs.survival}% సర్వైవల్ వద్ద)`)}</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    {[
-                      { count: 30, rate: 395 },
-                      { count: 40, rate: 340 },
-                      { count: 50, rate: 305 }
-                    ].map(sc => {
-                      const surv = Math.round(calcResult.totalSeedsNeeded * (calcInputs.survival / 100));
-                      const kg = Math.round(surv / sc.count);
-                      const prof = (kg * sc.rate) - calcResult.totalExpenses;
-                      return (
-                        <div key={sc.count} className={`p-3 rounded-xl border ${cardBg}`}>
-                          <div className="font-extrabold">{sc.count} {L('Count', 'కౌంట్')} @ ₹{sc.rate}/kg</div>
-                          <div className="text-[11px] opacity-70">{L('Harvest:', 'దిగుబడి:')} {kg.toLocaleString('en-IN')} kg</div>
-                          <div className={`font-black mt-1 ${prof >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                            {L('Net Profit:', 'నికర లాభం:')} ₹{prof.toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 5: POND WATER, VIBRIO DISEASE EARLY-WARNING & OXYGEN CALCULATOR */}
-            {buyerTab === 'waterlab' && (
-              <div className="space-y-6">
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <h3 className="text-base font-extrabold flex items-center gap-2">
-                    <Droplets className="w-5 h-5 text-teal-600" /> {L('Pond Water & Vibrio/WSSV Disease Early-Warning Matrix', 'చెరువు నీటి పరీక్ష & విబ్రియో/WSSV వ్యాధి ముందస్తు హెచ్చరిక')}
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Water pH (7.5 - 8.3)', 'నీటి pH (7.5 - 8.3)')}</label>
-                      <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Dissolved Oxygen (ppm)', 'కరిగిన ఆక్సిజన్ / DO (ppm)')}</label>
-                      <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Alkalinity (ppm)', 'ఆల్కలీనిటీ (ppm)')}</label>
-                      <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Ammonia (ppm)', 'అమ్మోనియా (ppm)')}</label>
-                      <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-75 block mb-1">{L('Pond Salinity (PPT)', 'చెరువు ఉప్పదనం (PPT)')}</label>
-                      <input type="number" value={waterTest.salinity} onChange={(e) => setWaterTest({ ...waterTest, salinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
-                    </div>
-                  </div>
-                  {(() => {
-                    const isSafe = waterTest.ph >= 7.5 && waterTest.ph <= 8.4 && waterTest.doLevel >= 4.5 && waterTest.ammonia <= 0.1;
-                    const vibrioRisk = waterTest.ph > 8.4 && waterTest.salinity > 20 ? 'HIGH' : waterTest.ammonia > 0.08 ? 'MODERATE' : 'LOW';
-                    return (
-                      <div className="space-y-2">
-                        <div className={`p-4 rounded-xl border text-xs font-bold ${isSafe ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-amber-500/15 border-amber-500/40 text-amber-500'}`}>
-                          {isSafe
-                            ? L('✅ Pond water parameters are OPTIMAL for immediate PL stocking!', '✅ చెరువు నీటి నాణ్యత సీడ్ వదలడానికి అనుకూలంగా ఉంది!')
-                            : L('⚠️ Warning: Stabilize pH (7.5-8.3), DO (above 4.5 ppm), and Ammonia (below 0.1 ppm) before stocking.', '⚠️ హెచ్చరిక: సీడ్ వదిలే ముందు pH (7.5-8.3), DO (4.5 ppm పైన), మరియు అమ్మోనియా (0.1 ppm లోపు) సరిచేయండి.')}
-                        </div>
-                        {/* FEATURE 7: VIBRIO / PATHOGEN RISK BADGE */}
-                        <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-between ${subCardBg}`}>
-                          <span>{L('Luminescent Vibrio & EHP Susceptibility Risk:', 'విబ్రియో & EHP వ్యాధి రిస్క్ అంచనా:')}</span>
-                          <span className={vibrioRisk === 'LOW' ? 'text-emerald-500' : vibrioRisk === 'MODERATE' ? 'text-amber-500' : 'text-rose-500'}>
-                            {vibrioRisk} RISK ({vibrioRisk === 'LOW' ? 'Safe Bio-floc Balance' : 'Apply Gut Probiotics & Minerals'})
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                    <h4 className="font-bold text-sm text-teal-500">{L('Salinity Acclimatization Time Calculator', 'ఉప్పదనం అలవాటు (Acclimatization) కాలిక్యులేటర్')}</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Hatchery PPT', 'హేచరీ PPT')}</label>
-                        <input type="number" value={acclimCalc.hatcheryPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, hatcheryPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond PPT', 'చెరువు PPT')}</label>
-                        <input type="number" value={acclimCalc.pondPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, pondPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-                    </div>
-                    <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
-                      Salinity Variance: <b>{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt)} PPT</b> • Required Acclimatization Time: <b className="text-teal-500">{Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4} Hours</b> (1 PPT every 4 hrs).
-                    </div>
-                    {/* FEATURE 6: LIVE SALINITY ACCLIMATIZATION COUNTDOWN TIMER */}
-                    {(() => {
-                      const totalSecs = Math.max(1, Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
-                      const hrs = String(Math.floor(acclimTimerSec / 3600)).padStart(2, '0');
-                      const mins = String(Math.floor((acclimTimerSec % 3600) / 60)).padStart(2, '0');
-                      const secs = String(acclimTimerSec % 60).padStart(2, '0');
-                      const pctDone = Math.min(100, Math.max(0, Math.round(((totalSecs - acclimTimerSec) / totalSecs) * 100)));
-                      return (
-                        <div className={`p-3.5 rounded-xl border border-teal-500/30 space-y-2.5 ${subCardBg}`}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-extrabold text-teal-500 inline-flex items-center gap-1.5">
-                              <Timer className="w-3.5 h-3.5" /> {L('Live Acclimatization Countdown', 'లైవ్ అక్లైమటైజేషన్ టైమర్')}
+                        {/* FEATURE 21: EMERGENCY AQUA LAB & DISEASE SOS HELPLINE */}
+                        <div className={`rounded-2xl p-5 border-2 border-rose-500/40 bg-rose-500/5 flex flex-wrap items-center justify-between gap-4`}>
+                          <div className="space-y-1">
+                            <span className="text-xs font-extrabold uppercase text-rose-500 inline-flex items-center gap-1.5">
+                              <ShieldAlert className="w-4 h-4" /> {L('Emergency Aqua Lab & Disease SOS Helpline', 'అత్యవసర ఆక్వా ల్యాబ్ & వ్యాధి SOS హెల్ప్‌లైన్')}
                             </span>
-                            <span className="font-mono text-lg font-black text-teal-600">{hrs}:{mins}:{secs}</span>
+                            <p className="text-xs opacity-80">
+                              {L('Suspecting White Spot (WSSV), EHP, or sudden mortality? Call AP Fisheries SOS or send your current Water Lab report on WhatsApp in 1 click.', 'వైట్ స్పాట్ (WSSV), EHP లేదా ఆకస్మిక మరణాలు కనిపిస్తే వెంటనే AP ఫిషరీస్ SOS కు కాల్ చేయండి లేదా వాటర్ రిపోర్ట్ WhatsApp లో పంపండి.')}
+                            </p>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
-                            <div className="h-full bg-teal-500 transition-all" style={{ width: `${pctDone}%` }} />
-                          </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <a
+                              href="tel:18004251660"
+                              className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs"
+                            >
+                              <PhoneCall className="w-4 h-4" /> {L('AP Fisheries SOS (1800-425-1660)', 'AP ఫిషరీస్ SOS కాల్')}
+                            </a>
                             <button
                               type="button"
-                              onClick={() => {
-                                if (acclimTimerSec <= 0) setAcclimTimerSec(Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
-                                setAcclimTimerRunning(!acclimTimerRunning);
-                              }}
-                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer ${acclimTimerRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'}`}
+                              onClick={handlePrintStockingSop}
+                              className={`px-4 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
                             >
-                              {acclimTimerRunning ? L('Pause', 'పాజ్') : L('Start Timer', 'ప్రారంభించు')}
+                              <Printer className="w-4 h-4 text-teal-600" /> {L('Print Stocking SOP', 'స్టాకింగ్ SOP ప్రింట్')}
                             </button>
                             <button
                               type="button"
                               onClick={() => {
-                                setAcclimTimerRunning(false);
-                                setAcclimTimerSec(Math.abs(acclimCalc.hatcheryPpt - acclimCalc.pondPpt) * 4 * 3600);
-                              }}
-                              className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer ${cardBg}`}
-                            >
-                              {L('Reset', 'రీసెట్')}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                    <h4 className="font-bold text-sm text-teal-500">{L('Oxygen Packing Bags & Van Size Estimator', 'ఆక్సిజన్ ప్యాకింగ్ బ్యాగ్‌లు & వ్యాన్ అంచనా')}</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Total Seed (PL)', 'మొత్తం సీడ్ (PL)')}</label>
-                        <input type="number" step="50000" value={oxygenCalc.seedCount} onChange={(e) => setOxygenCalc({ ...oxygenCalc, seedCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Transit Hours', 'ప్రయాణ సమయం (గంటలు)')}</label>
-                        <input type="number" value={oxygenCalc.travelHours} onChange={(e) => setOxygenCalc({ ...oxygenCalc, travelHours: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-                    </div>
-                    {(() => {
-                      const plPerBag = oxygenCalc.travelHours > 5 ? 2000 : 3000;
-                      const bags = Math.ceil((oxygenCalc.seedCount || 100000) / plPerBag);
-                      const boxes = Math.ceil(bags / 2);
-                      return (
-                        <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
-                          Required Oxygen Bags: <b>{bags} Bags</b> ({plPerBag} PL/bag) • Cartons: <b>{boxes} Boxes</b> • Vehicle: <b className="text-emerald-500">{boxes > 60 ? 'Bolero Pickup / Mini Truck' : 'Tata Ace AC Van'}</b>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-
-                {/* FEATURE 21: EMERGENCY AQUA LAB & DISEASE SOS HELPLINE */}
-                <div className={`rounded-2xl p-5 border-2 border-rose-500/40 bg-rose-500/5 flex flex-wrap items-center justify-between gap-4`}>
-                  <div className="space-y-1">
-                    <span className="text-xs font-extrabold uppercase text-rose-500 inline-flex items-center gap-1.5">
-                      <ShieldAlert className="w-4 h-4" /> {L('Emergency Aqua Lab & Disease SOS Helpline', 'అత్యవసర ఆక్వా ల్యాబ్ & వ్యాధి SOS హెల్ప్‌లైన్')}
-                    </span>
-                    <p className="text-xs opacity-80">
-                      {L('Suspecting White Spot (WSSV), EHP, or sudden mortality? Call AP Fisheries SOS or send your current Water Lab report on WhatsApp in 1 click.', 'వైట్ స్పాట్ (WSSV), EHP లేదా ఆకస్మిక మరణాలు కనిపిస్తే వెంటనే AP ఫిషరీస్ SOS కు కాల్ చేయండి లేదా వాటర్ రిపోర్ట్ WhatsApp లో పంపండి.')}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    <a
-                      href="tel:18004251660"
-                      className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs"
-                    >
-                      <PhoneCall className="w-4 h-4" /> {L('AP Fisheries SOS (1800-425-1660)', 'AP ఫిషరీస్ SOS కాల్')}
-                    </a>
-                    <button
-                      type="button"
-                      onClick={handlePrintStockingSop}
-                      className={`px-4 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
-                    >
-                      <Printer className="w-4 h-4 text-teal-600" /> {L('Print Stocking SOP', 'స్టాకింగ్ SOP ప్రింట్')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const msg = `🚨 *Aqua Mark Emergency Water Lab Report*
+                                const msg = `🚨 *Aqua Mark Emergency Water Lab Report*
 • Farmer: ${currentUser.name} (+91 ${currentUser.phone})
 • pH: ${waterTest.ph} | DO: ${waterTest.doLevel} ppm
 • Alkalinity: ${waterTest.alkalinity} ppm | Ammonia: ${waterTest.ammonia} ppm
 • Salinity: ${waterTest.salinity} PPT
 Please advise immediate treatment protocol.`;
-                        openWhatsAppMessage(ADMIN_WHATSAPP_NUMBER, msg);
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Send className="w-4 h-4" /> {L('WhatsApp Water Report to Lab', 'ల్యాబ్‌కు వాటర్ రిపోర్ట్ పంపండి')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 6: DOC 1-110 FEEDING SCHEDULE */}
-            {buyerTab === 'guide' && (
-              <div className={`rounded-2xl p-6 border shadow-xs space-y-3 ${cardBg}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="font-bold text-sm">{L('DOC 1–110 Standard Vannamei Feeding & Check-Tray Chart (Per 1,00,000 PL)', 'DOC 1–110 వనామీ ఫీడింగ్ & చెక్-ట్రే చార్ట్ (1,00,000 PL కు)')}</h4>
-                  <button
-                    type="button"
-                    onClick={() => handleVoiceReadout(
-                      'doc_guide',
-                      'DOC 1 to 10: feed 2 to 4 kg per lakh daily, blind feeding. DOC 11 to 20: 4.2 to 7.5 kg. DOC 21 to 35: 8 to 14 kg, check tray after 2.5 hours. DOC 36 to 55: 15 to 24 kg. DOC 56 to 80: 25 to 34 kg. DOC 81 to 110: 35 to 42 kg per lakh.',
-                      'DOC 1 నుండి 10 రోజులు: లక్ష సీడ్ కు రోజుకు 2 నుండి 4 కిలోల ఫీడ్ వేయండి. DOC 11 నుండి 20: 4.2 నుండి 7.5 కిలోలు. DOC 21 నుండి 35: 8 నుండి 14 కిలోలు, 2.5 గంటల తర్వాత చెక్ ట్రే చూడండి. DOC 36 నుండి 55: 15 నుండి 24 కిలోలు. DOC 56 నుండి 110: 25 నుండి 42 కిలోల వరకు ఫీడ్ అందించండి.'
+                                openWhatsAppMessage(ADMIN_WHATSAPP_NUMBER, msg);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Send className="w-4 h-4" /> {L('WhatsApp Water Report to Lab', 'ల్యాబ్‌కు వాటర్ రిపోర్ట్ పంపండి')}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${isSpeakingId === 'doc_guide' ? 'bg-teal-600 text-white border-teal-600' : subCardBg}`}
-                  >
-                    {isSpeakingId === 'doc_guide' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-teal-600" />}
-                    {isSpeakingId === 'doc_guide' ? L('Stop Audio', 'ఆపు') : L('Listen Chart', 'వాయిస్‌లో వినండి')}
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-300/30 opacity-65 uppercase text-[10px]">
-                        <th className="py-2">{L('Crop Stage', 'పంట దశ')}</th>
-                        <th className="py-2">{L('Avg Body Weight', 'సగటు బరువు')}</th>
-                        <th className="py-2">{L('Daily Feed / Lakh', 'రోజువారీ ఫీడ్ / లక్షకు')}</th>
-                        <th className="py-2">{L('Feed Grade', 'ఫీడ్ గ్రేడ్')}</th>
-                        <th className="py-2">{L('Check-Tray Protocol', 'చెక్-ట్రే విధానం')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-300/20">
-                      {DOC_SCHEDULE_TABLE.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="py-2.5 font-bold text-teal-500">{row.doc}</td>
-                          <td className="py-2.5">{row.abw}</td>
-                          <td className="py-2.5 font-bold">{row.feedPerLakh}</td>
-                          <td className="py-2.5">{row.size}</td>
-                          <td className="py-2.5 opacity-80">{row.trayCheck}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
-        )}
 
-        {/* =========================================================
-            2. SELLER (HATCHERY) PORTAL — ₹10K DEPOSIT GATE -> PROMINENT HATCHERY CARD -> 3 TABS
-           ========================================================= */}
-        {currentUser.role === 'seller' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* ONE-STEP HATCHERY & BANK REGISTRATION (NO MANDATORY DEPOSIT) */}
-            {!myFixedHatchery ? (
-              <div className={`rounded-2xl p-5 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
-                <div>
-                  <span className="bg-teal-500/15 text-teal-600 border border-teal-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                    ✓ CAA Hatchery Onboarding • Zero Upfront Deposit
-                  </span>
-                  <h2 className="text-xl font-extrabold mt-2">{t.unifiedRegTitle}</h2>
-                  <p className="text-xs opacity-60 mt-1">{t.unifiedRegSub}</p>
-                </div>
-
-                <form onSubmit={handleCompleteUnifiedSellerReg} className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-bold block mb-1">{t.hatcheryNameLabel}</label>
-                      <input required type="text" placeholder="e.g., Sri Sai Coastal Hatcheries" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold block mb-1">{t.caaLicenseLabel}</label>
-                      <input required type="text" placeholder="CAA/AP/2026/XXXX" value={unifiedSellerForm.caaLicense} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, caaLicense: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold block mb-1">{t.zoneLabel}</label>
-                      <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}>
-                        {COASTAL_ZONES.map(z => (
-                          <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Add Custom Zone' : z}</option>
-                        ))}
-                      </select>
-                      {unifiedSellerForm.zone === 'OTHER_CUSTOM' && (
-                        <input required type="text" placeholder={t.customZonePlaceholder} value={unifiedSellerForm.customZone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, customZone: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-xs mt-2 select-text ${inputCls}`} />
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold block mb-1">{t.addressLabel}</label>
-                      <input required type="text" placeholder="Beach Road, Kakinada" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-bold block mb-1">{t.mapsLinkLabel}</label>
-                      <input type="url" placeholder="https://maps.google.com/?q=..." value={unifiedSellerForm.googleMapsLink} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, googleMapsLink: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-bold block mb-1">{t.descriptionLabel}</label>
-                      <textarea rows={2} placeholder="Write about your hatchery tanks, SPF broodstock, water filtration & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-300/30 space-y-3">
-                    <h3 className="text-sm font-extrabold flex items-center gap-2">
-                      <Landmark className="w-4 h-4 text-teal-600" /> Settlement Bank & UPI Account
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold block mb-1">{t.accHolderLabel}</label>
-                        <input required type="text" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold block mb-1">{t.accNoLabel}</label>
-                        <input required type="text" placeholder="3892010004512" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold block mb-1">{t.ifscLabel}</label>
-                        <input required type="text" placeholder="SBIN0001234" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold block mb-1">{t.upiLabel}</label>
-                        <input required type="text" placeholder="hatchery@okaxis" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
-                    {t.completeRegBtn}
-                  </button>
-                </form>
-              </div>
-            ) : (
-              /* STEP C: ACTIVE HATCHERY DASHBOARD — PROMINENT HATCHERY DETAILS AT TOP, 3 TABS BELOW */
-              <>
-                <div className={`rounded-2xl p-6 sm:p-7 border-2 border-teal-500/30 shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-1.5 flex-1 min-w-[260px]">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                          <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
-                        </span>
-                        <span className="inline-flex items-center gap-1 bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                          <ShieldCheck className="w-3.5 h-3.5" /> {L('CAA Verified Partner', 'CAA వెరిఫైడ్ పార్టనర్')}
-                        </span>
-                      </div>
-                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white bg-slate-900 px-3 py-1 rounded-xl inline-block">
-                        {myFixedHatchery.realName}
-                      </h2>
-                      <p className="text-xs sm:text-sm opacity-80 font-medium">
-                        CAA: <span className="font-mono font-bold">{myFixedHatchery.caaLicense}</span> • {myFixedHatchery.zone} • {myFixedHatchery.realAddress}
-                      </p>
-                      {myFixedHatchery.description && (
-                        <p className="text-xs opacity-75 pt-1 italic leading-relaxed">"{myFixedHatchery.description}"</p>
-                      )}
-                      {myFixedHatchery.googleMapsLink && (
-                        <a
-                          href={myFixedHatchery.googleMapsLink.startsWith('http') ? myFixedHatchery.googleMapsLink : `https://${myFixedHatchery.googleMapsLink}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-teal-500 hover:underline pt-1"
-                        >
-                          <MapPin className="w-3.5 h-3.5" /> {L('View Google Maps Pin', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      {!isEditingSellerProfile && (
-                        <>
+                    {/* TAB 6: DOC 1-110 FEEDING SCHEDULE */}
+                    {buyerTab === 'guide' && (
+                      <div className={`rounded-2xl p-6 border shadow-xs space-y-3 ${cardBg}`}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h4 className="font-bold text-sm">{L('DOC 1–110 Standard Vannamei Feeding & Check-Tray Chart (Per 1,00,000 PL)', 'DOC 1–110 వనామీ ఫీడింగ్ & చెక్-ట్రే చార్ట్ (1,00,000 PL కు)')}</h4>
                           <button
                             type="button"
-                            onClick={() => {
-                              setUnifiedSellerForm({
-                                realName: myFixedHatchery.realName || '',
-                                caaLicense: myFixedHatchery.caaLicense || '',
-                                zone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? myFixedHatchery.zone : 'OTHER_CUSTOM',
-                                customZone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? '' : myFixedHatchery.zone,
-                                realAddress: myFixedHatchery.realAddress || '',
-                                googleMapsLink: myFixedHatchery.googleMapsLink || '',
-                                description: myFixedHatchery.description || '',
-                                accountName: myFixedHatchery.bankDetails?.accountName || '',
-                                accountNo: myFixedHatchery.bankDetails?.accountNo || '',
-                                ifsc: myFixedHatchery.bankDetails?.ifsc || '',
-                                upiId: myFixedHatchery.bankDetails?.upiId || ''
-                              });
-                              setIsEditingSellerProfile(true);
-                            }}
-                            className={`border text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                            onClick={() => handleVoiceReadout(
+                              'doc_guide',
+                              'DOC 1 to 10: feed 2 to 4 kg per lakh daily, blind feeding. DOC 11 to 20: 4.2 to 7.5 kg. DOC 21 to 35: 8 to 14 kg, check tray after 2.5 hours. DOC 36 to 55: 15 to 24 kg. DOC 56 to 80: 25 to 34 kg. DOC 81 to 110: 35 to 42 kg per lakh.',
+                              'DOC 1 నుండి 10 రోజులు: లక్ష సీడ్ కు రోజుకు 2 నుండి 4 కిలోల ఫీడ్ వేయండి. DOC 11 నుండి 20: 4.2 నుండి 7.5 కిలోలు. DOC 21 నుండి 35: 8 నుండి 14 కిలోలు, 2.5 గంటల తర్వాత చెక్ ట్రే చూడండి. DOC 36 నుండి 55: 15 నుండి 24 కిలోలు. DOC 56 నుండి 110: 25 నుండి 42 కిలోల వరకు ఫీడ్ అందించండి.'
+                            )}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${isSpeakingId === 'doc_guide' ? 'bg-teal-600 text-white border-teal-600' : subCardBg}`}
                           >
-                            <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
-                          </button>
-
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {isEditingSellerProfile ? (
-                    <form onSubmit={handleUpdateSellerProfileAndBank} className="space-y-4 pt-3 border-t border-slate-300/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.hatcheryNameLabel}</label>
-                          <input required type="text" placeholder="Enter Hatchery Name" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.zoneLabel}</label>
-                          <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
-                            {COASTAL_ZONES.map(z => <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Custom Zone' : z}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.addressLabel}</label>
-                          <input required type="text" placeholder="Enter Facility Address" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.mapsLinkLabel}</label>
-                          <input type="url" placeholder="https://maps.google.com/?q=..." value={unifiedSellerForm.googleMapsLink} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, googleMapsLink: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.descriptionLabel}</label>
-                          <input type="text" placeholder="Describe hatchery facilities, broodstock & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
-                          <input required type="text" placeholder="Account Holder Name" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
-                          <input required type="text" placeholder="Account Number" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
-                          <input required type="text" placeholder="IFSC Code" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
-                          <input required type="text" placeholder="UPI ID (name@bank)" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
-                          className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
-                        </button>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => setIsEditingSellerProfile(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
-                            Cancel
-                          </button>
-                          <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                            {t.saveBtn}
+                            {isSpeakingId === 'doc_guide' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-teal-600" />}
+                            {isSpeakingId === 'doc_guide' ? L('Stop Audio', 'ఆపు') : L('Listen Chart', 'వాయిస్‌లో వినండి')}
                           </button>
                         </div>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
-                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedHatchery.bankDetails?.accountName}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.accountNo}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedHatchery.bankDetails?.upiId}</b></div>
-                    </div>
-                  )}
-                </div>
-
-                {/* B2B HATCHERY OWNER ADVANTAGE & NO-SHOW PROTECTION BAR */}
-                <div className={`rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{L('Zero No-Show Shield', 'నో-షో రక్షణ')}</span>
-                      <span className="text-[10px] opacity-65">{L('Non-refundable 4% advance', 'నాన్-రిఫండబుల్ 4% అడ్వాన్స్')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-teal-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{L('Direct Farmer + Broker Reach', 'రైతు + బ్రోకర్ నెట్‌వర్క్')}</span>
-                      <span className="text-[10px] opacity-65">{L('Instant batch alerts to brokers', 'బ్రోకర్లకు తక్షణ అలర్ట్')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{L('1-Scan Gate Settlement', '1-స్కాన్ సెటిల్‌మెంట్')}</span>
-                      <span className="text-[10px] opacity-65">{L('QR verifies & clears invoice', 'QR తో తక్షణ రసీదు')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-amber-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{hatcheryClearedOrders.length} {L('Verified Dispatches', 'పూర్తయిన ఆర్డర్లు')}</span>
-                      <span className="text-[10px] opacity-65">{L('Boosts coastal trust rank', 'మార్కెట్ ర్యాంక్ పెంచుతుంది')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* BELOW HATCHERY DETAILS: 3 CLICKABLE TABS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div
-                    onClick={() => setSellerTxModal({ title: 'Upcoming Packing Receivable Transactions', list: hatcheryUpcomingOrders })}
-                    className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
-                  >
-                    <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {L('Upcoming Packing Receivable', 'రాబోయే ప్యాకింగ్ ఆదాయం')}</span>
-                      <span className="underline text-[11px]">View All →</span>
-                    </span>
-                    <div className="text-2xl font-black mt-1.5">₹{hatcheryPendingRevenue.toLocaleString('en-IN')}</div>
-                    <p className="text-[11px] opacity-60 mt-1">{hatcheryUpcomingOrders.length} upcoming packing orders</p>
-                  </div>
-
-                  <div
-                    onClick={() => setSellerTxModal({ title: 'Booked Packing Orders & Actions', list: hatcheryUpcomingOrders })}
-                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
-                  >
-                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> {L('Packing Orders', 'ప్యాకింగ్ ఆర్డర్లు')}</span>
-                      <span className="underline text-[11px]">Manage →</span>
-                    </span>
-                    <div className="text-2xl font-black mt-1.5">{hatcheryUpcomingOrders.length} Scheduled</div>
-                    <p className="text-[11px] opacity-60 mt-1">Click to view booked packings & mark complete</p>
-                  </div>
-
-                  <div
-                    onClick={() => setShowSellerVideoModal(true)}
-                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
-                  >
-                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Video className="w-4 h-4" /> {L('Live Video Requests', 'లైవ్ వీడియో అభ్యర్థనలు')}</span>
-                      <span className="underline text-[11px]">Open & Reply →</span>
-                    </span>
-                    <div className="text-2xl font-black mt-1.5">{myLiveVideoReqs.length} Requests</div>
-                    <p className="text-[11px] opacity-60 mt-1">
-                      {myLiveVideoReqs[0]
-                        ? `Latest: ${myLiveVideoReqs[0].farmerName} (Batch ${myLiveVideoReqs[0].batchId})`
-                        : 'Click to view farmer live video requests'}
-                    </p>
-                  </div>
-                </div>
-
-
-                {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
-                <div className={`rounded-2xl p-4 border shadow-xs space-y-2.5 ${myFixedHatchery.dispatchNotice ? 'border-amber-500/50 bg-amber-500/10' : cardBg}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-extrabold inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                      <Megaphone className="w-4 h-4" /> {L('Hatchery Holiday / Dispatch Notice Bar', 'హేచరీ సెలవు / ప్యాకింగ్ నోటీసు బార్')}
-                    </span>
-                    {!editingNotice && (
-                      <div className="flex items-center gap-2">
-                        {myFixedHatchery.dispatchNotice && (
-                          <button type="button" onClick={() => handleSaveHatcheryNotice('')} className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer">
-                            {L('Clear Notice', 'నోటీసు తొలగించు')}
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => { setNoticeDraft(myFixedHatchery.dispatchNotice || ''); setEditingNotice(true); }}
-                          className={`px-3 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${subCardBg}`}
-                        >
-                          {myFixedHatchery.dispatchNotice ? L('Edit Notice', 'నోటీసు మార్చు') : L('+ Set Notice', '+ నోటీసు పెట్టు')}
-                        </button>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="border-b border-slate-300/30 opacity-65 uppercase text-[10px]">
+                                <th className="py-2">{L('Crop Stage', 'పంట దశ')}</th>
+                                <th className="py-2">{L('Avg Body Weight', 'సగటు బరువు')}</th>
+                                <th className="py-2">{L('Daily Feed / Lakh', 'రోజువారీ ఫీడ్ / లక్షకు')}</th>
+                                <th className="py-2">{L('Feed Grade', 'ఫీడ్ గ్రేడ్')}</th>
+                                <th className="py-2">{L('Check-Tray Protocol', 'చెక్-ట్రే విధానం')}</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-300/20">
+                              {DOC_SCHEDULE_TABLE.map((row, idx) => (
+                                <tr key={idx}>
+                                  <td className="py-2.5 font-bold text-teal-500">{row.doc}</td>
+                                  <td className="py-2.5">{row.abw}</td>
+                                  <td className="py-2.5 font-bold">{row.feedPerLakh}</td>
+                                  <td className="py-2.5">{row.size}</td>
+                                  <td className="py-2.5 opacity-80">{row.trayCheck}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
-                  </div>
-                  {editingNotice ? (
-                    <div className="flex flex-wrap gap-2">
-                      <input
-                        type="text"
-                        placeholder={L('e.g., Sunday Holiday — Next packing starts Monday 04:00 AM', 'ఉదా: ఆదివారం సెలవు — తదుపరి ప్యాకింగ్ సోమవారం ఉదయం 4 గంటలకు')}
-                        value={noticeDraft}
-                        onChange={(e) => setNoticeDraft(e.target.value)}
-                        className={`flex-1 min-w-[220px] border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
-                      />
-                      <button type="button" onClick={() => handleSaveHatcheryNotice(noticeDraft)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                        {L('Publish Notice', 'సేవ్ చేయండి')}
-                      </button>
-                      <button type="button" onClick={() => setEditingNotice(false)} className={`px-3 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-xs opacity-80">
-                      {myFixedHatchery.dispatchNotice
-                        ? myFixedHatchery.dispatchNotice
-                        : L('No active holiday or delay notice. Set a custom notice to display on all your live batch cards.', 'ప్రస్తుతం నోటీసు లేదు. సెలవు లేదా ప్యాకింగ్ ఆలస్యం ఉంటే ఇక్కడ నోట్ పెట్టుకోవచ్చు.')}
-                    </p>
-                  )}
-                </div>
+                  </>
+                )}
 
+                {/* =========================================================
+            2. SELLER (HATCHERY) PORTAL — ₹10K DEPOSIT GATE -> PROMINENT HATCHERY CARD -> 3 TABS
+           ========================================================= */}
+                {currentUser.role === 'seller' && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    {/* ONE-STEP HATCHERY & BANK REGISTRATION (NO MANDATORY DEPOSIT) */}
+                    {!myFixedHatchery ? (
+                      <div className={`rounded-2xl p-5 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
+                        <div>
+                          <span className="bg-teal-500/15 text-teal-600 border border-teal-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                            ✓ CAA Hatchery Onboarding • Zero Upfront Deposit
+                          </span>
+                          <h2 className="text-xl font-extrabold mt-2">{t.unifiedRegTitle}</h2>
+                          <p className="text-xs opacity-60 mt-1">{t.unifiedRegSub}</p>
+                        </div>
 
-                {/* ROUND-3 FEATURE: HATCHERY TODAY'S PACKING SUMMARY & OXYGEN BOXES PREP WIDGET */}
-                {(() => {
-                  const todayStr = new Date().toISOString().split('T')[0];
-                  const todayOrds = hatcheryUpcomingOrders.filter(o => o.packingDate === todayStr);
-                  const totalPlToday = todayOrds.reduce((s, o) => s + (o.quantity || 0) + (o.bonusSeeds || 0), 0);
-                  const bagsToday = Math.ceil(totalPlToday / 2500);
-                  const boxesToday = Math.ceil(bagsToday / 2);
-                  const valToday = todayOrds.reduce((s, o) => s + (o.hatcheryFixedTotal || 0), 0);
-                  return (
-                    <div className={`rounded-2xl p-4 border shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs ${cardBg}`}>
-                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                        <span className="text-[10px] opacity-60 block">{L("Today's Packing Orders", 'నేటి ప్యాకింగ్ ఆర్డర్లు')}</span>
-                        <b className="text-lg text-teal-600">{todayOrds.length}</b>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                        <span className="text-[10px] opacity-60 block">{L('Total PL + Bonus Today', 'నేటి మొత్తం PL + బోనస్')}</span>
-                        <b className="text-lg">{totalPlToday.toLocaleString('en-IN')}</b>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                        <span className="text-[10px] opacity-60 block">{L('Prep Oxygen Bags / Boxes', 'ఆక్సిజన్ బ్యాగ్స్ / బాక్సులు')}</span>
-                        <b className="text-lg text-indigo-500">{bagsToday} / {boxesToday}</b>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                        <span className="text-[10px] opacity-60 block">{L("Today's Dispatch Value", 'నేటి డిస్పాచ్ విలువ')}</span>
-                        <b className="text-lg text-emerald-500">₹{valToday.toLocaleString('en-IN')}</b>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* FEATURE 13: HATCHERY PACKING BAY SHIFT QUEUE BOARD */}
-                <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-extrabold text-sm flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-teal-600" /> {L('Hatchery Packing Bay Shift Queue Board', 'హేచరీ ప్యాకింగ్ బే షిఫ్ట్ క్యూ బోర్డ్')}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => handleExportCsvLedger(myHatcheryOrders, 'Hatchery')}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
-                    >
-                      <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
-                    </button>
-                  </div>
-                  {hatcheryUpcomingOrders.length === 0 ? (
-                    <p className="text-xs opacity-60">{L('No active packing orders in the shift queue right now.', 'ప్రస్తుతం ప్యాకింగ్ క్యూలో ఆర్డర్లు లేవు.')}</p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {PACKING_TIME_SLOTS.map(slot => {
-                        const slotOrders = hatcheryUpcomingOrders.filter(o => (o.packingTimeSlot || 'All Day (24 Hours Flexible)') === slot);
-                        if (slotOrders.length === 0) return null;
-                        return (
-                          <div key={slot} className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
-                            <div className="flex items-center justify-between text-[11px] font-extrabold text-teal-600">
-                              <span>{slot}</span>
-                              <span className="bg-teal-500/15 px-2 py-0.5 rounded-full">{slotOrders.length} {L('Order(s)', 'ఆర్డర్లు')}</span>
+                        <form onSubmit={handleCompleteUnifiedSellerReg} className="space-y-5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs font-bold block mb-1">{t.hatcheryNameLabel}</label>
+                              <input required type="text" placeholder="e.g., Sri Sai Coastal Hatcheries" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
                             </div>
-                            {slotOrders.map(ord => (
-                              <div
-                                key={ord.bookingId}
-                                onClick={() => setInspectedSellerOrder(ord)}
-                                className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs cursor-pointer hover:border-teal-500 ${cardBg}`}
-                              >
-                                <div>
-                                  <b className="font-mono text-teal-500">{ord.bookingId}</b> • <b>{ord.farmerName}</b>
-                                  <span className="block text-[10px] opacity-65">Batch {ord.batch?.id} • {(ord.quantity || 0).toLocaleString('en-IN')} PL • Pond {ord.pondSalinity} PPT • {ord.packingDate}</span>
-                                </div>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${ord.packingStatus === 'PACKING_DONE_BY_SELLER' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>
-                                  {ord.packingStatus === 'PACKING_DONE_BY_SELLER' ? 'Packed ✓' : 'Queued'}
+                            <div>
+                              <label className="text-xs font-bold block mb-1">{t.caaLicenseLabel}</label>
+                              <input required type="text" placeholder="CAA/AP/2026/XXXX" value={unifiedSellerForm.caaLicense} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, caaLicense: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold block mb-1">{t.zoneLabel}</label>
+                              <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}>
+                                {COASTAL_ZONES.map(z => (
+                                  <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Add Custom Zone' : z}</option>
+                                ))}
+                              </select>
+                              {unifiedSellerForm.zone === 'OTHER_CUSTOM' && (
+                                <input required type="text" placeholder={t.customZonePlaceholder} value={unifiedSellerForm.customZone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, customZone: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-xs mt-2 select-text ${inputCls}`} />
+                              )}
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold block mb-1">{t.addressLabel}</label>
+                              <input required type="text" placeholder="Beach Road, Kakinada" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="text-xs font-bold block mb-1">{t.mapsLinkLabel}</label>
+                              <input type="url" placeholder="https://maps.google.com/?q=..." value={unifiedSellerForm.googleMapsLink} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, googleMapsLink: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="text-xs font-bold block mb-1">{t.descriptionLabel}</label>
+                              <textarea rows={2} placeholder="Write about your hatchery tanks, SPF broodstock, water filtration & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2 text-sm select-text ${inputCls}`} />
+                            </div>
+                          </div>
+
+                          <div className="pt-4 border-t border-slate-300/30 space-y-3">
+                            <h3 className="text-sm font-extrabold flex items-center gap-2">
+                              <Landmark className="w-4 h-4 text-teal-600" /> Settlement Bank & UPI Account
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-xs font-bold block mb-1">{t.accHolderLabel}</label>
+                                <input required type="text" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm select-text ${inputCls}`} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold block mb-1">{t.accNoLabel}</label>
+                                <input required type="text" placeholder="3892010004512" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold block mb-1">{t.ifscLabel}</label>
+                                <input required type="text" placeholder="SBIN0001234" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold block mb-1">{t.upiLabel}</label>
+                                <input required type="text" placeholder="hatchery@okaxis" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
+                            {t.completeRegBtn}
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      /* STEP C: ACTIVE HATCHERY DASHBOARD — PROMINENT HATCHERY DETAILS AT TOP, 3 TABS BELOW */
+                      <>
+                        <div className={`rounded-2xl p-6 sm:p-7 border-2 border-teal-500/30 shadow-xs space-y-4 ${cardBg}`}>
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="space-y-1.5 flex-1 min-w-[260px]">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                                  <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
+                                </span>
+                                <span className="inline-flex items-center gap-1 bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                                  <ShieldCheck className="w-3.5 h-3.5" /> {L('CAA Verified Partner', 'CAA వెరిఫైడ్ పార్టనర్')}
                                 </span>
                               </div>
-                            ))}
+                              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white bg-slate-900 px-3 py-1 rounded-xl inline-block">
+                                {myFixedHatchery.realName}
+                              </h2>
+                              <p className="text-xs sm:text-sm opacity-80 font-medium">
+                                CAA: <span className="font-mono font-bold">{myFixedHatchery.caaLicense}</span> • {myFixedHatchery.zone} • {myFixedHatchery.realAddress}
+                              </p>
+                              {myFixedHatchery.description && (
+                                <p className="text-xs opacity-75 pt-1 italic leading-relaxed">"{myFixedHatchery.description}"</p>
+                              )}
+                              {myFixedHatchery.googleMapsLink && (
+                                <a
+                                  href={myFixedHatchery.googleMapsLink.startsWith('http') ? myFixedHatchery.googleMapsLink : `https://${myFixedHatchery.googleMapsLink}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-teal-500 hover:underline pt-1"
+                                >
+                                  <MapPin className="w-3.5 h-3.5" /> {L('View Google Maps Pin', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              {!isEditingSellerProfile && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setUnifiedSellerForm({
+                                        realName: myFixedHatchery.realName || '',
+                                        caaLicense: myFixedHatchery.caaLicense || '',
+                                        zone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? myFixedHatchery.zone : 'OTHER_CUSTOM',
+                                        customZone: COASTAL_ZONES.includes(myFixedHatchery.zone) ? '' : myFixedHatchery.zone,
+                                        realAddress: myFixedHatchery.realAddress || '',
+                                        googleMapsLink: myFixedHatchery.googleMapsLink || '',
+                                        description: myFixedHatchery.description || '',
+                                        accountName: myFixedHatchery.bankDetails?.accountName || '',
+                                        accountNo: myFixedHatchery.bankDetails?.accountNo || '',
+                                        ifsc: myFixedHatchery.bankDetails?.ifsc || '',
+                                        upiId: myFixedHatchery.bankDetails?.upiId || ''
+                                      });
+                                      setIsEditingSellerProfile(true);
+                                    }}
+                                    className={`border text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
+                                  </button>
+
+                                </>
+                              )}
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
+
+                          {isEditingSellerProfile ? (
+                            <form onSubmit={handleUpdateSellerProfileAndBank} className="space-y-4 pt-3 border-t border-slate-300/30">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.hatcheryNameLabel}</label>
+                                  <input required type="text" placeholder="Enter Hatchery Name" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.zoneLabel}</label>
+                                  <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                                    {COASTAL_ZONES.map(z => <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Custom Zone' : z}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.addressLabel}</label>
+                                  <input required type="text" placeholder="Enter Facility Address" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.mapsLinkLabel}</label>
+                                  <input type="url" placeholder="https://maps.google.com/?q=..." value={unifiedSellerForm.googleMapsLink} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, googleMapsLink: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.descriptionLabel}</label>
+                                  <input type="text" placeholder="Describe hatchery facilities, broodstock & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
+                                  <input required type="text" placeholder="Account Holder Name" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
+                                  <input required type="text" placeholder="Account Number" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
+                                  <input required type="text" placeholder="IFSC Code" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
+                                  <input required type="text" placeholder="UPI ID (name@bank)" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
+                                  className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
+                                </button>
+                                <div className="flex items-center gap-2">
+                                  <button type="button" onClick={() => setIsEditingSellerProfile(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
+                                    Cancel
+                                  </button>
+                                  <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                                    {t.saveBtn}
+                                  </button>
+                                </div>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
+                              <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedHatchery.bankDetails?.accountName}</b></div>
+                              <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.accountNo}</b></div>
+                              <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
+                              <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedHatchery.bankDetails?.upiId}</b></div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* B2B HATCHERY OWNER ADVANTAGE & NO-SHOW PROTECTION BAR */}
+                        <div className={`rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <div>
+                              <span className="font-extrabold block leading-tight">{L('Zero No-Show Shield', 'నో-షో రక్షణ')}</span>
+                              <span className="text-[10px] opacity-65">{L('Non-refundable 5% advance', 'నాన్-రిఫండబుల్ 5% అడ్వాన్స్')}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-teal-500 shrink-0" />
+                            <div>
+                              <span className="font-extrabold block leading-tight">{L('Direct Farmer + Broker Reach', 'రైతు + బ్రోకర్ నెట్‌వర్క్')}</span>
+                              <span className="text-[10px] opacity-65">{L('Instant batch alerts to brokers', 'బ్రోకర్లకు తక్షణ అలర్ట్')}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
+                            <div>
+                              <span className="font-extrabold block leading-tight">{L('1-Scan Gate Settlement', '1-స్కాన్ సెటిల్‌మెంట్')}</span>
+                              <span className="text-[10px] opacity-65">{L('QR verifies & clears invoice', 'QR తో తక్షణ రసీదు')}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4 text-amber-500 shrink-0" />
+                            <div>
+                              <span className="font-extrabold block leading-tight">{hatcheryClearedOrders.length} {L('Verified Dispatches', 'పూర్తయిన ఆర్డర్లు')}</span>
+                              <span className="text-[10px] opacity-65">{L('Boosts coastal trust rank', 'మార్కెట్ ర్యాంక్ పెంచుతుంది')}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* BELOW HATCHERY DETAILS: 3 CLICKABLE TABS */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div
+                            onClick={() => setSellerTxModal({ title: 'Upcoming Packing Receivable Transactions', list: hatcheryUpcomingOrders })}
+                            className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                          >
+                            <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {L('Upcoming Packing Receivable', 'రాబోయే ప్యాకింగ్ ఆదాయం')}</span>
+                              <span className="underline text-[11px]">View All →</span>
+                            </span>
+                            <div className="text-2xl font-black mt-1.5">₹{hatcheryPendingRevenue.toLocaleString('en-IN')}</div>
+                            <p className="text-[11px] opacity-60 mt-1">{hatcheryUpcomingOrders.length} upcoming packing orders</p>
+                          </div>
+
+                          <div
+                            onClick={() => setSellerTxModal({ title: 'Booked Packing Orders & Actions', list: hatcheryUpcomingOrders })}
+                            className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                          >
+                            <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> {L('Packing Orders', 'ప్యాకింగ్ ఆర్డర్లు')}</span>
+                              <span className="underline text-[11px]">Manage →</span>
+                            </span>
+                            <div className="text-2xl font-black mt-1.5">{hatcheryUpcomingOrders.length} Scheduled</div>
+                            <p className="text-[11px] opacity-60 mt-1">Click to view booked packings & mark complete</p>
+                          </div>
+
+                          <div
+                            onClick={() => setShowSellerVideoModal(true)}
+                            className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                          >
+                            <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1.5"><Video className="w-4 h-4" /> {L('Live Video Requests', 'లైవ్ వీడియో అభ్యర్థనలు')}</span>
+                              <span className="underline text-[11px]">Open & Reply →</span>
+                            </span>
+                            <div className="text-2xl font-black mt-1.5">{myLiveVideoReqs.length} Requests</div>
+                            <p className="text-[11px] opacity-60 mt-1">
+                              {myLiveVideoReqs[0]
+                                ? `Latest: ${myLiveVideoReqs[0].farmerName} (Batch ${myLiveVideoReqs[0].batchId})`
+                                : 'Click to view farmer live video requests'}
+                            </p>
+                          </div>
+                        </div>
+
+
+                        {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
+                        <div className={`rounded-2xl p-4 border shadow-xs space-y-2.5 ${myFixedHatchery.dispatchNotice ? 'border-amber-500/50 bg-amber-500/10' : cardBg}`}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs font-extrabold inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                              <Megaphone className="w-4 h-4" /> {L('Hatchery Holiday / Dispatch Notice Bar', 'హేచరీ సెలవు / ప్యాకింగ్ నోటీసు బార్')}
+                            </span>
+                            {!editingNotice && (
+                              <div className="flex items-center gap-2">
+                                {myFixedHatchery.dispatchNotice && (
+                                  <button type="button" onClick={() => handleSaveHatcheryNotice('')} className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer">
+                                    {L('Clear Notice', 'నోటీసు తొలగించు')}
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => { setNoticeDraft(myFixedHatchery.dispatchNotice || ''); setEditingNotice(true); }}
+                                  className={`px-3 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${subCardBg}`}
+                                >
+                                  {myFixedHatchery.dispatchNotice ? L('Edit Notice', 'నోటీసు మార్చు') : L('+ Set Notice', '+ నోటీసు పెట్టు')}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {editingNotice ? (
+                            <div className="flex flex-wrap gap-2">
+                              <input
+                                type="text"
+                                placeholder={L('e.g., Sunday Holiday — Next packing starts Monday 04:00 AM', 'ఉదా: ఆదివారం సెలవు — తదుపరి ప్యాకింగ్ సోమవారం ఉదయం 4 గంటలకు')}
+                                value={noticeDraft}
+                                onChange={(e) => setNoticeDraft(e.target.value)}
+                                className={`flex-1 min-w-[220px] border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
+                              />
+                              <button type="button" onClick={() => handleSaveHatcheryNotice(noticeDraft)} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                                {L('Publish Notice', 'సేవ్ చేయండి')}
+                              </button>
+                              <button type="button" onClick={() => setEditingNotice(false)} className={`px-3 py-2 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}>
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-xs opacity-80">
+                              {myFixedHatchery.dispatchNotice
+                                ? myFixedHatchery.dispatchNotice
+                                : L('No active holiday or delay notice. Set a custom notice to display on all your live batch cards.', 'ప్రస్తుతం నోటీసు లేదు. సెలవు లేదా ప్యాకింగ్ ఆలస్యం ఉంటే ఇక్కడ నోట్ పెట్టుకోవచ్చు.')}
+                            </p>
+                          )}
+                        </div>
+
+
+                        {/* ROUND-3 FEATURE: HATCHERY TODAY'S PACKING SUMMARY & OXYGEN BOXES PREP WIDGET */}
+                        {(() => {
+                          const todayStr = new Date().toISOString().split('T')[0];
+                          const todayOrds = hatcheryUpcomingOrders.filter(o => o.packingDate === todayStr);
+                          const totalPlToday = todayOrds.reduce((s, o) => s + (o.quantity || 0) + (o.bonusSeeds || 0), 0);
+                          const bagsToday = Math.ceil(totalPlToday / 2500);
+                          const boxesToday = Math.ceil(bagsToday / 2);
+                          const valToday = todayOrds.reduce((s, o) => s + (o.hatcheryFixedTotal || 0), 0);
+                          return (
+                            <div className={`rounded-2xl p-4 border shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs ${cardBg}`}>
+                              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                <span className="text-[10px] opacity-60 block">{L("Today's Packing Orders", 'నేటి ప్యాకింగ్ ఆర్డర్లు')}</span>
+                                <b className="text-lg text-teal-600">{todayOrds.length}</b>
+                              </div>
+                              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                <span className="text-[10px] opacity-60 block">{L('Total PL + Bonus Today', 'నేటి మొత్తం PL + బోనస్')}</span>
+                                <b className="text-lg">{totalPlToday.toLocaleString('en-IN')}</b>
+                              </div>
+                              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                <span className="text-[10px] opacity-60 block">{L('Prep Oxygen Bags / Boxes', 'ఆక్సిజన్ బ్యాగ్స్ / బాక్సులు')}</span>
+                                <b className="text-lg text-indigo-500">{bagsToday} / {boxesToday}</b>
+                              </div>
+                              <div className={`p-3 rounded-xl border ${subCardBg}`}>
+                                <span className="text-[10px] opacity-60 block">{L("Today's Dispatch Value", 'నేటి డిస్పాచ్ విలువ')}</span>
+                                <b className="text-lg text-emerald-500">₹{valToday.toLocaleString('en-IN')}</b>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* FEATURE 13: HATCHERY PACKING BAY SHIFT QUEUE BOARD */}
+                        <div className={`rounded-2xl p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="font-extrabold text-sm flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-teal-600" /> {L('Hatchery Packing Bay Shift Queue Board', 'హేచరీ ప్యాకింగ్ బే షిఫ్ట్ క్యూ బోర్డ్')}
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => handleExportCsvLedger(myHatcheryOrders, 'Hatchery')}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                            >
+                              <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                            </button>
+                          </div>
+                          {hatcheryUpcomingOrders.length === 0 ? (
+                            <p className="text-xs opacity-60">{L('No active packing orders in the shift queue right now.', 'ప్రస్తుతం ప్యాకింగ్ క్యూలో ఆర్డర్లు లేవు.')}</p>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {PACKING_TIME_SLOTS.map(slot => {
+                                const slotOrders = hatcheryUpcomingOrders.filter(o => (o.packingTimeSlot || 'All Day (24 Hours Flexible)') === slot);
+                                if (slotOrders.length === 0) return null;
+                                return (
+                                  <div key={slot} className={`border rounded-xl p-3 space-y-2 ${subCardBg}`}>
+                                    <div className="flex items-center justify-between text-[11px] font-extrabold text-teal-600">
+                                      <span>{slot}</span>
+                                      <span className="bg-teal-500/15 px-2 py-0.5 rounded-full">{slotOrders.length} {L('Order(s)', 'ఆర్డర్లు')}</span>
+                                    </div>
+                                    {slotOrders.map(ord => (
+                                      <div
+                                        key={ord.bookingId}
+                                        onClick={() => setInspectedSellerOrder(ord)}
+                                        className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs cursor-pointer hover:border-teal-500 ${cardBg}`}
+                                      >
+                                        <div>
+                                          <b className="font-mono text-teal-500">{ord.bookingId}</b> • <b>{ord.farmerName}</b>
+                                          <span className="block text-[10px] opacity-65">Batch {ord.batch?.id} • {(ord.quantity || 0).toLocaleString('en-IN')} PL • Pond {ord.pondSalinity} PPT • {ord.packingDate}</span>
+                                        </div>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${ord.packingStatus === 'PACKING_DONE_BY_SELLER' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>
+                                          {ord.packingStatus === 'PACKING_DONE_BY_SELLER' ? 'Packed ✓' : 'Queued'}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
                   )}
-                </div>
+                  </div>
 
                 {/* ADD NEW SEED BATCH */}
                 <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
@@ -6451,15 +6490,24 @@ Please advise immediate treatment protocol.`;
                                     {b.paused ? 'PAUSED' : 'LIVE'}
                                   </span>
                                 </div>
-                                <span className="block text-[11px] opacity-65 mt-0.5">
-                                  Packing: {b.availableDate} ({b.availableTimeSlot}) • PCR: {(b.pcrImages || []).length} Img • Videos: {(b.tankVideos || []).length}
-                                </span>
+                                {(() => {
+                                  const batchOrders = myHatcheryOrders.filter(o => o.batch?.id === b.id && o.packingStatus !== 'CANCELLED');
+                                  const soldPl = batchOrders.reduce((s, o) => s + (o.quantity || 0), 0);
+                                  return (
+                                    <span className="block text-[11px] opacity-70 mt-0.5">
+                                      Packing: {b.availableDate} ({b.availableTimeSlot}) • Media: {(b.pcrImages || []).length} PCR / {(b.seedImages || []).length} Seed / {(b.tankVideos || []).length} Vid
+                                      {batchOrders.length > 0 && (
+                                        <span className="text-emerald-500 font-bold"> • {batchOrders.length} Booked ({soldPl.toLocaleString('en-IN')} PL)</span>
+                                      )}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
                                 {/* FEATURE 7: PRINTABLE BATCH CRATE QR STICKER */}
                                 <button
                                   type="button"
-                                  onClick={() => handlePrintCrateQrSticker(b)}
+                                  onClick={() => setCrateQrBatch(b)}
                                   className="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer"
                                 >
                                   <QrCode className="w-3.5 h-3.5" /> {L('Crate QR', 'క్రేట్ QR')}
@@ -7138,6 +7186,59 @@ Please advise immediate treatment protocol.`;
                       })}
                     </div>
                   )}
+                </div>
+
+                {/* BROKER QUICK MARGIN & COMMISSION CALCULATOR (COLLAPSIBLE) */}
+                <div className={`rounded-2xl border overflow-hidden ${cardBg}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBrokerMarginCalc(prev => !prev)}
+                    className="w-full px-4 py-3.5 flex items-center justify-between gap-2 text-xs font-extrabold cursor-pointer"
+                  >
+                    <span className="inline-flex items-center gap-2 text-teal-600">
+                      <Calculator className="w-4 h-4 shrink-0" />
+                      {L('Quick Broker Commission & Margin Calculator', 'బ్రోకర్ 2% కమిషన్ & అదనపు మార్జిన్ కాలిక్యులేటర్')}
+                    </span>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${showBrokerMarginCalc ? 'rotate-90' : ''}`} />
+                  </button>
+                  {showBrokerMarginCalc && (() => {
+                    const pl = Math.max(1, Number(brokerCalcInput.lakhs) || 1) * 100000;
+                    const baseTotal = Math.round(pl * (Number(brokerCalcInput.rate) || 0.42));
+                    const comm2Pct = Math.round(baseTotal * 0.02);
+                    const extraM = Math.round(pl * ((Number(brokerCalcInput.extraPaise) || 0) / 100));
+                    return (
+                      <div className="p-4 pt-2 border-t border-slate-300/20 space-y-3 text-xs">
+                        <div className="grid grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="text-[10px] font-bold opacity-70 block mb-1">{L('Qty (Lakhs PL)', 'సీడ్ (లక్షలు)')}</label>
+                            <input type="number" min="1" max="100" value={brokerCalcInput.lakhs} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, lakhs: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold opacity-70 block mb-1">{L('Rate (₹/Seed)', 'ధర (₹/సీడ్)')}</label>
+                            <input type="number" step="0.01" value={brokerCalcInput.rate} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, rate: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold opacity-70 block mb-1">{L('Extra (Paise)', 'అదనపు పైసలు')}</label>
+                            <input type="number" min="0" max="99" value={brokerCalcInput.extraPaise} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, extraPaise: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className={`p-2.5 rounded-xl border ${subCardBg}`}>
+                            <span className="text-[10px] opacity-65 block">2% Comm</span>
+                            <b className="text-sm text-teal-500">₹{comm2Pct.toLocaleString('en-IN')}</b>
+                          </div>
+                          <div className={`p-2.5 rounded-xl border ${subCardBg}`}>
+                            <span className="text-[10px] opacity-65 block">Extra Margin</span>
+                            <b className="text-sm text-indigo-500">₹{extraM.toLocaleString('en-IN')}</b>
+                          </div>
+                          <div className="p-2.5 rounded-xl border bg-emerald-500/15 border-emerald-500/30 text-emerald-500">
+                            <span className="text-[10px] opacity-80 block">Total Profit</span>
+                            <b className="text-sm">₹{(comm2Pct + extraM).toLocaleString('en-IN')}</b>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* BROKER MARKETPLACE */}
@@ -7920,7 +8021,7 @@ Please advise immediate treatment protocol.`;
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Species & Stage:</span><b>{inspectedBuyerBooking.batch?.species} ({inspectedBuyerBooking.batch?.plStage})</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Quantity + Free Bonus:</span><b>{(inspectedBuyerBooking.quantity || 0).toLocaleString('en-IN')} + {(inspectedBuyerBooking.bonusSeeds || 0).toLocaleString('en-IN')} PL</b></div>
               <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Packing Schedule:</span><b>{inspectedBuyerBooking.packingDate} ({inspectedBuyerBooking.packingTimeSlot})</b></div>
-              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (4%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
+              <div className="flex justify-between py-1 border-b border-slate-300/20"><span>Advance Paid (5%):</span><b>₹{(inspectedBuyerBooking.tokenAdvance || 0).toLocaleString('en-IN')}</b></div>
               <div className="flex justify-between py-1"><span>Settlement Status:</span><b className="text-emerald-500">{inspectedBuyerBooking.settlement?.status === 'BALANCE_CLEARED' ? `Balance Cleared (${inspectedBuyerBooking.clearedAt})` : (inspectedBuyerBooking.packingStatus === 'CANCELLED' || inspectedBuyerBooking.settlement?.status === 'CANCELLED_REFUNDED' || inspectedBuyerBooking.settlement?.status === 'CANCELLED_NON_REFUNDABLE') ? L('Cancelled (Non-Refundable)', 'క్యాన్సిల్ చేయబడింది (నాన్-రిఫండబుల్)') : `₹${(inspectedBuyerBooking.balanceAtPacking || 0).toLocaleString('en-IN')} Pending at Packing`}</b></div>
             </div>
             {(() => {
@@ -8550,7 +8651,7 @@ Please advise immediate treatment protocol.`;
                       onClick={() => setBookingForm({ ...bookingForm, paymentOption: 'ADVANCE', qrRevealed: false })}
                       className={`p-2.5 rounded-xl border text-xs font-bold cursor-pointer ${bookingForm.paymentOption !== 'FULL' ? 'border-teal-600 bg-teal-500/15 text-teal-600' : subCardBg}`}
                     >
-                      4% Advance Booking
+                      5% Advance Booking (+2% App Bonus)
                     </button>
                     <button
                       type="button"
@@ -8591,7 +8692,7 @@ Please advise immediate treatment protocol.`;
                     const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
                     const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
                     const fullTotal = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
-                    const advToken = Math.max(800, Math.round(hatcheryFixedCost * 0.04));
+                    const advToken = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
                     const token = bookingForm.paymentOption === 'FULL' ? fullTotal : advToken;
 
                     // UPI PAYMENT: BLURRED QR UNTIL "Show QR" CLICKED + "Pay By App" (NO REQUEST BY VPA)
@@ -8668,7 +8769,7 @@ Please advise immediate treatment protocol.`;
                           <div className="font-mono text-[11px] space-y-0.5 select-text">
                             <div><b>Account Name:</b> Aqua Mark Settlement Account</div>
                             <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
-                            <div><b>4% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
+                            <div><b>5% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
                           </div>
                           <input
                             required
@@ -8701,7 +8802,7 @@ Please advise immediate treatment protocol.`;
                 const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
                 const total = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
                 const isFull = bookingForm.paymentOption === 'FULL';
-                const payNowAmt = isFull ? total : Math.max(800, Math.round(hatcheryFixedCost * 0.04));
+                const payNowAmt = isFull ? total : Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
                 return (
                   <>
                     <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 text-xs">
@@ -8719,7 +8820,8 @@ Please advise immediate treatment protocol.`;
                       </div>
                       {/* ROUND-3 FEATURE: EFFECTIVE NET RATE & OXYGEN LOGISTICS PREVIEW */}
                       {(() => {
-                        const bonusPl = Math.round(qty * ((selectedBatch.bonusPercent || 15) / 100));
+                        const totalBonusPct = (selectedBatch.bonusPercent || 15) + 2;
+                        const bonusPl = Math.round(qty * (totalBonusPct / 100));
                         const totalPl = qty + bonusPl;
                         const effRate = totalPl > 0 ? (total / totalPl).toFixed(3) : '0.000';
                         const bags = Math.ceil(totalPl / 2500);
@@ -8727,7 +8829,7 @@ Please advise immediate treatment protocol.`;
                         const splitCnt = Math.max(1, Number(bookingForm.pondSplitCount) || 1);
                         return (
                           <div className="border-t border-white/10 pt-2 mt-1 grid grid-cols-2 gap-1.5 text-[11px] text-teal-300">
-                            <span>Effective Rate (+{selectedBatch.bonusPercent}%): <b>₹{effRate}/seed</b></span>
+                            <span>Effective Rate (+{selectedBatch.bonusPercent}% + 2% App): <b>₹{effRate}/seed</b></span>
                             <span className="text-right">Est. Packing: <b>{bags} Bags / {boxes} Boxes</b></span>
                             {splitCnt > 1 && (
                               <span className="col-span-2 text-amber-300">Split Across {splitCnt} Ponds: <b>{Math.round(totalPl / splitCnt).toLocaleString('en-IN')} PL / Pond</b></span>
@@ -9183,7 +9285,7 @@ Please advise immediate treatment protocol.`;
         const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
         const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
         const steps = [
-          { title: bk.fullPaid ? '100% Full Payment Paid' : '4% Advance Paid', sub: `Ref: ${bk.paymentId}`, done: true },
+          { title: bk.fullPaid ? '100% Full Payment Paid' : '5% Advance Paid', sub: `Ref: ${bk.paymentId}`, done: true },
           { title: 'Salinity Acclimatization', sub: `Hatchery ${bk.batch?.salinity || 16} PPT → Pond ${bk.pondSalinity || 15} PPT`, done: true },
           { title: 'Packing & Gate-Pass Ready', sub: `${bk.packingDate} (${bk.packingTimeSlot || 'All Day'})`, done: isPacked },
           { title: 'Gate-Pass Scanned', sub: isFinalCleared ? `Cleared ${bk.clearedAt || ''}` : 'Pending at Hatchery', done: isFinalCleared }
@@ -9460,6 +9562,50 @@ Please advise immediate treatment protocol.`;
           </div>
         </div>
       )}
+
+      {/* OWNER CRATE QR PREVIEW MODAL (SHOWS QR FIRST + SAVE PDF BUTTON) */}
+      {crateQrBatch && (() => {
+        const qrPayload = `AQUAMARK-CRATE:${crateQrBatch.id}|HATCHERY:${crateQrBatch.realName}|STAGE:${crateQrBatch.plStage}|PPT:${crateQrBatch.salinity}|CAA:${crateQrBatch.caaLicense}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrPayload)}`;
+        return (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border-2 border-teal-500 text-center space-y-4 ${cardBg}`}>
+              <div className="flex items-center justify-between border-b border-slate-300/30 pb-2.5">
+                <div className="text-left">
+                  <span className="text-[10px] font-extrabold text-teal-600 uppercase tracking-wider block">Oxygen Crate QR</span>
+                  <h3 className="font-extrabold text-sm">{crateQrBatch.id} • {crateQrBatch.plStage}</h3>
+                </div>
+                <button type="button" onClick={() => setCrateQrBatch(null)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
+              </div>
+              <div className="bg-white p-3.5 rounded-2xl border border-teal-200 inline-block mx-auto shadow-xs">
+                <img src={qrUrl} alt={`Crate QR ${crateQrBatch.id}`} className="w-48 h-48 object-contain" />
+              </div>
+              <div className={`grid grid-cols-2 gap-2 text-left text-[11px] p-3 rounded-xl border ${subCardBg}`}>
+                <div><span className="opacity-60 block">Hatchery</span><b className="truncate block">{crateQrBatch.realName}</b></div>
+                <div><span className="opacity-60 block">CAA License</span><b className="font-mono">{crateQrBatch.caaLicense}</b></div>
+                <div><span className="opacity-60 block">Salinity / Bonus</span><b>{crateQrBatch.salinity} PPT • +{crateQrBatch.bonusPercent}%</b></div>
+                <div><span className="opacity-60 block">Packing Date</span><b>{crateQrBatch.availableDate || 'Flexible'}</b></div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePrintCrateQrSticker(crateQrBatch)}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" /> {L('Save PDF / Print', 'PDF సేవ్ / ప్రింట్')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCrateQrBatch(null)}
+                  className={`px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer ${subCardBg}`}
+                >
+                  {t.closeBtn}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* FLOATING SCROLL-TO-TOP BUTTON (RIGHT SIDE) */}
       {showScrollTop && (
