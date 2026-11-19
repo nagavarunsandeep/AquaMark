@@ -643,7 +643,7 @@ const DICT = {
     portalBadges: { buyer: 'Farmer Portal', seller: 'Hatchery Portal', mediator: 'Broker Portal' },
     tickerTitle: 'AP Farmgate Count Rates:',
     tabMarketplace: 'Hatchery Marketplace',
-    tabBookings: 'My Bookings & Gate-Passes',
+    tabBookings: 'My Bookings',
     tabPondLog: 'My Ponds & Daily Feed Log',
     tabAnalytics: 'Harvest & Profit Estimator',
     tabWaterLab: 'Water, Salinity & Disease Lab',
