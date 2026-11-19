@@ -1191,13 +1191,13 @@ function AquaMarkApp() {
   // Dynamic Browser Tab Title based on Login / Active User Role
   useEffect(() => {
     if (!currentUser) {
-      document.title = 'AquaMark_Login';
+      document.title = 'AquaMark | Login';
     } else if (currentUser.role === 'buyer') {
-      document.title = 'AquaMark-Buyer';
+      document.title = 'AquaMark | Buyer';
     } else if (currentUser.role === 'seller') {
-      document.title = 'AquaMark-Seller';
+      document.title = 'AquaMark | Seller';
     } else if (currentUser.role === 'mediator') {
-      document.title = 'AquaMark-Broker';
+      document.title = 'AquaMark | Mediator';
     } else {
       document.title = 'AquaMark';
     }
