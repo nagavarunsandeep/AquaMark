@@ -1429,6 +1429,10 @@ function AquaMarkApp() {
   const [waVerifiedDone, setWaVerifiedDone] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [bookingStatusFilter, setBookingStatusFilter] = useState('ALL');
+  const [showPublishBatchForm, setShowPublishBatchForm] = useState(false);
+  const [videoReqFilter, setVideoReqFilter] = useState('ALL');
+  const [sellerBatchFilter, setSellerBatchFilter] = useState('ALL');
+  const [sellerBatchSearch, setSellerBatchSearch] = useState('');
 
   const handleCopyText = (textToCopy, label = 'Copied') => {
     if (!textToCopy) return;
@@ -2637,6 +2641,25 @@ function AquaMarkApp() {
     showToast(t.toasts.liveVideoRequested);
   };
 
+  const handleToggleVideoRequestStatus = async (reqId) => {
+    let nextStatus = 'COMPLETED';
+    const nextReqs = liveVideoRequests.map((r) => {
+      if (r.id !== reqId) return r;
+      nextStatus = r.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+      return { ...r, status: nextStatus };
+    });
+    setLiveVideoRequests(nextReqs);
+    await saveKvToSupabase('live_videos', nextReqs);
+    showToast(nextStatus === 'COMPLETED' ? L('Request marked as completed!', 'రిక్వెస్ట్ పూర్తయినట్లు మార్క్ అయింది!') : L('Request moved back to pending', 'రిక్వెస్ట్ మళ్లీ పెండింగ్‌లోకి మార్చబడింది'));
+  };
+
+  const handleDeleteVideoRequest = async (reqId) => {
+    const nextReqs = liveVideoRequests.filter((r) => r.id !== reqId);
+    setLiveVideoRequests(nextReqs);
+    await saveKvToSupabase('live_videos', nextReqs);
+    showToast(L('Video request deleted', 'వీడియో రిక్వెస్ట్ తొలగించబడింది'));
+  };
+
   const handleSellerMarkPacked = async (bookingId) => {
     let targetBk = null;
     const nextList = bookings.map(bk => {
@@ -3835,15 +3858,15 @@ function AquaMarkApp() {
           </div>
         </header>
 
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className={`max-w-lg w-full rounded-3xl shadow-sm border p-7 sm:p-8 space-y-5 ${cardBg}`}>
+        <div className="flex-1 flex items-center justify-center p-3 sm:p-5">
+          <div className={`max-w-xl w-full rounded-3xl shadow-sm border p-4 sm:p-8 space-y-5 ${cardBg}`}>
             <div>
-              <h2 className="text-2xl font-extrabold tracking-tight">{t.selectRoleTitle}</h2>
-              <p className="text-xs opacity-60 mt-1">{t.selectRoleSub}</p>
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">{t.selectRoleTitle}</h2>
+              <p className="text-xs opacity-65 mt-1">{t.selectRoleSub}</p>
             </div>
 
-            {/* ROLE TABS (BUYER / SELLER / MEDIATOR — COMPLETELY SEPARATE REGISTRATIONS) */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* ROLE TABS (BUYER / SELLER / MEDIATOR — SPACIOUS WIDE CARDS ON MOBILE, 3-COL ON LAPTOP) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {[
                 { id: 'buyer', icon: ShoppingBag },
                 { id: 'seller', icon: Building2 },
@@ -3857,18 +3880,21 @@ function AquaMarkApp() {
                     key={item.id}
                     type="button"
                     onClick={() => { setLoginRole(item.id); setWaVerifiedDone(false); setLoginPassword(''); }}
-                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${active
-                      ? 'border-teal-600 bg-teal-600/10 ring-2 ring-teal-600/20'
-                      : subCardBg
+                    className={`px-3.5 py-3 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-row sm:flex-col items-center sm:items-start justify-between gap-3 sm:gap-2.5 ${active
+                      ? 'border-teal-500 bg-teal-500/12 ring-2 ring-teal-500/25 shadow-xs'
+                      : `${subCardBg} hover:border-teal-500/40`
                       }`}
                   >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${active ? 'bg-teal-600 text-white' : 'bg-slate-200/70 text-slate-700'}`}>
+                    <div className={`w-10 h-10 sm:w-9 sm:h-9 shrink-0 rounded-xl flex items-center justify-center ${active ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-200/70 text-slate-700'}`}>
                       <IconComp className="w-4 h-4" />
                     </div>
-                    <div>
-                      <div className="text-xs font-extrabold">{meta.title}</div>
-                      <div className="text-[10px] opacity-70 mt-0.5 leading-tight">{meta.desc}</div>
+                    <div className="min-w-0 flex-1 sm:w-full">
+                      <div className="text-sm sm:text-xs font-extrabold leading-tight">{meta.title}</div>
+                      <div className="text-[11px] sm:text-[10px] opacity-70 mt-0.5 leading-snug">{meta.desc}</div>
                     </div>
+                    {active && (
+                      <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0 sm:hidden" />
+                    )}
                   </button>
                 );
               })}
@@ -5906,84 +5932,20 @@ Please advise immediate treatment protocol.`;
                       <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedHatchery.bankDetails?.accountName}</b></div>
                       <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.accountNo}</b></div>
                       <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedHatchery.bankDetails?.upiId}</b></div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] opacity-60 block">{t.upiLabel}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(myFixedHatchery.bankDetails?.upiId, L('UPI ID Copied', 'UPI ID కాపీ అయింది'))}
+                          title={L('Tap to copy UPI ID', 'UPI ID కాపీ చేయండి')}
+                          className="inline-flex items-center gap-1 font-mono font-bold text-teal-500 hover:underline cursor-pointer max-w-full"
+                        >
+                          <span className="truncate">{myFixedHatchery.bankDetails?.upiId}</span>
+                          <Copy className="w-3 h-3 shrink-0 opacity-75" />
+                        </button>
+                      </div>
                     </div>
                   )}
-                </div>
-
-                {/* B2B HATCHERY OWNER ADVANTAGE & NO-SHOW PROTECTION BAR */}
-                <div className={`rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{L('Zero No-Show Shield', 'నో-షో రక్షణ')}</span>
-                      <span className="text-[10px] opacity-65">{L('Non-refundable 5% advance', 'నాన్-రిఫండబుల్ 5% అడ్వాన్స్')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-teal-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{L('Direct Farmer + Broker Reach', 'రైతు + బ్రోకర్ నెట్‌వర్క్')}</span>
-                      <span className="text-[10px] opacity-65">{L('Instant batch alerts to brokers', 'బ్రోకర్లకు తక్షణ అలర్ట్')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{L('1-Scan Gate Settlement', '1-స్కాన్ సెటిల్‌మెంట్')}</span>
-                      <span className="text-[10px] opacity-65">{L('QR verifies & clears invoice', 'QR తో తక్షణ రసీదు')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-amber-500 shrink-0" />
-                    <div>
-                      <span className="font-extrabold block leading-tight">{hatcheryClearedOrders.length} {L('Verified Dispatches', 'పూర్తయిన ఆర్డర్లు')}</span>
-                      <span className="text-[10px] opacity-65">{L('Boosts coastal trust rank', 'మార్కెట్ ర్యాంక్ పెంచుతుంది')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* BELOW HATCHERY DETAILS: 3 CLICKABLE TABS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div
-                    onClick={() => setSellerTxModal({ title: 'Upcoming Packing Receivable Transactions', list: hatcheryUpcomingOrders })}
-                    className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
-                  >
-                    <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {L('Upcoming Packing Receivable', 'రాబోయే ప్యాకింగ్ ఆదాయం')}</span>
-                      <span className="underline text-[11px]">View All →</span>
-                    </span>
-                    <div className="text-2xl font-black mt-1.5">₹{hatcheryPendingRevenue.toLocaleString('en-IN')}</div>
-                    <p className="text-[11px] opacity-60 mt-1">{hatcheryUpcomingOrders.length} upcoming packing orders</p>
-                  </div>
-
-                  <div
-                    onClick={() => setSellerTxModal({ title: 'Booked Packing Orders & Actions', list: hatcheryUpcomingOrders })}
-                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
-                  >
-                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> {L('Packing Orders', 'ప్యాకింగ్ ఆర్డర్లు')}</span>
-                      <span className="underline text-[11px]">Manage →</span>
-                    </span>
-                    <div className="text-2xl font-black mt-1.5">{hatcheryUpcomingOrders.length} Scheduled</div>
-                    <p className="text-[11px] opacity-60 mt-1">Click to view booked packings & mark complete</p>
-                  </div>
-
-                  <div
-                    onClick={() => setShowSellerVideoModal(true)}
-                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
-                  >
-                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5"><Video className="w-4 h-4" /> {L('Live Video Requests', 'లైవ్ వీడియో అభ్యర్థనలు')}</span>
-                      <span className="underline text-[11px]">Open & Reply →</span>
-                    </span>
-                    <div className="text-2xl font-black mt-1.5">{myLiveVideoReqs.length} Requests</div>
-                    <p className="text-[11px] opacity-60 mt-1">
-                      {myLiveVideoReqs[0]
-                        ? `Latest: ${myLiveVideoReqs[0].farmerName} (Batch ${myLiveVideoReqs[0].batchId})`
-                        : 'Click to view farmer live video requests'}
-                    </p>
-                  </div>
                 </div>
 
                 {/* GROUPED SELLER DISPATCH, PREP & NOTICE TOOLS (CLEAN COLLAPSIBLE) */}
@@ -6138,650 +6100,801 @@ Please advise immediate treatment protocol.`;
                   )}
                 </div>
 
-                {/* ADD NEW SEED BATCH */}
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <h3 className="text-base font-bold flex items-center gap-2">
-                    <PlusCircle className="w-5 h-5 text-teal-600" /> {t.addBatchTitle}
-                  </h3>
-                  <form onSubmit={handlePublishBatch} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.batchNoLabel}</label>
-                        <input
-                          required
-                          type="text"
-                          placeholder={t.batchNoPlaceholder}
-                          value={newBatchForm.batchNumber}
-                          onChange={(e) => setNewBatchForm({ ...newBatchForm, batchNumber: e.target.value })}
-                          className={`w-full border rounded-xl px-3 py-2 text-xs font-mono font-bold select-text ${inputCls}`}
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.speciesLabel}</label>
-                        <select value={newBatchForm.species} onChange={(e) => setNewBatchForm({ ...newBatchForm, species: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
-                          {SHRIMP_SPECIES_OPTIONS.map(sp => (
-                            <option key={sp} value={sp}>{sp === 'OTHER_CUSTOM' ? '+ Other (Type Custom Species)' : sp}</option>
-                          ))}
-                        </select>
-                        {newBatchForm.species === 'OTHER_CUSTOM' && (
-                          <input required type="text" placeholder={t.customSpeciesPlaceholder} value={newBatchForm.customSpecies} onChange={(e) => setNewBatchForm({ ...newBatchForm, customSpecies: e.target.value })} className={`w-full border rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text ${inputCls}`} />
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.stage}</label>
-                        <select value={newBatchForm.plStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, plStage: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
-                          {SEED_STAGE_OPTIONS.map(st => (
-                            <option key={st} value={st}>{st === 'OTHER_CUSTOM' ? '+ Custom Stage' : st}</option>
-                          ))}
-                        </select>
-                        {newBatchForm.plStage === 'OTHER_CUSTOM' && (
-                          <input required type="text" placeholder={t.customStagePlaceholder} value={newBatchForm.customStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, customStage: e.target.value })} className={`w-full border rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text ${inputCls}`} />
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.ratePerSeedLabel}</label>
-                        <input type="number" step="0.01" value={newBatchForm.pricePer1000} onChange={(e) => setNewBatchForm({ ...newBatchForm, pricePer1000: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.salinity} (PPT)</label>
-                        <input type="number" value={newBatchForm.salinity} onChange={(e) => setNewBatchForm({ ...newBatchForm, salinity: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
+                {/* B2B HATCHERY OWNER ADVANTAGE & NO-SHOW PROTECTION BAR */}
+                <div className={`rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('Zero No-Show Shield', 'నో-షో రక్షణ')}</span>
+                      <span className="text-[10px] opacity-65">{L('Non-refundable 5% advance', 'నాన్-రిఫండబుల్ 5% అడ్వాన్స్')}</span>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">Min. Packing (Lakhs)</label>
-                        <input required type="number" min="1" max="100" value={newBatchForm.minPackingLakhs} onChange={(e) => setNewBatchForm({ ...newBatchForm, minPackingLakhs: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.bonus} (%)</label>
-                        <input type="number" value={newBatchForm.bonusPercent} onChange={(e) => setNewBatchForm({ ...newBatchForm, bonusPercent: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.stockLabel}</label>
-                        <div className="flex gap-1.5">
-                          <input
-                            required
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={3}
-                            placeholder="1-100"
-                            value={newBatchForm.stockAmount}
-                            onChange={(e) => {
-                              const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                              const num = clean === '' ? '' : String(Math.min(100, Number(clean)));
-                              setNewBatchForm({ ...newBatchForm, stockAmount: num });
-                            }}
-                            className={`w-24 border rounded-xl px-3 py-2 text-xs font-bold text-center select-text ${inputCls}`}
-                          />
-                          <select
-                            value={newBatchForm.stockUnit}
-                            onChange={(e) => setNewBatchForm({ ...newBatchForm, stockUnit: e.target.value })}
-                            className={`flex-1 border rounded-xl px-2.5 py-2 text-xs font-bold ${inputCls}`}
-                          >
-                            <option value="LAKHS">Lakhs (× 1,00,000)</option>
-                            <option value="MILLIONS">Millions (× 10,00,000)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.availDateLabel}</label>
-                        <input required type="date" value={newBatchForm.availableDate} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold opacity-75 block mb-1">{t.availTimeLabel}</label>
-                        <select value={newBatchForm.availableTimeSlot} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableTimeSlot: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
-                          {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                        </select>
-                      </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-teal-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('Direct Farmer + Broker Reach', 'రైతు + బ్రోకర్ నెట్‌వర్క్')}</span>
+                      <span className="text-[10px] opacity-65">{L('Instant batch alerts to brokers', 'బ్రోకర్లకు తక్షణ అలర్ట్')}</span>
                     </div>
-
-                    {/* UNIFIED UPLOAD IMAGES/VIDEOS BUTTON + TANK GPS */}
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
-                        <button
-                          type="button"
-                          disabled={uploadProgress.active}
-                          onClick={() => setShowNewMediaPanel(prev => !prev)}
-                          className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showNewMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${subCardBg} text-teal-600`}`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <Upload className="w-4 h-4 shrink-0" />
-                            {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showNewMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
-                            PCR: {pcrImages.length} • Seed: {seedImages.length} • Vid: {tankVideos.length}
-                          </span>
-                        </button>
-
-                        {/* TANK GPS STAMP */}
-                        <div className={`border rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 ${subCardBg}`}>
-                          <div className="min-w-0">
-                            <span className="text-xs font-extrabold flex items-center gap-1.5"><Camera className="w-4 h-4 text-teal-600 shrink-0" /> Tank GPS</span>
-                            <p className="text-[11px] opacity-65 truncate mt-0.5">{gpsLocation || 'Auto Stamp'}</p>
-                          </div>
-                          <button type="button" onClick={handleCaptureGps} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap">
-                            <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
-                          </button>
-                        </div>
-                      </div>
-
-                      {showNewMediaPanel && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
-                          {/* 1. UPLOAD PCR */}
-                          <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
-                            <button
-                              type="button"
-                              disabled={uploadProgress.active}
-                              onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_PCR' ? null : 'NEW_PCR')}
-                              className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
-                            >
-                              <FileCheck2 className="w-4 h-4" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({pcrImages.length})
-                            </button>
-                            {mediaPickerTarget === 'NEW_PCR' && (
-                              <div className="grid grid-cols-2 gap-2">
-                                <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                  <Camera className="w-4 h-4" /> Camera
-                                </button>
-                                <button type="button" onClick={() => pcrFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                  <FolderOpen className="w-4 h-4" /> Files
-                                </button>
-                              </div>
-                            )}
-                            {pcrImages.length > 0 ? (
-                              <div className="grid grid-cols-2 gap-2 pt-1">
-                                {pcrImages.map((img, i) => {
-                                  const isBad = img.aiPcrStatus === 'NOT_A_PCR_REPORT';
-                                  return (
-                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${isBad ? 'border-rose-500/60' : 'border-teal-500/30'} ${cardBg}`}>
-                                      <button
-                                        type="button"
-                                        title={L('Delete image', 'ఫోటో తొలగించు')}
-                                        onClick={() => {
-                                          deleteStorageFilesByUrls([img.url]);
-                                          setPcrImages(prev => prev.filter((_, idx) => idx !== i));
-                                          showToast(L('PCR image removed.', 'PCR ఫోటో తొలగించబడింది.'));
-                                        }}
-                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
-                                      >
-                                        ✕
-                                      </button>
-                                      <img
-                                        src={img.url}
-                                        alt={img.label}
-                                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                        className="w-full h-20 object-cover cursor-pointer hover:opacity-90 transition"
-                                      />
-                                      <div className="p-1 text-[10px] font-bold flex items-center justify-between gap-1">
-                                        <span className="truncate">{img.label}</span>
-                                        <span className={isBad ? 'text-rose-500' : 'text-emerald-500'}>
-                                          {isBad ? '✕' : '✓'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <span className="text-[11px] opacity-65 block text-center">{L('Required: Lab PCR Report (AI checked)', 'తప్పనిసరి: ల్యాబ్ PCR రిపోర్ట్ (AI తనిఖీ)')}</span>
-                            )}
-                          </div>
-
-                          {/* 2. UPLOAD SEED IMAGES */}
-                          <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
-                            <button
-                              type="button"
-                              disabled={uploadProgress.active}
-                              onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_SEED' ? null : 'NEW_SEED')}
-                              className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
-                            >
-                              <Camera className="w-4 h-4" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({seedImages.length})
-                            </button>
-                            {mediaPickerTarget === 'NEW_SEED' && (
-                              <div className="grid grid-cols-2 gap-2">
-                                <button type="button" onClick={() => seedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                  <Camera className="w-4 h-4" /> Camera
-                                </button>
-                                <button type="button" onClick={() => seedFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                  <FolderOpen className="w-4 h-4" /> Files
-                                </button>
-                              </div>
-                            )}
-                            {seedImages.length > 0 ? (
-                              <div className="grid grid-cols-2 gap-2 pt-1">
-                                {seedImages.map((img, i) => (
-                                  <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
-                                    <button
-                                      type="button"
-                                      title={L('Delete image', 'ఫోటో తొలగించు')}
-                                      onClick={() => {
-                                        deleteStorageFilesByUrls([img.url]);
-                                        setSeedImages(prev => prev.filter((_, idx) => idx !== i));
-                                        showToast(L('Seed image removed.', 'సీడ్ ఫోటో తొలగించబడింది.'));
-                                      }}
-                                      className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
-                                    >
-                                      ✕
-                                    </button>
-                                    <img
-                                      src={img.url}
-                                      alt={img.label}
-                                      onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                      className="w-full h-20 object-cover cursor-pointer hover:opacity-90 transition"
-                                    />
-                                    <div className="p-1 text-[10px] font-bold flex items-center justify-between">
-                                      <span className="truncate">{img.label}</span>
-                                      <span className="text-emerald-500">✓</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-[11px] opacity-65 block text-center">{L('Optional: Live PL / Tank Seed Photos', 'ఐచ్ఛికం: లైవ్ సీడ్ / ట్యాంక్ ఫోటోలు')}</span>
-                            )}
-                          </div>
-
-                          {/* 3. UPLOAD VIDEOS */}
-                          <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
-                            <button
-                              type="button"
-                              disabled={uploadProgress.active}
-                              onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_VID' ? null : 'NEW_VID')}
-                              className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
-                            >
-                              <Video className="w-4 h-4" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({tankVideos.length})
-                            </button>
-                            {mediaPickerTarget === 'NEW_VID' && (
-                              <div className="grid grid-cols-2 gap-2">
-                                <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                  <Camera className="w-4 h-4" /> Camera
-                                </button>
-                                <button type="button" onClick={() => vidFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                  <FolderOpen className="w-4 h-4" /> Files
-                                </button>
-                              </div>
-                            )}
-                            {tankVideos.length > 0 ? (
-                              <div className="grid grid-cols-2 gap-2 pt-1">
-                                {tankVideos.map((vid, i) => (
-                                  <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
-                                    <button
-                                      type="button"
-                                      title={L('Delete video', 'వీడియో తొలగించు')}
-                                      onClick={() => {
-                                        deleteStorageFilesByUrls([vid.url]);
-                                        setTankVideos(prev => prev.filter((_, idx) => idx !== i));
-                                        showToast(L('Tank video removed.', 'ట్యాంక్ వీడియో తొలగించబడింది.'));
-                                      }}
-                                      className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
-                                    >
-                                      ✕
-                                    </button>
-                                    <video
-                                      src={vid.url}
-                                      muted
-                                      onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
-                                      className="w-full h-20 object-cover bg-black cursor-pointer"
-                                    />
-                                    <div className="p-1 text-[10px] font-bold flex items-center justify-between">
-                                      <span className="truncate">{vid.label}</span>
-                                      <span className="text-teal-500">▶</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-[11px] opacity-65 block text-center">{L('Optional: Tank PL activity videos', 'ఐచ్ఛికం: ట్యాంక్ PL వీడియోలు')}</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('1-Scan Gate Settlement', '1-స్కాన్ సెటిల్‌మెంట్')}</span>
+                      <span className="text-[10px] opacity-65">{L('QR verifies & clears invoice', 'QR తో తక్షణ రసీదు')}</span>
                     </div>
-
-                    <button type="submit" disabled={uploadProgress.active} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
-                      {t.publishBtn}
-                    </button>
-                  </form>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{hatcheryClearedOrders.length} {L('Verified Dispatches', 'పూర్తయిన ఆర్డర్లు')}</span>
+                      <span className="text-[10px] opacity-65">{L('Boosts coastal trust rank', 'మార్కెట్ ర్యాంక్ పెంచుతుంది')}</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* OWNER'S ACTIVE BATCHES */}
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <h3 className="font-bold text-base flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-teal-600" /> {t.myBatchesTitle}
-                  </h3>
+                {/* BELOW HATCHERY DETAILS: 3 CLICKABLE TABS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div
+                    onClick={() => setSellerTxModal({ title: 'Upcoming Packing Receivable Transactions', list: hatcheryUpcomingOrders })}
+                    className={`border hover:border-amber-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-amber-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {L('Upcoming Packing Receivable', 'రాబోయే ప్యాకింగ్ ఆదాయం')}</span>
+                      <span className="underline text-[11px]">View All →</span>
+                    </span>
+                    <div className="text-2xl font-black mt-1.5">₹{hatcheryPendingRevenue.toLocaleString('en-IN')}</div>
+                    <p className="text-[11px] opacity-60 mt-1">{hatcheryUpcomingOrders.length} upcoming packing orders</p>
+                  </div>
+
+                  <div
+                    onClick={() => setSellerTxModal({ title: 'Booked Packing Orders & Actions', list: hatcheryUpcomingOrders })}
+                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Package className="w-4 h-4" /> {L('Packing Orders', 'ప్యాకింగ్ ఆర్డర్లు')}</span>
+                      <span className="underline text-[11px]">Manage →</span>
+                    </span>
+                    <div className="text-2xl font-black mt-1.5">{hatcheryUpcomingOrders.length} Scheduled</div>
+                    <p className="text-[11px] opacity-60 mt-1">Click to view booked packings & mark complete</p>
+                  </div>
+
+                  <div
+                    onClick={() => setShowSellerVideoModal(true)}
+                    className={`border hover:border-teal-500 rounded-2xl p-5 shadow-xs cursor-pointer transition ${cardBg}`}
+                  >
+                    <span className="text-xs text-teal-500 font-bold flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5"><Video className="w-4 h-4" /> {L('Live Video Requests', 'లైవ్ వీడియో అభ్యర్థనలు')}</span>
+                      <span className="underline text-[11px]">Open & Reply →</span>
+                    </span>
+                    <div className="text-2xl font-black mt-1.5">
+                      {myLiveVideoReqs.filter(r => r.status !== 'COMPLETED').length} {L('Pending', 'పెండింగ్')}
+                      {myLiveVideoReqs.filter(r => r.status === 'COMPLETED').length > 0 && (
+                        <span className="text-xs font-bold opacity-60 ml-1.5">({myLiveVideoReqs.length} {L('Total', 'మొత్తం')})</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] opacity-60 mt-1">
+                      {myLiveVideoReqs[0]
+                        ? `Latest: ${myLiveVideoReqs[0].farmerName} (Batch ${myLiveVideoReqs[0].batchId})`
+                        : 'Click to view farmer live video requests'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* OWNER'S ACTIVE BATCHES & EDIT */}
+                <div className={`rounded-2xl p-4 sm:p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                    <h3 className="font-bold text-sm sm:text-base flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-teal-600 shrink-0" />
+                      <span>{t.myBatchesTitle} ({myOwnedBatches.length})</span>
+                    </h3>
+                    {myOwnedBatches.length > 0 && (
+                      <div className="relative w-full sm:w-56">
+                        <Search className="w-3.5 h-3.5 opacity-50 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={sellerBatchSearch}
+                          onChange={(e) => setSellerBatchSearch(e.target.value)}
+                          placeholder={L('Search batch ID or species...', 'బ్యాచ్ ID / రకం వెతకండి...')}
+                          className={`w-full border rounded-xl pl-8 pr-3 py-1.5 text-xs select-text ${inputCls}`}
+                        />
+                      </div>
+                    )}
+                  </div>
                   {myOwnedBatches.length === 0 ? (
                     <p className="text-xs opacity-60">{t.noBatchesSeller}</p>
-                  ) : (
-                    <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
-                      {myOwnedBatches.map((b) => {
-                        const isEditing = editingBatchId === b.id;
-                        return (
-                          <div key={b.id} className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono text-xs font-bold text-teal-500">{b.id}</span>
-                                  <span className="font-bold text-sm">{b.species}</span>
-                                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.paused ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
-                                    {b.paused ? 'PAUSED' : 'LIVE'}
-                                  </span>
-                                </div>
-                                {(() => {
-                                  const batchOrders = myHatcheryOrders.filter(o => o.batch?.id === b.id && o.packingStatus !== 'CANCELLED');
-                                  const soldPl = batchOrders.reduce((s, o) => s + (o.quantity || 0), 0);
-                                  return (
-                                    <span className="block text-[11px] opacity-70 mt-0.5">
-                                      Packing: {b.availableDate} ({b.availableTimeSlot}) • Media: {(b.pcrImages || []).length} PCR / {(b.seedImages || []).length} Seed / {(b.tankVideos || []).length} Vid
-                                      {batchOrders.length > 0 && (
-                                        <span className="text-emerald-500 font-bold"> • {batchOrders.length} Booked ({soldPl.toLocaleString('en-IN')} PL)</span>
+                  ) : (() => {
+                    const liveCnt = myOwnedBatches.filter(b => !b.paused && (b.availablePl || 0) > 0).length;
+                    const pausedCnt = myOwnedBatches.filter(b => b.paused).length;
+                    const soldCnt = myOwnedBatches.filter(b => (b.availablePl || 0) <= 0).length;
+                    const q = sellerBatchSearch.trim().toLowerCase();
+                    const filteredOwnedBatches = myOwnedBatches.filter(b => {
+                      if (sellerBatchFilter === 'LIVE' && (b.paused || (b.availablePl || 0) <= 0)) return false;
+                      if (sellerBatchFilter === 'PAUSED' && !b.paused) return false;
+                      if (sellerBatchFilter === 'SOLD' && (b.availablePl || 0) > 0) return false;
+                      if (q && !`${b.id} ${b.species} ${b.plStage}`.toLowerCase().includes(q)) return false;
+                      return true;
+                    });
+                    return (
+                      <>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {[
+                            { id: 'ALL', label: L('All', 'అన్నీ'), cnt: myOwnedBatches.length },
+                            { id: 'LIVE', label: L('Live', 'లైవ్'), cnt: liveCnt },
+                            { id: 'PAUSED', label: L('Paused', 'పాజ్'), cnt: pausedCnt },
+                            { id: 'SOLD', label: L('Sold Out', 'అయిపోయాయి'), cnt: soldCnt },
+                          ].map((st) => (
+                            <button
+                              key={st.id}
+                              type="button"
+                              onClick={() => setSellerBatchFilter(st.id)}
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
+                                ? 'bg-teal-600 text-white border-teal-600'
+                                : `${subCardBg} opacity-80 hover:opacity-100`
+                                }`}
+                            >
+                              {st.label} ({st.cnt})
+                            </button>
+                          ))}
+                        </div>
+                        {filteredOwnedBatches.length === 0 ? (
+                          <p className="text-xs opacity-60 py-4 text-center">{L('No matching batches found.', 'సరిపోయే బ్యాచ్‌లు లేవు.')}</p>
+                        ) : (
+                          <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
+                            {filteredOwnedBatches.map((b) => {
+                              const isEditing = editingBatchId === b.id;
+                              return (
+                                <div key={b.id} className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono text-xs font-bold text-teal-500">{b.id}</span>
+                                        <span className="font-bold text-sm">{b.species}</span>
+                                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.paused ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
+                                          {b.paused ? 'PAUSED' : 'LIVE'}
+                                        </span>
+                                      </div>
+                                      {(() => {
+                                        const batchOrders = myHatcheryOrders.filter(o => o.batch?.id === b.id && o.packingStatus !== 'CANCELLED');
+                                        const soldPl = batchOrders.reduce((s, o) => s + (o.quantity || 0), 0);
+                                        return (
+                                          <span className="block text-[11px] opacity-70 mt-0.5">
+                                            Packing: {b.availableDate} ({b.availableTimeSlot}) • Media: {(b.pcrImages || []).length} PCR / {(b.seedImages || []).length} Seed / {(b.tankVideos || []).length} Vid
+                                            {batchOrders.length > 0 && (
+                                              <span className="text-emerald-500 font-bold"> • {batchOrders.length} Booked ({soldPl.toLocaleString('en-IN')} PL)</span>
+                                            )}
+                                          </span>
+                                        );
+                                      })()}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      {/* FEATURE 7: PRINTABLE BATCH CRATE QR STICKER */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setCrateQrBatch(b)}
+                                        className="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <QrCode className="w-3.5 h-3.5" /> {L('Crate QR', 'క్రేట్ QR')}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => togglePauseBatch(b.id)}
+                                        className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${b.paused ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : 'bg-amber-500/15 border-amber-500/30 text-amber-500'}`}
+                                      >
+                                        {b.paused ? <><PlayCircle className="w-3.5 h-3.5" /> Resume Live</> : <><PauseCircle className="w-3.5 h-3.5" /> Pause</>}
+                                      </button>
+
+                                      {isEditing ? (
+                                        <>
+                                          <button type="button" onClick={() => saveEditedBatch(b.id)} className="bg-emerald-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg cursor-pointer">
+                                            {t.saveChangesBtn}
+                                          </button>
+                                          <button type="button" onClick={() => setEditingBatchId(null)} className={`border text-xs font-bold px-2.5 py-1.5 rounded-lg cursor-pointer ${cardBg}`}>
+                                            Cancel
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <button type="button" onClick={() => startEditingBatch(b)} className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${cardBg}`}>
+                                          <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBatchBtn}
+                                        </button>
                                       )}
-                                    </span>
-                                  );
-                                })()}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                {/* FEATURE 7: PRINTABLE BATCH CRATE QR STICKER */}
-                                <button
-                                  type="button"
-                                  onClick={() => setCrateQrBatch(b)}
-                                  className="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer"
-                                >
-                                  <QrCode className="w-3.5 h-3.5" /> {L('Crate QR', 'క్రేట్ QR')}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => togglePauseBatch(b.id)}
-                                  className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${b.paused ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : 'bg-amber-500/15 border-amber-500/30 text-amber-500'}`}
-                                >
-                                  {b.paused ? <><PlayCircle className="w-3.5 h-3.5" /> Resume Live</> : <><PauseCircle className="w-3.5 h-3.5" /> Pause</>}
-                                </button>
-
-                                {isEditing ? (
-                                  <>
-                                    <button type="button" onClick={() => saveEditedBatch(b.id)} className="bg-emerald-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg cursor-pointer">
-                                      {t.saveChangesBtn}
-                                    </button>
-                                    <button type="button" onClick={() => setEditingBatchId(null)} className={`border text-xs font-bold px-2.5 py-1.5 rounded-lg cursor-pointer ${cardBg}`}>
-                                      Cancel
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button type="button" onClick={() => startEditingBatch(b)} className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${cardBg}`}>
-                                    <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBatchBtn}
-                                  </button>
-                                )}
-                                <button type="button" onClick={() => removeBatch(b.id)} className="bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" /> {t.removeBtn}
-                                </button>
-                              </div>
-                            </div>
-
-                            {isEditing ? (
-                              <div className="space-y-3 pt-2 border-t border-slate-300/30">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.speciesLabel}</label>
-                                    <input type="text" value={editBatchValues.species} onChange={(e) => setEditBatchValues({ ...editBatchValues, species: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.broodstockLabel}</label>
-                                    <select value={editBatchValues.broodstock} onChange={(e) => setEditBatchValues({ ...editBatchValues, broodstock: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${inputCls}`}>
-                                      {BROODSTOCK_ORIGINS.map(br => <option key={br} value={br}>{br}</option>)}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.stage}</label>
-                                    <input type="text" value={editBatchValues.plStage} onChange={(e) => setEditBatchValues({ ...editBatchValues, plStage: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.salinity} (PPT)</label>
-                                    <input type="number" value={editBatchValues.salinity} onChange={(e) => setEditBatchValues({ ...editBatchValues, salinity: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.ratePerSeedLabel}</label>
-                                    <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">Min. Packing (Lakhs)</label>
-                                    <input type="number" min="1" max="100" value={editBatchValues.minPackingLakhs} onChange={(e) => setEditBatchValues({ ...editBatchValues, minPackingLakhs: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.bonus} (%)</label>
-                                    <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">Stock (1-100)</label>
-                                    <div className="flex gap-1">
-                                      <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={editBatchValues.stockAmount}
-                                        onChange={(e) => {
-                                          const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                                          setEditBatchValues({ ...editBatchValues, stockAmount: clean === '' ? '' : Math.min(100, Number(clean)) });
-                                        }}
-                                        className={`w-11 border rounded-lg px-1 py-1.5 text-xs font-bold text-center select-text ${inputCls}`}
-                                      />
-                                      <select value={editBatchValues.stockUnit} onChange={(e) => setEditBatchValues({ ...editBatchValues, stockUnit: e.target.value })} className={`flex-1 border rounded-lg px-1 py-1.5 text-[10px] font-bold ${inputCls}`}>
-                                        <option value="LAKHS">Lakhs</option>
-                                        <option value="MILLIONS">Millions</option>
-                                      </select>
+                                      <button type="button" onClick={() => removeBatch(b.id)} className="bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer">
+                                        <Trash2 className="w-3.5 h-3.5" /> {t.removeBtn}
+                                      </button>
                                     </div>
                                   </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.availDateLabel}</label>
-                                    <input type="date" value={editBatchValues.availableDate} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableDate: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold opacity-60 block">{t.availTimeLabel}</label>
-                                    <select value={editBatchValues.availableTimeSlot} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableTimeSlot: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-[10px] font-bold ${inputCls}`}>
-                                      {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                                    </select>
-                                  </div>
-                                </div>
 
-                                <div className="pt-3 border-t border-slate-300/20 space-y-3">
-                                  <button
-                                    type="button"
-                                    disabled={uploadProgress.active}
-                                    onClick={() => setShowEditMediaPanel(prev => !prev)}
-                                    className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showEditMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${cardBg} text-teal-600`}`}
-                                  >
-                                    <span className="inline-flex items-center gap-2">
-                                      <Upload className="w-4 h-4 shrink-0" />
-                                      {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
-                                    </span>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showEditMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
-                                      PCR: {(editBatchValues.pcrImages || []).length} • Seed: {(editBatchValues.seedImages || []).length} • Vid: {(editBatchValues.tankVideos || []).length}
-                                    </span>
-                                  </button>
+                                  {isEditing ? (
+                                    <div className="space-y-3 pt-2 border-t border-slate-300/30">
+                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.speciesLabel}</label>
+                                          <input type="text" value={editBatchValues.species} onChange={(e) => setEditBatchValues({ ...editBatchValues, species: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.broodstockLabel}</label>
+                                          <select value={editBatchValues.broodstock} onChange={(e) => setEditBatchValues({ ...editBatchValues, broodstock: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${inputCls}`}>
+                                            {BROODSTOCK_ORIGINS.map(br => <option key={br} value={br}>{br}</option>)}
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.stage}</label>
+                                          <input type="text" value={editBatchValues.plStage} onChange={(e) => setEditBatchValues({ ...editBatchValues, plStage: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                      </div>
 
-                                  {showEditMediaPanel && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                      {/* 1. UPLOAD PCR */}
-                                      <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.salinity} (PPT)</label>
+                                          <input type="number" value={editBatchValues.salinity} onChange={(e) => setEditBatchValues({ ...editBatchValues, salinity: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.ratePerSeedLabel}</label>
+                                          <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">Min. Packing (Lakhs)</label>
+                                          <input type="number" min="1" max="100" value={editBatchValues.minPackingLakhs} onChange={(e) => setEditBatchValues({ ...editBatchValues, minPackingLakhs: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.bonus} (%)</label>
+                                          <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">Stock (1-100)</label>
+                                          <div className="flex gap-1">
+                                            <input
+                                              type="text"
+                                              inputMode="numeric"
+                                              value={editBatchValues.stockAmount}
+                                              onChange={(e) => {
+                                                const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                                                setEditBatchValues({ ...editBatchValues, stockAmount: clean === '' ? '' : Math.min(100, Number(clean)) });
+                                              }}
+                                              className={`w-11 border rounded-lg px-1 py-1.5 text-xs font-bold text-center select-text ${inputCls}`}
+                                            />
+                                            <select value={editBatchValues.stockUnit} onChange={(e) => setEditBatchValues({ ...editBatchValues, stockUnit: e.target.value })} className={`flex-1 border rounded-lg px-1 py-1.5 text-[10px] font-bold ${inputCls}`}>
+                                              <option value="LAKHS">Lakhs</option>
+                                              <option value="MILLIONS">Millions</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.availDateLabel}</label>
+                                          <input type="date" value={editBatchValues.availableDate} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableDate: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] font-bold opacity-60 block">{t.availTimeLabel}</label>
+                                          <select value={editBatchValues.availableTimeSlot} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableTimeSlot: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-[10px] font-bold ${inputCls}`}>
+                                            {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                                          </select>
+                                        </div>
+                                      </div>
+
+                                      <div className="pt-3 border-t border-slate-300/20 space-y-3">
                                         <button
                                           type="button"
                                           disabled={uploadProgress.active}
-                                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_PCR' ? null : 'EDIT_PCR')}
-                                          className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                          onClick={() => setShowEditMediaPanel(prev => !prev)}
+                                          className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showEditMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${cardBg} text-teal-600`}`}
                                         >
-                                          <FileCheck2 className="w-3.5 h-3.5" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({(editBatchValues.pcrImages || []).length})
+                                          <span className="inline-flex items-center gap-2">
+                                            <Upload className="w-4 h-4 shrink-0" />
+                                            {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
+                                          </span>
+                                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showEditMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
+                                            PCR: {(editBatchValues.pcrImages || []).length} • Seed: {(editBatchValues.seedImages || []).length} • Vid: {(editBatchValues.tankVideos || []).length}
+                                          </span>
                                         </button>
-                                        {mediaPickerTarget === 'EDIT_PCR' && (
-                                          <div className="grid grid-cols-2 gap-2">
-                                            <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                              <Camera className="w-3.5 h-3.5" /> Camera
-                                            </button>
-                                            <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                              <FolderOpen className="w-3.5 h-3.5" /> Files
-                                            </button>
-                                          </div>
-                                        )}
-                                        {(editBatchValues.pcrImages || []).length > 0 && (
-                                          <div className="grid grid-cols-2 gap-2 pt-1">
-                                            {(editBatchValues.pcrImages || []).map((img, i) => (
-                                              <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setEditBatchValues(prev => ({
-                                                    ...prev,
-                                                    removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
-                                                    pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
-                                                  }))}
-                                                  className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                                >
-                                                  ✕
-                                                </button>
-                                                <img
-                                                  src={img.url}
-                                                  alt={img.label}
-                                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                                  className="w-full h-20 object-cover cursor-pointer"
-                                                />
-                                                <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
-                                              </div>
-                                            ))}
+
+                                        {showEditMediaPanel && (
+                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            {/* 1. UPLOAD PCR */}
+                                            <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                              <button
+                                                type="button"
+                                                disabled={uploadProgress.active}
+                                                onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_PCR' ? null : 'EDIT_PCR')}
+                                                className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                              >
+                                                <FileCheck2 className="w-3.5 h-3.5" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({(editBatchValues.pcrImages || []).length})
+                                              </button>
+                                              {mediaPickerTarget === 'EDIT_PCR' && (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                  <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                                    <Camera className="w-3.5 h-3.5" /> Camera
+                                                  </button>
+                                                  <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                                    <FolderOpen className="w-3.5 h-3.5" /> Files
+                                                  </button>
+                                                </div>
+                                              )}
+                                              {(editBatchValues.pcrImages || []).length > 0 && (
+                                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                                  {(editBatchValues.pcrImages || []).map((img, i) => (
+                                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => setEditBatchValues(prev => ({
+                                                          ...prev,
+                                                          removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
+                                                          pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
+                                                        }))}
+                                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                      >
+                                                        ✕
+                                                      </button>
+                                                      <img
+                                                        src={img.url}
+                                                        alt={img.label}
+                                                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                                        className="w-full h-20 object-cover cursor-pointer"
+                                                      />
+                                                      <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+
+                                            {/* 2. UPLOAD SEED IMAGES */}
+                                            <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                              <button
+                                                type="button"
+                                                disabled={uploadProgress.active}
+                                                onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_SEED' ? null : 'EDIT_SEED')}
+                                                className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                              >
+                                                <Camera className="w-3.5 h-3.5" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({(editBatchValues.seedImages || []).length})
+                                              </button>
+                                              {mediaPickerTarget === 'EDIT_SEED' && (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                  <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                                    <Camera className="w-3.5 h-3.5" /> Camera
+                                                  </button>
+                                                  <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                                    <FolderOpen className="w-3.5 h-3.5" /> Files
+                                                  </button>
+                                                </div>
+                                              )}
+                                              {(editBatchValues.seedImages || []).length > 0 && (
+                                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                                  {(editBatchValues.seedImages || []).map((img, i) => (
+                                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => setEditBatchValues(prev => ({
+                                                          ...prev,
+                                                          removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
+                                                          seedImages: prev.seedImages.filter((_, idx) => idx !== i)
+                                                        }))}
+                                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                      >
+                                                        ✕
+                                                      </button>
+                                                      <img
+                                                        src={img.url}
+                                                        alt={img.label}
+                                                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                                        className="w-full h-20 object-cover cursor-pointer"
+                                                      />
+                                                      <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+
+                                            {/* 3. UPLOAD VIDEOS */}
+                                            <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                              <button
+                                                type="button"
+                                                disabled={uploadProgress.active}
+                                                onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_VID' ? null : 'EDIT_VID')}
+                                                className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                              >
+                                                <Video className="w-3.5 h-3.5" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({(editBatchValues.tankVideos || []).length})
+                                              </button>
+                                              {mediaPickerTarget === 'EDIT_VID' && (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                  <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                                    <Camera className="w-3.5 h-3.5" /> Camera
+                                                  </button>
+                                                  <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                                    <FolderOpen className="w-3.5 h-3.5" /> Files
+                                                  </button>
+                                                </div>
+                                              )}
+                                              {(editBatchValues.tankVideos || []).length > 0 && (
+                                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                                  {(editBatchValues.tankVideos || []).map((vid, i) => (
+                                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => setEditBatchValues(prev => ({
+                                                          ...prev,
+                                                          removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
+                                                          tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
+                                                        }))}
+                                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                      >
+                                                        ✕
+                                                      </button>
+                                                      <video
+                                                        src={vid.url}
+                                                        muted
+                                                        onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                                        className="w-full h-20 object-cover bg-black cursor-pointer"
+                                                      />
+                                                      <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
                                         )}
                                       </div>
-
-                                      {/* 2. UPLOAD SEED IMAGES */}
-                                      <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                        <button
-                                          type="button"
-                                          disabled={uploadProgress.active}
-                                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_SEED' ? null : 'EDIT_SEED')}
-                                          className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
-                                        >
-                                          <Camera className="w-3.5 h-3.5" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({(editBatchValues.seedImages || []).length})
+                                    </div>
+                                  ) : (
+                                    <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
+                                      <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
+                                      <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
+                                      <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
+                                      <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
+                                      <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
+                                    </div>
+                                  )}
+                                  {!isEditing && (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                                      <span className="opacity-65 font-semibold">{L('Quick Stock Adjust:', 'త్వరిత స్టాక్ మార్పు:')}</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <button type="button" onClick={() => handleQuickAdjustStock(b, -1)} className="px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                          <Minus className="w-3 h-3" /> 1L
                                         </button>
-                                        {mediaPickerTarget === 'EDIT_SEED' && (
-                                          <div className="grid grid-cols-2 gap-2">
-                                            <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                              <Camera className="w-3.5 h-3.5" /> Camera
-                                            </button>
-                                            <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                              <FolderOpen className="w-3.5 h-3.5" /> Files
-                                            </button>
-                                          </div>
-                                        )}
-                                        {(editBatchValues.seedImages || []).length > 0 && (
-                                          <div className="grid grid-cols-2 gap-2 pt-1">
-                                            {(editBatchValues.seedImages || []).map((img, i) => (
-                                              <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setEditBatchValues(prev => ({
-                                                    ...prev,
-                                                    removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
-                                                    seedImages: prev.seedImages.filter((_, idx) => idx !== i)
-                                                  }))}
-                                                  className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                                >
-                                                  ✕
-                                                </button>
-                                                <img
-                                                  src={img.url}
-                                                  alt={img.label}
-                                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                                  className="w-full h-20 object-cover cursor-pointer"
-                                                />
-                                                <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* 3. UPLOAD VIDEOS */}
-                                      <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                        <button
-                                          type="button"
-                                          disabled={uploadProgress.active}
-                                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_VID' ? null : 'EDIT_VID')}
-                                          className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
-                                        >
-                                          <Video className="w-3.5 h-3.5" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({(editBatchValues.tankVideos || []).length})
+                                        <button type="button" onClick={() => handleQuickAdjustStock(b, 1)} className="px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                          <Plus className="w-3 h-3" /> 1L
                                         </button>
-                                        {mediaPickerTarget === 'EDIT_VID' && (
-                                          <div className="grid grid-cols-2 gap-2">
-                                            <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                              <Camera className="w-3.5 h-3.5" /> Camera
-                                            </button>
-                                            <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                              <FolderOpen className="w-3.5 h-3.5" /> Files
-                                            </button>
-                                          </div>
-                                        )}
-                                        {(editBatchValues.tankVideos || []).length > 0 && (
-                                          <div className="grid grid-cols-2 gap-2 pt-1">
-                                            {(editBatchValues.tankVideos || []).map((vid, i) => (
-                                              <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setEditBatchValues(prev => ({
-                                                    ...prev,
-                                                    removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
-                                                    tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
-                                                  }))}
-                                                  className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                                >
-                                                  ✕
-                                                </button>
-                                                <video
-                                                  src={vid.url}
-                                                  muted
-                                                  onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
-                                                  className="w-full h-20 object-cover bg-black cursor-pointer"
-                                                />
-                                                <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
+                                        <button type="button" onClick={() => handleQuickAdjustStock(b, 5)} className="px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-600 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                          <Plus className="w-3 h-3" /> 5L
+                                        </button>
                                       </div>
                                     </div>
                                   )}
                                 </div>
-                              </div>
-                            ) : (
-                              <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
-                                <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
-                                <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
-                              </div>
-                            )}
-                            {!isEditing && (
-                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
-                                <span className="opacity-65 font-semibold">{L('Quick Stock Adjust:', 'త్వరిత స్టాక్ మార్పు:')}</span>
-                                <div className="flex items-center gap-1.5">
-                                  <button type="button" onClick={() => handleQuickAdjustStock(b, -1)} className="px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
-                                    <Minus className="w-3 h-3" /> 1L
-                                  </button>
-                                  <button type="button" onClick={() => handleQuickAdjustStock(b, 1)} className="px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
-                                    <Plus className="w-3 h-3" /> 1L
-                                  </button>
-                                  <button type="button" onClick={() => handleQuickAdjustStock(b, 5)} className="px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-600 font-bold inline-flex items-center gap-0.5 cursor-pointer">
-                                    <Plus className="w-3 h-3" /> 5L
-                                  </button>
-                                </div>
-                              </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* ADD NEW SEED BATCH (COLLAPSIBLE — OPENS ON CLICK) */}
+                <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowPublishBatchForm(prev => !prev)}
+                    className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-teal-500/5 transition"
+                  >
+                    <span className="text-sm sm:text-base font-extrabold flex items-center gap-2">
+                      <PlusCircle className="w-5 h-5 text-teal-600 shrink-0" />
+                      <span>{t.addBatchTitle}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 shrink-0">
+                      <span className="bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                        {showPublishBatchForm ? L('Close', 'మూసివేయి') : L('+ Open Form', '+ ఫారమ్ తెరువు')}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform ${showPublishBatchForm ? 'rotate-90' : ''}`} />
+                    </span>
+                  </button>
+                  {showPublishBatchForm && (
+                    <div className="px-4 sm:px-6 pb-6 pt-2 border-t border-slate-300/20">
+                      <form onSubmit={handlePublishBatch} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.batchNoLabel}</label>
+                            <input
+                              required
+                              type="text"
+                              placeholder={t.batchNoPlaceholder}
+                              value={newBatchForm.batchNumber}
+                              onChange={(e) => setNewBatchForm({ ...newBatchForm, batchNumber: e.target.value })}
+                              className={`w-full border rounded-xl px-3 py-2 text-xs font-mono font-bold select-text ${inputCls}`}
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.speciesLabel}</label>
+                            <select value={newBatchForm.species} onChange={(e) => setNewBatchForm({ ...newBatchForm, species: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                              {SHRIMP_SPECIES_OPTIONS.map(sp => (
+                                <option key={sp} value={sp}>{sp === 'OTHER_CUSTOM' ? '+ Other (Type Custom Species)' : sp}</option>
+                              ))}
+                            </select>
+                            {newBatchForm.species === 'OTHER_CUSTOM' && (
+                              <input required type="text" placeholder={t.customSpeciesPlaceholder} value={newBatchForm.customSpecies} onChange={(e) => setNewBatchForm({ ...newBatchForm, customSpecies: e.target.value })} className={`w-full border rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text ${inputCls}`} />
                             )}
                           </div>
-                        );
-                      })}
+
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.stage}</label>
+                            <select value={newBatchForm.plStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, plStage: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                              {SEED_STAGE_OPTIONS.map(st => (
+                                <option key={st} value={st}>{st === 'OTHER_CUSTOM' ? '+ Custom Stage' : st}</option>
+                              ))}
+                            </select>
+                            {newBatchForm.plStage === 'OTHER_CUSTOM' && (
+                              <input required type="text" placeholder={t.customStagePlaceholder} value={newBatchForm.customStage} onChange={(e) => setNewBatchForm({ ...newBatchForm, customStage: e.target.value })} className={`w-full border rounded-xl px-3 py-1.5 text-xs mt-1.5 select-text ${inputCls}`} />
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.ratePerSeedLabel}</label>
+                            <input type="number" step="0.01" value={newBatchForm.pricePer1000} onChange={(e) => setNewBatchForm({ ...newBatchForm, pricePer1000: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.salinity} (PPT)</label>
+                            <input type="number" value={newBatchForm.salinity} onChange={(e) => setNewBatchForm({ ...newBatchForm, salinity: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">Min. Packing (Lakhs)</label>
+                            <input required type="number" min="1" max="100" value={newBatchForm.minPackingLakhs} onChange={(e) => setNewBatchForm({ ...newBatchForm, minPackingLakhs: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.bonus} (%)</label>
+                            <input type="number" value={newBatchForm.bonusPercent} onChange={(e) => setNewBatchForm({ ...newBatchForm, bonusPercent: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.stockLabel}</label>
+                            <div className="flex gap-1.5">
+                              <input
+                                required
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={3}
+                                placeholder="1-100"
+                                value={newBatchForm.stockAmount}
+                                onChange={(e) => {
+                                  const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                                  const num = clean === '' ? '' : String(Math.min(100, Number(clean)));
+                                  setNewBatchForm({ ...newBatchForm, stockAmount: num });
+                                }}
+                                className={`w-24 border rounded-xl px-3 py-2 text-xs font-bold text-center select-text ${inputCls}`}
+                              />
+                              <select
+                                value={newBatchForm.stockUnit}
+                                onChange={(e) => setNewBatchForm({ ...newBatchForm, stockUnit: e.target.value })}
+                                className={`flex-1 border rounded-xl px-2.5 py-2 text-xs font-bold ${inputCls}`}
+                              >
+                                <option value="LAKHS">Lakhs (× 1,00,000)</option>
+                                <option value="MILLIONS">Millions (× 10,00,000)</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.availDateLabel}</label>
+                            <input required type="date" value={newBatchForm.availableDate} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableDate: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.availTimeLabel}</label>
+                            <select value={newBatchForm.availableTimeSlot} onChange={(e) => setNewBatchForm({ ...newBatchForm, availableTimeSlot: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                              {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* UNIFIED UPLOAD IMAGES/VIDEOS BUTTON + TANK GPS */}
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
+                            <button
+                              type="button"
+                              disabled={uploadProgress.active}
+                              onClick={() => setShowNewMediaPanel(prev => !prev)}
+                              className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showNewMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${subCardBg} text-teal-600`}`}
+                            >
+                              <span className="inline-flex items-center gap-2">
+                                <Upload className="w-4 h-4 shrink-0" />
+                                {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showNewMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
+                                PCR: {pcrImages.length} • Seed: {seedImages.length} • Vid: {tankVideos.length}
+                              </span>
+                            </button>
+
+                            {/* TANK GPS STAMP */}
+                            <div className={`border rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 ${subCardBg}`}>
+                              <div className="min-w-0">
+                                <span className="text-xs font-extrabold flex items-center gap-1.5"><Camera className="w-4 h-4 text-teal-600 shrink-0" /> Tank GPS</span>
+                                <p className="text-[11px] opacity-65 truncate mt-0.5">{gpsLocation || 'Auto Stamp'}</p>
+                              </div>
+                              <button type="button" onClick={handleCaptureGps} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap">
+                                <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
+                              </button>
+                            </div>
+                          </div>
+
+                          {showNewMediaPanel && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+                              {/* 1. UPLOAD PCR */}
+                              <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                                <button
+                                  type="button"
+                                  disabled={uploadProgress.active}
+                                  onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_PCR' ? null : 'NEW_PCR')}
+                                  className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                                >
+                                  <FileCheck2 className="w-4 h-4" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({pcrImages.length})
+                                </button>
+                                {mediaPickerTarget === 'NEW_PCR' && (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                      <Camera className="w-4 h-4" /> Camera
+                                    </button>
+                                    <button type="button" onClick={() => pcrFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                      <FolderOpen className="w-4 h-4" /> Files
+                                    </button>
+                                  </div>
+                                )}
+                                {pcrImages.length > 0 ? (
+                                  <div className="grid grid-cols-2 gap-2 pt-1">
+                                    {pcrImages.map((img, i) => {
+                                      const isBad = img.aiPcrStatus === 'NOT_A_PCR_REPORT';
+                                      return (
+                                        <div key={i} className={`relative rounded-xl border overflow-hidden ${isBad ? 'border-rose-500/60' : 'border-teal-500/30'} ${cardBg}`}>
+                                          <button
+                                            type="button"
+                                            title={L('Delete image', 'ఫోటో తొలగించు')}
+                                            onClick={() => {
+                                              deleteStorageFilesByUrls([img.url]);
+                                              setPcrImages(prev => prev.filter((_, idx) => idx !== i));
+                                              showToast(L('PCR image removed.', 'PCR ఫోటో తొలగించబడింది.'));
+                                            }}
+                                            className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
+                                          >
+                                            ✕
+                                          </button>
+                                          <img
+                                            src={img.url}
+                                            alt={img.label}
+                                            onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                            className="w-full h-20 object-cover cursor-pointer hover:opacity-90 transition"
+                                          />
+                                          <div className="p-1 text-[10px] font-bold flex items-center justify-between gap-1">
+                                            <span className="truncate">{img.label}</span>
+                                            <span className={isBad ? 'text-rose-500' : 'text-emerald-500'}>
+                                              {isBad ? '✕' : '✓'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] opacity-65 block text-center">{L('Required: Lab PCR Report (AI checked)', 'తప్పనిసరి: ల్యాబ్ PCR రిపోర్ట్ (AI తనిఖీ)')}</span>
+                                )}
+                              </div>
+
+                              {/* 2. UPLOAD SEED IMAGES */}
+                              <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                                <button
+                                  type="button"
+                                  disabled={uploadProgress.active}
+                                  onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_SEED' ? null : 'NEW_SEED')}
+                                  className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                                >
+                                  <Camera className="w-4 h-4" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({seedImages.length})
+                                </button>
+                                {mediaPickerTarget === 'NEW_SEED' && (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => seedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                      <Camera className="w-4 h-4" /> Camera
+                                    </button>
+                                    <button type="button" onClick={() => seedFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                      <FolderOpen className="w-4 h-4" /> Files
+                                    </button>
+                                  </div>
+                                )}
+                                {seedImages.length > 0 ? (
+                                  <div className="grid grid-cols-2 gap-2 pt-1">
+                                    {seedImages.map((img, i) => (
+                                      <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
+                                        <button
+                                          type="button"
+                                          title={L('Delete image', 'ఫోటో తొలగించు')}
+                                          onClick={() => {
+                                            deleteStorageFilesByUrls([img.url]);
+                                            setSeedImages(prev => prev.filter((_, idx) => idx !== i));
+                                            showToast(L('Seed image removed.', 'సీడ్ ఫోటో తొలగించబడింది.'));
+                                          }}
+                                          className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
+                                        >
+                                          ✕
+                                        </button>
+                                        <img
+                                          src={img.url}
+                                          alt={img.label}
+                                          onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                          className="w-full h-20 object-cover cursor-pointer hover:opacity-90 transition"
+                                        />
+                                        <div className="p-1 text-[10px] font-bold flex items-center justify-between">
+                                          <span className="truncate">{img.label}</span>
+                                          <span className="text-emerald-500">✓</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] opacity-65 block text-center">{L('Optional: Live PL / Tank Seed Photos', 'ఐచ్ఛికం: లైవ్ సీడ్ / ట్యాంక్ ఫోటోలు')}</span>
+                                )}
+                              </div>
+
+                              {/* 3. UPLOAD VIDEOS */}
+                              <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                                <button
+                                  type="button"
+                                  disabled={uploadProgress.active}
+                                  onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_VID' ? null : 'NEW_VID')}
+                                  className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                                >
+                                  <Video className="w-4 h-4" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({tankVideos.length})
+                                </button>
+                                {mediaPickerTarget === 'NEW_VID' && (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                      <Camera className="w-4 h-4" /> Camera
+                                    </button>
+                                    <button type="button" onClick={() => vidFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                      <FolderOpen className="w-4 h-4" /> Files
+                                    </button>
+                                  </div>
+                                )}
+                                {tankVideos.length > 0 ? (
+                                  <div className="grid grid-cols-2 gap-2 pt-1">
+                                    {tankVideos.map((vid, i) => (
+                                      <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
+                                        <button
+                                          type="button"
+                                          title={L('Delete video', 'వీడియో తొలగించు')}
+                                          onClick={() => {
+                                            deleteStorageFilesByUrls([vid.url]);
+                                            setTankVideos(prev => prev.filter((_, idx) => idx !== i));
+                                            showToast(L('Tank video removed.', 'ట్యాంక్ వీడియో తొలగించబడింది.'));
+                                          }}
+                                          className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
+                                        >
+                                          ✕
+                                        </button>
+                                        <video
+                                          src={vid.url}
+                                          muted
+                                          onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                          className="w-full h-20 object-cover bg-black cursor-pointer"
+                                        />
+                                        <div className="p-1 text-[10px] font-bold flex items-center justify-between">
+                                          <span className="truncate">{vid.label}</span>
+                                          <span className="text-teal-500">▶</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] opacity-65 block text-center">{L('Optional: Tank PL activity videos', 'ఐచ్ఛికం: ట్యాంక్ PL వీడియోలు')}</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button type="submit" disabled={uploadProgress.active} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
+                          {t.publishBtn}
+                        </button>
+                      </form>
                     </div>
                   )}
                 </div>
@@ -7934,50 +8047,117 @@ Please advise immediate treatment protocol.`;
         </div>
       )}
 
-      {/* SELLER LIVE VIDEO REQUESTS LIST MODAL */}
-      {showSellerVideoModal && (
-        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className={`rounded-2xl max-w-xl w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] overflow-y-auto ${cardBg}`}>
-            <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
-              <div>
-                <h3 className="font-extrabold text-base flex items-center gap-2">
-                  <Video className="w-5 h-5 text-teal-500" /> Farmer Live Video Requests ({myLiveVideoReqs.length})
-                </h3>
-                <p className="text-xs opacity-60">Click WhatsApp to send live tank video directly to the farmer</p>
+      {/* SELLER LIVE VIDEO REQUESTS LIST MODAL (INTERNAL SCROLL, FILTER, COMPLETE & DELETE) */}
+      {showSellerVideoModal && (() => {
+        const pendingReqsCount = myLiveVideoReqs.filter(r => r.status !== 'COMPLETED').length;
+        const completedReqsCount = myLiveVideoReqs.filter(r => r.status === 'COMPLETED').length;
+        const filteredVideoReqs = myLiveVideoReqs.filter(r => {
+          if (videoReqFilter === 'PENDING') return r.status !== 'COMPLETED';
+          if (videoReqFilter === 'COMPLETED') return r.status === 'COMPLETED';
+          return true;
+        });
+        return (
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+            <div className={`rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-2xl border flex flex-col max-h-[85vh] overflow-hidden ${cardBg}`}>
+              <div className="flex items-start justify-between gap-2 border-b border-slate-300/30 pb-3 shrink-0">
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-sm sm:text-base flex items-center gap-2">
+                    <Video className="w-5 h-5 text-teal-500 shrink-0" />
+                    <span className="truncate">{L('Farmer Live Video Requests', 'రైతుల లైవ్ వీడియో రిక్వెస్ట్‌లు')} ({myLiveVideoReqs.length})</span>
+                  </h3>
+                  <p className="text-[11px] sm:text-xs opacity-65 mt-0.5">{L('Send tank video on WhatsApp, mark completed, or delete old requests', 'WhatsApp లో వీడియో పంపండి, పూర్తయినవి మార్క్ చేయండి లేదా తొలగించండి')}</p>
+                </div>
+                <button type="button" onClick={() => setShowSellerVideoModal(false)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer p-1 shrink-0">✕</button>
               </div>
-              <button type="button" onClick={() => setShowSellerVideoModal(false)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
-            </div>
-            {myLiveVideoReqs.length === 0 ? (
-              <p className="text-xs opacity-60 py-6 text-center">No live video requests received yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {myLiveVideoReqs.map((req) => (
-                  <div key={req.id} className={`border rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs ${subCardBg}`}>
-                    <div className="space-y-1 flex-1 min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded">Batch: {req.batchId}</span>
-                        <span className="opacity-60 text-[11px]">{req.requestedAt}</span>
-                      </div>
-                      <p className="font-extrabold text-sm">{req.farmerName} • WhatsApp: +91 {req.farmerWhatsapp || req.farmerPhone}</p>
-                      {req.note && <p className="opacity-80">"{req.note}"</p>}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => openWhatsAppMessage(
-                        req.farmerWhatsapp || req.farmerPhone,
-                        `Hello ${req.farmerName}, sharing live tank video from ${myFixedHatchery?.realName} for Batch ${req.batchId} (${req.batchStage || ''}).`
-                      )}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-                    >
-                      <Send className="w-3.5 h-3.5" /> Send Video on WhatsApp
-                    </button>
-                  </div>
+
+              {/* FILTER PILLS: ALL / PENDING / COMPLETED */}
+              <div className="flex flex-wrap items-center gap-1.5 py-3 shrink-0">
+                {[
+                  { id: 'ALL', label: L('All', 'అన్నీ'), cnt: myLiveVideoReqs.length },
+                  { id: 'PENDING', label: L('Pending', 'పెండింగ్'), cnt: pendingReqsCount },
+                  { id: 'COMPLETED', label: L('Completed', 'పూర్తయినవి'), cnt: completedReqsCount },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setVideoReqFilter(tab.id)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : `${subCardBg} opacity-80 hover:opacity-100`
+                      }`}
+                  >
+                    {tab.label} ({tab.cnt})
+                  </button>
                 ))}
               </div>
-            )}
+
+              {/* INTERNAL SCROLLABLE REQUESTS LIST ONLY */}
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
+                {filteredVideoReqs.length === 0 ? (
+                  <p className="text-xs opacity-60 py-8 text-center">
+                    {myLiveVideoReqs.length === 0
+                      ? L('No live video requests received yet.', 'ఇంకా లైవ్ వీడియో రిక్వెస్ట్‌లు రాలేదు.')
+                      : L('No requests in this filter.', 'ఈ ఫిల్టర్‌లో రిక్వెస్ట్‌లు లేవు.')}
+                  </p>
+                ) : (
+                  filteredVideoReqs.map((req) => {
+                    const isDone = req.status === 'COMPLETED';
+                    return (
+                      <div key={req.id} className={`border rounded-xl p-3.5 sm:p-4 space-y-3 text-xs ${isDone ? 'border-emerald-500/35 bg-emerald-500/5' : subCardBg}`}>
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center justify-between gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="font-mono font-bold text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded">Batch: {req.batchId}</span>
+                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>
+                                {isDone ? L('Completed', 'పూర్తయింది') : L('Pending', 'పెండింగ్')}
+                              </span>
+                            </div>
+                            <span className="opacity-60 text-[10px]">{req.requestedAt}</span>
+                          </div>
+                          <p className="font-extrabold text-sm break-words">{req.farmerName} • +91 {req.farmerWhatsapp || req.farmerPhone}</p>
+                          {req.note && <p className="opacity-80 break-words">"{req.note}"</p>}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-300/20">
+                          <button
+                            type="button"
+                            onClick={() => openWhatsAppMessage(
+                              req.farmerWhatsapp || req.farmerPhone,
+                              `Hello ${req.farmerName}, sharing live tank video from ${myFixedHatchery?.realName} for Batch ${req.batchId} (${req.batchStage || ''}).`
+                            )}
+                            className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-700 text-white font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                          >
+                            <Send className="w-3.5 h-3.5 shrink-0" /> {L('Send Video', 'వీడియో పంపండి')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleVideoRequestStatus(req.id)}
+                            className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
+                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            {isDone ? L('Mark Pending', 'పెండింగ్ చేయి') : L('Mark Completed', 'పూర్తయింది')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteVideoRequest(req.id)}
+                            title={L('Delete Request', 'రిక్వెస్ట్ తొలగించు')}
+                            className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 shrink-0" /> {L('Delete', 'తొలగించు')}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* BUYER OLD TRANSACTION INSPECTION MODAL */}
       {inspectedBuyerBooking && (
