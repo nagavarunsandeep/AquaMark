@@ -1187,6 +1187,21 @@ function AquaMarkApp() {
   useEffect(() => { try { localStorage.setItem('aqm_v11_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_live_videos', JSON.stringify(liveVideoRequests)); } catch { } }, [liveVideoRequests]);
+
+  // Dynamic Browser Tab Title based on Login / Active User Role
+  useEffect(() => {
+    if (!currentUser) {
+      document.title = 'AquaMark_Login';
+    } else if (currentUser.role === 'buyer') {
+      document.title = 'AquaMark-Buyer';
+    } else if (currentUser.role === 'seller') {
+      document.title = 'AquaMark-Seller';
+    } else if (currentUser.role === 'mediator') {
+      document.title = 'AquaMark-Broker';
+    } else {
+      document.title = 'AquaMark';
+    }
+  }, [currentUser]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
 
