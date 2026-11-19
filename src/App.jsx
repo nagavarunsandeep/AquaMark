@@ -668,7 +668,7 @@ const DICT = {
     comparingBtn: 'Selected',
     compareModalTitle: 'Side-by-Side Hatchery Comparison',
     emptyMarketTitle: 'No Registered Hatchery Batches Live Yet',
-    emptyMarketSub: 'Once a CAA-certified Hatchery completes deposit & publishes a batch, it appears here immediately.',
+    emptyMarketSub: 'Once a CAA-certified Hatchery registers & publishes a batch, it appears here immediately.',
     caaVerified: 'CAA Certified',
     soldOutBadge: 'SOLD OUT',
     pausedBadge: 'PAUSED BY HATCHERY',
@@ -701,7 +701,7 @@ const DICT = {
     depositSub: 'To protect farmers against fake listings and guarantee SPF seed quality, every Hatchery Owner must complete a one-time ₹10,000 refundable security deposit before activating their Hatchery account.',
     depositPayBtn: 'Verify & Activate Hatchery Account (₹10,000)',
     unifiedRegTitle: 'Hatchery & Bank Registration (One-Time Setup)',
-    unifiedRegSub: 'Your ₹10,000 security deposit is verified! Complete your hatchery & settlement bank profile.',
+    unifiedRegSub: 'Complete your CAA Hatchery & settlement bank profile to publish live seed batches.',
     hatcheryNameLabel: 'Hatchery Legal Name',
     caaLicenseLabel: 'CAA Registration Number',
     zoneLabel: 'Coastal Zone',
@@ -894,7 +894,7 @@ const DICT = {
     depositSub: 'రైతులకు నాణ్యమైన SPF సీడ్ హామీ కోసం ప్రతి హేచరీ యజమాని ఒకసారి ₹10,000 రిఫండబుల్ సెక్యూరిటీ డిపాజిట్ చెల్లించాలి.',
     depositPayBtn: '₹10,000 డిపాజిట్ నిర్ధారించి ఖాతా ప్రారంభించండి',
     unifiedRegTitle: 'హేచరీ & బ్యాంక్ రిజిస్ట్రేషన్ (ఒకే స్టెప్‌లో పూర్తి చేయండి)',
-    unifiedRegSub: 'మీ ₹10,000 డిపాజిట్ పూర్తయింది! ఇప్పుడు మీ హేచరీ వివరాలు నమోదు చేయండి.',
+    unifiedRegSub: 'లైవ్ సీడ్ బ్యాచ్‌లు పబ్లిష్ చేయడానికి మీ హేచరీ & బ్యాంక్ వివరాలు నమోదు చేయండి.',
     hatcheryNameLabel: 'హేచరీ పేరు',
     caaLicenseLabel: 'CAA లైసెన్స్ నంబర్',
     zoneLabel: 'ప్రాంతం (Zone)',
@@ -1049,16 +1049,22 @@ function AquaMarkApp() {
   // Role-isolated user map keyed by `${phone}_${role}` so same mobile has separate Sign Up & Password per role
   const [registeredUsers, setRegisteredUsers] = useState(() => safeLoadStorage('aqm_v11_users_db', {}));
 
-  // Live Supabase States
-  const [hatcheryProfiles, setHatcheryProfiles] = useState({});
-  const [brokerProfiles, setBrokerProfiles] = useState({});
-  const [batches, setBatches] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [brokerFarmers, setBrokerFarmers] = useState([]);
+  // Live Supabase States (cached in localStorage so offline drops NEVER kick user to Bank/Registration page)
+  const [hatcheryProfiles, setHatcheryProfiles] = useState(() => safeLoadStorage('aqm_v11_hatcheries', {}));
+  const [brokerProfiles, setBrokerProfiles] = useState(() => safeLoadStorage('aqm_v11_brokers', {}));
+  const [batches, setBatches] = useState(() => safeLoadStorage('aqm_v11_batches', []));
+  const [bookings, setBookings] = useState(() => safeLoadStorage('aqm_v11_bookings', []));
+  const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v11_farmers', []));
   const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v11_wishlist', []));
-  const [liveVideoRequests, setLiveVideoRequests] = useState([]);
-  const [farmerPonds, setFarmerPonds] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [liveVideoRequests, setLiveVideoRequests] = useState(() => safeLoadStorage('aqm_v11_live_videos', []));
+  const [farmerPonds, setFarmerPonds] = useState(() => safeLoadStorage('aqm_v11_ponds', []));
+  const [notifications, setNotifications] = useState(() => safeLoadStorage('aqm_v11_notifications', []));
+  // Unified Upload Images/Videos toggle states for Publish Batch & Edit Batch
+  const [showNewMediaPanel, setShowNewMediaPanel] = useState(false);
+  const [showEditMediaPanel, setShowEditMediaPanel] = useState(false);
+  // Network offline / error popup state
+  const [networkError, setNetworkError] = useState(false);
+  const [isRetryingNetwork, setIsRetryingNetwork] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [selectedNotifDetail, setSelectedNotifDetail] = useState(null);
   const [showSellerDepositModal, setShowSellerDepositModal] = useState(false);
@@ -1158,7 +1164,11 @@ function AquaMarkApp() {
   useEffect(() => { try { localStorage.setItem('aqm_v12_batch_notes', JSON.stringify(farmerBatchNotes)); } catch { } }, [farmerBatchNotes]);
 
   useEffect(() => {
-    const onOnline = () => setIsOnline(true);
+    const onOnline = () => {
+      setIsOnline(true);
+      setNetworkError(false);
+      syncAllFromSupabase();
+    };
     const onOffline = () => setIsOnline(false);
     const onScroll = () => setShowScrollTop(window.scrollY > 360);
     window.addEventListener('online', onOnline);
@@ -1170,6 +1180,16 @@ function AquaMarkApp() {
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
+
+  // Keep localStorage cache synced so network drops keep user on exact same page
+  useEffect(() => { try { localStorage.setItem('aqm_v11_hatcheries', JSON.stringify(hatcheryProfiles)); } catch { } }, [hatcheryProfiles]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_brokers', JSON.stringify(brokerProfiles)); } catch { } }, [brokerProfiles]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_batches', JSON.stringify(batches)); } catch { } }, [batches]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_live_videos', JSON.stringify(liveVideoRequests)); } catch { } }, [liveVideoRequests]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
 
   useEffect(() => { try { localStorage.setItem('aqm_v12_matchmaker', JSON.stringify(matchmaker)); } catch { } }, [matchmaker]);
   useEffect(() => { try { localStorage.setItem('aqm_v12_watchlist_price', JSON.stringify(watchlistPrice)); } catch { } }, [watchlistPrice]);
@@ -1226,6 +1246,11 @@ function AquaMarkApp() {
   // LOAD & SYNC ALL DATA FROM SUPABASE
   // =========================================================================
   const syncAllFromSupabase = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setIsOnline(false);
+      setNetworkError(true);
+      return false;
+    }
     try {
       const [batchesRes, bookingsRes, kvRes, usersRes] = await Promise.all([
         supabase.from('batches').select('*').order('created_at', { ascending: false }),
@@ -1233,6 +1258,15 @@ function AquaMarkApp() {
         supabase.from('app_kv_store').select('*'),
         supabase.from('app_users').select('*')
       ]);
+
+      const anyNetworkErr = [batchesRes.error, bookingsRes.error, kvRes.error, usersRes.error].some(
+        (e) => e && /fetch|network|failed|offline|timeout/i.test(String(e.message || e))
+      );
+      if (anyNetworkErr) {
+        setNetworkError(true);
+        return false;
+      }
+      setNetworkError(false);
 
       if (batchesRes.data) {
         setBatches(batchesRes.data.map(r => (r.data && r.data.id ? r.data : {
@@ -1286,8 +1320,27 @@ function AquaMarkApp() {
         });
         setRegisteredUsers(prev => ({ ...prev, ...dbMap }));
       }
+      return true;
     } catch (err) {
       console.error('Supabase sync error:', err);
+      setNetworkError(true);
+      return false;
+    }
+  };
+
+  const handleRetryConnection = async () => {
+    setIsRetryingNetwork(true);
+    const onlineNow = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    setIsOnline(onlineNow);
+    if (!onlineNow) {
+      setTimeout(() => setIsRetryingNetwork(false), 600);
+      return;
+    }
+    const ok = await syncAllFromSupabase();
+    setIsRetryingNetwork(false);
+    if (ok) {
+      setNetworkError(false);
+      showToast(L('Connection restored! Live data synced.', 'ఇంటర్నెట్ కనెక్షన్ తిరిగి వచ్చింది! డేటా సింక్ అయింది.'));
     }
   };
 
@@ -2290,9 +2343,21 @@ function AquaMarkApp() {
     setBatches([created, ...batches]);
     await saveBatchToSupabase(created);
 
+    // Notify all registered Brokers about the new live seed batch
+    Object.keys(brokerProfiles || {}).forEach((bPhone) => {
+      pushAppNotification(
+        bPhone,
+        'mediator',
+        `New Live Seed Batch (${created.id})`,
+        `${created.plStage} ${created.species} in ${created.zone} at ₹${(created.pricePer1000 || 0).toFixed(2)}/seed (+${created.bonusPercent}% Bonus, ${created.salinity} PPT).`,
+        { batchId: created.id, zone: created.zone, stage: created.plStage, rate: `₹${(created.pricePer1000 || 0).toFixed(2)}/seed`, stock: created.availableStock }
+      );
+    });
+
     setPcrImages([]);
     setSeedImages([]);
     setTankVideos([]);
+    setShowNewMediaPanel(false);
     setNewBatchForm(prev => ({ ...prev, batchNumber: '' }));
     showToast(t.toasts.batchPublished);
   };
@@ -2313,6 +2378,7 @@ function AquaMarkApp() {
 
   const startEditingBatch = (batch) => {
     setEditingBatchId(batch.id);
+    setShowEditMediaPanel(false);
     const isMillions = (batch.availableStock || 0) >= 1000000 && (batch.availableStock % 1000000 === 0);
     const amountVal = isMillions
       ? Math.max(1, Math.round(batch.availableStock / 1000000))
@@ -2421,6 +2487,7 @@ function AquaMarkApp() {
       farmerPhone: bookingForm.farmerPhone,
       bookedByRole: currentUser?.role,
       bookedByPhone: currentUser?.phone,
+      brokerPhone: currentUser?.role === 'mediator' ? currentUser?.phone : (matchedBrokerFarmer?.brokerPhone || null),
       isBrokerLinked,
       quantity: qty,
       bonusSeeds,
@@ -2475,6 +2542,15 @@ function AquaMarkApp() {
       `Your slot at ${selectedBatch.realName} for ${qty.toLocaleString('en-IN')} PL is confirmed. Gate-Pass PIN: ${newBooking.gatePassPin}.`,
       { bookingId: newBooking.bookingId, batchId: selectedBatch.id, hatcheryName: selectedBatch.realName, amount: paidNow, balance: balanceAtPacking }
     );
+    if (isBrokerLinked && newBooking.brokerPhone) {
+      await pushAppNotification(
+        newBooking.brokerPhone,
+        'mediator',
+        `Broker Booking Confirmed (${newBooking.bookingId})`,
+        `Farmer ${bookingForm.farmerName} booked ${qty.toLocaleString('en-IN')} PL at ${selectedBatch.realName}. 2% Commission: ₹${hold2Pct.toLocaleString('en-IN')}${brokerExtraMarginTotal > 0 ? ` + Extra Margin: ₹${brokerExtraMarginTotal.toLocaleString('en-IN')}` : ''}.`,
+        { bookingId: newBooking.bookingId, batchId: selectedBatch.id, farmerName: bookingForm.farmerName, hatcheryName: selectedBatch.realName, commission2Pct: hold2Pct, extraMargin: brokerExtraMarginTotal, packingDate: bookingForm.packingDate }
+      );
+    }
 
     setSelectedBatch(null);
     setModalError('');
@@ -2556,6 +2632,23 @@ function AquaMarkApp() {
       setBatches(prev => prev.map(b => (b.id === restoredBatch.id ? restoredBatch : b)));
       await saveBatchToSupabase(restoredBatch);
     }
+    await pushAppNotification(
+      bk.hatcheryOwnerPhone,
+      'seller',
+      `Booking Cancelled (${bk.bookingId})`,
+      `${bk.farmerName} cancelled ${(bk.quantity || 0).toLocaleString('en-IN')} PL for Batch ${bk.batch?.id}. Stock restored.`,
+      { bookingId: bk.bookingId, batchId: bk.batch?.id, farmerName: bk.farmerName }
+    );
+    const cancelBrokerPhone = bk.brokerPhone || (bk.bookedByRole === 'mediator' ? bk.bookedByPhone : null);
+    if (bk.isBrokerLinked && cancelBrokerPhone) {
+      await pushAppNotification(
+        cancelBrokerPhone,
+        'mediator',
+        `Broker Deal Cancelled (${bk.bookingId})`,
+        `Booking for ${bk.farmerName} (${(bk.quantity || 0).toLocaleString('en-IN')} PL at ${bk.batch?.realName || bk.batch?.hatcheryCode}) was cancelled.`,
+        { bookingId: bk.bookingId, batchId: bk.batch?.id, farmerName: bk.farmerName }
+      );
+    }
     showToast(t.toasts.bookingCancelled);
   };
 
@@ -2617,6 +2710,16 @@ function AquaMarkApp() {
         `${targetBk.batch?.realName} marked packing complete for Batch ${targetBk.batch?.id}. Present Gate-Pass QR at Hatchery.`,
         { bookingId: targetBk.bookingId, batchId: targetBk.batch?.id, hatcheryName: targetBk.batch?.realName, balance: targetBk.balanceAtPacking }
       );
+      const packBrokerPhone = targetBk.brokerPhone || (targetBk.bookedByRole === 'mediator' ? targetBk.bookedByPhone : null);
+      if (targetBk.isBrokerLinked && packBrokerPhone) {
+        await pushAppNotification(
+          packBrokerPhone,
+          'mediator',
+          `Packing Ready (${targetBk.bookingId})`,
+          `${targetBk.batch?.realName} marked packing complete for Farmer ${targetBk.farmerName} (Batch ${targetBk.batch?.id}).`,
+          { bookingId: targetBk.bookingId, batchId: targetBk.batch?.id, farmerName: targetBk.farmerName, hatcheryName: targetBk.batch?.realName, balance: targetBk.balanceAtPacking }
+        );
+      }
     }
     showToast(t.toasts.packingMarked);
   };
@@ -2654,6 +2757,16 @@ function AquaMarkApp() {
         `Full balance settled for ${targetBk.batch?.realName}. Your Final Cleared Receipt is ready.`,
         { bookingId: targetBk.bookingId, totalPaid: targetBk.totalSeedCost }
       );
+      const payBrokerPhone = targetBk.brokerPhone || (targetBk.bookedByRole === 'mediator' ? targetBk.bookedByPhone : null);
+      if (targetBk.isBrokerLinked && payBrokerPhone) {
+        await pushAppNotification(
+          payBrokerPhone,
+          'mediator',
+          `2% Commission Credited (${targetBk.bookingId})`,
+          `Payment settled for ${targetBk.farmerName} at ${targetBk.batch?.realName}. Your ₹${(targetBk.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')} commission is now cleared!`,
+          { bookingId: targetBk.bookingId, farmerName: targetBk.farmerName, commissionCredited: targetBk.settlement?.brokerBase2Pct || 0, extraMargin: targetBk.brokerExtraMarginTotal || 0 }
+        );
+      }
     }
     showToast(t.toasts.paymentReceivedDone);
   };
@@ -2762,6 +2875,16 @@ function AquaMarkApp() {
       `Packing marked complete & payment settled for ${updatedBk.farmerName} (${(updatedBk.quantity || 0).toLocaleString('en-IN')} PL).`,
       { bookingId: updatedBk.bookingId, farmerName: updatedBk.farmerName, amount: updatedBk.totalSeedCost }
     );
+    const qrBrokerPhone = updatedBk.brokerPhone || (updatedBk.bookedByRole === 'mediator' ? updatedBk.bookedByPhone : null);
+    if (updatedBk.isBrokerLinked && qrBrokerPhone) {
+      await pushAppNotification(
+        qrBrokerPhone,
+        'mediator',
+        `Gate-Pass Cleared & Commission Credited (${updatedBk.bookingId})`,
+        `${updatedBk.batch?.realName} scanned Gate-Pass for ${updatedBk.farmerName}. Your 2% commission (₹${(updatedBk.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')}) is cleared!`,
+        { bookingId: updatedBk.bookingId, farmerName: updatedBk.farmerName, hatcheryName: updatedBk.batch?.realName, commissionCredited: updatedBk.settlement?.brokerBase2Pct || 0 }
+      );
+    }
 
     setShowSellerScanQrModal(false);
     setScanQrInput('');
@@ -2799,6 +2922,16 @@ function AquaMarkApp() {
       `Remaining balance of ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} paid. Your Final Cleared Receipt is ready.`,
       { bookingId: bk.bookingId, amount: bk.balanceAtPacking, ref }
     );
+    const remBrokerPhone = bk.brokerPhone || (bk.bookedByRole === 'mediator' ? bk.bookedByPhone : null);
+    if (bk.isBrokerLinked && remBrokerPhone) {
+      await pushAppNotification(
+        remBrokerPhone,
+        'mediator',
+        `Balance Paid & Commission Cleared (${bk.bookingId})`,
+        `${bk.farmerName} settled remaining ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}. Your 2% commission (₹${(bk.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')}) is cleared!`,
+        { bookingId: bk.bookingId, farmerName: bk.farmerName, commissionCredited: bk.settlement?.brokerBase2Pct || 0, ref }
+      );
+    }
 
     setPayRemainingBooking(null);
     setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
@@ -3096,6 +3229,7 @@ function AquaMarkApp() {
     lockDate.setFullYear(lockDate.getFullYear() + 1);
     const entry = {
       id: `F-${brokerFarmers.length + 1}`,
+      brokerPhone: currentUser?.phone || null,
       name: newFarmer.name,
       phone: newFarmer.phone,
       village: newFarmer.village,
@@ -3105,6 +3239,13 @@ function AquaMarkApp() {
     const nextFarmers = [entry, ...brokerFarmers];
     setBrokerFarmers(nextFarmers);
     await saveKvToSupabase('farmers', nextFarmers);
+    await pushAppNotification(
+      currentUser?.phone,
+      'mediator',
+      `Farmer Locked for 365 Days (${entry.name})`,
+      `${entry.name} (${entry.village}, ${entry.acres} Acres) is protected under your Broker ID till ${entry.lockedUntil}.`,
+      { farmerName: entry.name, phone: entry.phone, village: entry.village, lockedUntil: entry.lockedUntil }
+    );
     setNewFarmer({ name: '', phone: '', village: '', acres: '' });
     showToast(t.toasts.farmerLocked);
   };
@@ -3371,6 +3512,16 @@ function AquaMarkApp() {
       `${bk.farmerName} reported post-stocking survival for Batch ${bk.batch?.id}: 24h=${record.h24}%, 48h=${record.h48}%, 72h=${record.h72}%. ${record.note}`,
       { bookingId: bk.bookingId, batchId: bk.batch?.id, h24: `${record.h24}%`, h48: `${record.h48}%`, h72: `${record.h72}%` }
     );
+    const survBrokerPhone = bk.brokerPhone || (bk.bookedByRole === 'mediator' ? bk.bookedByPhone : null);
+    if (bk.isBrokerLinked && survBrokerPhone) {
+      await pushAppNotification(
+        survBrokerPhone,
+        'mediator',
+        `72h Survival Report (${bk.bookingId})`,
+        `Farmer ${bk.farmerName} logged survival for Batch ${bk.batch?.id}: 24h=${record.h24}%, 48h=${record.h48}%, 72h=${record.h72}%.`,
+        { bookingId: bk.bookingId, batchId: bk.batch?.id, farmerName: bk.farmerName, h72: `${record.h72}%` }
+      );
+    }
     setSurvivalModalBooking(null);
     showToast(L('72h Survival Check-In saved & Hatchery notified!', '72h సర్వైవల్ రిపోర్ట్ సేవ్ అయింది & హేచరీకి నోటిఫికేషన్ పంపబడింది!'));
   };
@@ -4039,6 +4190,34 @@ function AquaMarkApp() {
         <footer className="text-center py-4 text-[11px] opacity-50">
           Aqua Mark © 2026 • Live Cloud Database Connected
         </footer>
+        {/* NO INTERNET CONNECTION POPUP OVERLAY (KEEPS USER ON EXACT SAME PAGE) */}
+        {(!isOnline || networkError) && (
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[9998] flex items-center justify-center p-4">
+            <div className={`rounded-2xl max-w-sm w-full p-6 shadow-2xl border-2 border-rose-500/40 text-center space-y-4 ${cardBg}`}>
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center mx-auto">
+                <WifiOff className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-lg font-extrabold">{L('No Internet Connection', 'ఇంటర్నెట్ కనెక్షన్ లేదు')}</h3>
+                <p className="text-xs opacity-75 leading-relaxed">
+                  {L(
+                    'Your network appears to be offline or unreachable. Your current page and data are safely preserved — reconnect and tap Retry.',
+                    'మీ నెట్‌వర్క్ ఆఫ్‌లో ఉంది లేదా కనెక్ట్ అవ్వడం లేదు. మీరు ఉన్న పేజీ సురక్షితంగా ఉంది — నెట్ ఆన్ చేసి Retry నొక్కండి.'
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isRetryingNetwork}
+                onClick={handleRetryConnection}
+                className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-sm inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRetryingNetwork ? 'animate-spin' : ''}`} />
+                {isRetryingNetwork ? L('Retrying...', 'ప్రయత్నిస్తోంది...') : L('Retry', 'మళ్ళీ ప్రయత్నించండి (Retry)')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -4048,9 +4227,8 @@ function AquaMarkApp() {
   // =========================================================================
   const myFixedHatchery = currentUser.role === 'seller' ? hatcheryProfiles[currentUser.phone] : null;
   const sellerRoleRecord = currentUser.role === 'seller' ? registeredUsers[getUserKey(currentUser.phone, 'seller')] : null;
-  const isSellerDepositPaid = Boolean(
-    currentUser.depositPaid || sellerRoleRecord?.depositPaid || myFixedHatchery?.depositPaid
-  );
+  // Mandatory Hatchery Security Deposit removed — sellers go directly to Hatchery & Bank Registration
+  const isSellerDepositPaid = true;
 
   const myOwnedBatches = currentUser.role === 'seller' && myFixedHatchery
     ? batches.filter(b => b.ownerPhone === currentUser.phone)
@@ -4112,7 +4290,7 @@ function AquaMarkApp() {
       )}
 
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 max-w-md">
+        <div className="fixed bottom-20 right-4 sm:right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2.5 max-w-[calc(100vw-2rem)] sm:max-w-md">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-xs font-semibold leading-relaxed">{toast}</span>
         </div>
@@ -4148,7 +4326,7 @@ function AquaMarkApp() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-end">
             {/* BUYER & BROKER EDIT PROFILE BUTTON IN HEADER */}
             {(currentUser.role === 'buyer' || currentUser.role === 'mediator') && (
               <button
@@ -4161,7 +4339,7 @@ function AquaMarkApp() {
             )}
 
             {/* HATCHERY SCAN QR BUTTON NEXT TO REFRESH */}
-            {currentUser.role === 'seller' && isSellerDepositPaid && myFixedHatchery && (
+            {currentUser.role === 'seller' && myFixedHatchery && (
               <button
                 type="button"
                 onClick={() => { setScanQrInput(''); setScanQrError(''); setShowSellerScanQrModal(true); }}
@@ -4290,7 +4468,7 @@ function AquaMarkApp() {
             })()}
 
 
-            <div className={`flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border w-fit ${cardBg}`}>
+            <div className={`flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl border w-full sm:w-fit overflow-x-auto ${cardBg}`}>
               {[
                 { id: 'marketplace', label: t.tabMarketplace, icon: Building2 },
                 { id: 'bookings', label: `${t.tabBookings} (${bookings.filter(b => b.farmerPhone === currentUser.phone).length})`, icon: FileText },
@@ -4306,7 +4484,7 @@ function AquaMarkApp() {
                     key={tab.id}
                     type="button"
                     onClick={() => setBuyerTab(tab.id)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer relative ${buyerTab === tab.id ? 'bg-teal-600 text-white' : 'opacity-75 hover:opacity-100'}`}
+                    className={`px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer relative shrink-0 whitespace-nowrap ${buyerTab === tab.id ? 'bg-teal-600 text-white' : 'opacity-75 hover:opacity-100'}`}
                   >
                     <Icon className="w-3.5 h-3.5" /> {tab.label}
                     {hasClearedReceipt && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
@@ -4317,6 +4495,25 @@ function AquaMarkApp() {
 
             {buyerTab === 'marketplace' && (
               <>
+                {/* B2B BUYER ADVANTAGE & PROTECTION STRIP */}
+                <div className={`rounded-2xl p-3 sm:p-3.5 border border-teal-500/30 bg-teal-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2 text-[11px] ${cardBg}`}>
+                  <div className="flex items-center gap-2 font-bold">
+                    <ShieldCheck className="w-4 h-4 text-teal-500 shrink-0" />
+                    <span>{L('CAA + AI PCR Verified Seed', 'CAA + AI PCR ధృవీకరించబడిన సీడ్')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-bold">
+                    <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>{L('Locked Rate & Bonus PL', 'ఫిక్స్‌డ్ ధర & బోనస్ హామీ')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-bold">
+                    <QrCode className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>{L('Digital Gate-Pass & Receipt', 'డిజిటల్ Gate-Pass & రసీదు')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-bold">
+                    <Award className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>{L('72h Survival & Priority Tier', '72h సర్వైవల్ & ప్రయారిటీ టైర్')}</span>
+                  </div>
+                </div>
                 {renderFilterSortBar(true)}
 
                 {/* FEATURE 4: PRICE DROP WATCHLIST & ALERT */}
@@ -4449,21 +4646,115 @@ function AquaMarkApp() {
                         return (
                           <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
                             <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">
-                                      {batch.id}
-                                    </span>
-                                    <span className="bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                      <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
-                                    </span>
-                                    {/* FEATURE 1: PL VIGOR & STRESS-TEST LAB SCORECARD BADGE */}
+                              {/* TOP ROW: BATCH & CAA BADGES + ZONE/RATING (LEFT) | HEART & PRICE (RIGHT) */}
+                              <div className="space-y-2.5">
+                                <div className="flex items-start justify-between gap-2.5">
+                                  <div className="min-w-0 space-y-1.5">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded">
+                                        {batch.id}
+                                      </span>
+                                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> {t.caaVerified}
+                                      </span>
+                                      {isSoldOut && (
+                                        <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
+                                      )}
+                                      {isPaused && !isSoldOut && (
+                                        <span className="bg-amber-500/20 text-amber-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.pausedBadge}</span>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                                      <span className="font-semibold opacity-70">{batch.zone}</span>
+                                      <span className="font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
+                                      className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                                      title="Save Hatchery"
+                                    >
+                                      <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-60'}`} />
+                                    </button>
+                                    {(() => {
+                                      const conv = formatConvertedRate(batch.pricePer1000);
+                                      return (
+                                        <div className="text-right">
+                                          <div className="text-xl sm:text-2xl font-black leading-none">{conv.value}</div>
+                                          <div className="text-[11px] opacity-60 mt-0.5">{conv.unit}</div>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                </div>
+
+                                {/* FULL-WIDTH HATCHERY NAME ROW (NEATLY ALIGNED ON MOBILE LIKE SCREENSHOT) */}
+                                <div className="flex items-center justify-between gap-2 pt-0.5">
+                                  <h3 className="text-base sm:text-lg font-extrabold tracking-tight leading-snug min-w-0 flex-1 break-words">
+                                    {isUnlocked ? (
+                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                        <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        <span className="truncate sm:whitespace-normal">{batch.realName}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                        <Lock className="w-4 h-4 opacity-70 shrink-0" />
+                                        <span className="truncate sm:whitespace-normal">{batch.hatcheryCode || 'Verified Hatchery'}</span>
+                                      </span>
+                                    )}
+                                  </h3>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
+                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                      title="Transit Route & Oxygen Risk Predictor"
+                                    >
+                                      <Navigation className="w-3.5 h-3.5 text-indigo-500" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
+                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                      title="Share Batch Flyer on WhatsApp"
+                                    >
+                                      <Share2 className="w-3.5 h-3.5 text-teal-600" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* SPECIES, ADDRESS & SECONDARY TRUST PILLS */}
+                                <div className="space-y-1.5">
+                                  <p className="text-xs opacity-75 font-medium leading-relaxed">
+                                    {batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span>
+                                  </p>
+                                  {isUnlocked ? (
+                                    <div className="space-y-1">
+                                      <p className="text-xs opacity-80 leading-relaxed">{batch.realAddress} • +91 {batch.realPhone}</p>
+                                      {mapsUrl && (
+                                        <a
+                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                        >
+                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[11px] opacity-55">{t.unlockHint}</p>
+                                  )}
+                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                                     <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                                       <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
                                     </span>
-
-                                    {/* AI PCR REPORT VERIFICATION STATUS FOR FARMER & BROKER */}
                                     {(batch.pcrImages || []).length > 0 && (() => {
                                       const hasInvalid = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'NOT_A_PCR_REPORT');
                                       const hasVerified = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'VERIFIED_PCR');
@@ -4483,7 +4774,6 @@ function AquaMarkApp() {
                                       }
                                       return null;
                                     })()}
-                                    {/* FEATURE 3: SMART SEED MATCHMAKER SCORE */}
                                     {matchmaker.enabled && (() => {
                                       const mScore = computeBatchMatchScore(batch);
                                       return (
@@ -4492,79 +4782,7 @@ function AquaMarkApp() {
                                         </span>
                                       );
                                     })()}
-                                    <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
-                                    <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
-                                    </span>
-                                    {isSoldOut && (
-                                      <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
-                                    )}
-                                    {isPaused && !isSoldOut && (
-                                      <span className="bg-amber-500/20 text-amber-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.pausedBadge}</span>
-                                    )}
                                   </div>
-                                  <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
-                                    {isUnlocked ? (
-                                      <span className="text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-400" /> {batch.realName}</span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
-                                    )}
-                                  </h3>
-                                  <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
-                                  {isUnlocked ? (
-                                    <div className="mt-1 space-y-1">
-                                      <p className="text-xs opacity-80">{batch.realAddress} • +91 {batch.realPhone}</p>
-                                      {mapsUrl && (
-                                        <a
-                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
-                                        >
-                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
-                                        </a>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <p className="text-[11px] opacity-50 mt-0.5">{t.unlockHint}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  {/* FEATURE 2: TRANSIT MORTALITY & ROUTE PREDICTOR BUTTON */}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
-                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                    title="Transit Route & Oxygen Risk Predictor"
-                                  >
-                                    <Navigation className="w-4 h-4 text-indigo-500" />
-                                  </button>
-                                  {/* FEATURE 9: WHATSAPP FLYER SHARE BUTTON */}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
-                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                    title="Share Batch Flyer on WhatsApp"
-                                  >
-                                    <Share2 className="w-4 h-4 text-teal-600" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
-                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                  >
-                                    <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-50'}`} />
-                                  </button>
-                                  {(() => {
-                                    const conv = formatConvertedRate(batch.pricePer1000);
-                                    return (
-                                      <div className="text-right pl-1">
-                                        <div className="text-xl sm:text-2xl font-black">{conv.value}</div>
-                                        <div className="text-[11px] opacity-60">{conv.unit}</div>
-                                      </div>
-                                    );
-                                  })()}
                                 </div>
                               </div>
 
@@ -4684,7 +4902,7 @@ function AquaMarkApp() {
                                   }));
                                   setSelectedBatch(batch);
                                 }}
-                                className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                                className="w-full sm:w-auto sm:flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                               >
                                 {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.bookSlotBtn} {!isSoldOut && !isPaused && <ChevronRight className="w-4 h-4" />}
                               </button>
@@ -5481,119 +5699,12 @@ Please advise immediate treatment protocol.`;
            ========================================================= */}
         {currentUser.role === 'seller' && (
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* STEP A: MANDATORY ₹10,000 SECURITY DEPOSIT GATE IF NOT YET PAID */}
-            {!isSellerDepositPaid ? (
-              <div className={`rounded-2xl p-6 sm:p-8 border-2 border-amber-500/40 shadow-sm space-y-5 ${cardBg}`}>
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="bg-amber-500/15 text-amber-500 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-                      Hatchery Verification Deposit Required
-                    </span>
-                    <h2 className="text-xl font-extrabold mt-1.5">{t.depositTitle}</h2>
-                    <p className="text-xs opacity-75 mt-1 leading-relaxed">{t.depositSub}</p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleConfirmHatcheryDeposit} className="space-y-4">
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {[
-                      { id: 'DIRECT_UPI', label: 'UPI (QR / App)', icon: QrCode },
-                      { id: 'RAZORPAY', label: 'Razorpay', icon: CreditCard },
-                      { id: 'BANK_TO_BANK', label: 'Bank NEFT / IMPS', icon: Landmark }
-                    ].map(pm => {
-                      const Icon = pm.icon;
-                      const active = depositPayMethod === pm.id;
-                      return (
-                        <button
-                          key={pm.id}
-                          type="button"
-                          onClick={() => setDepositPayMethod(pm.id)}
-                          className={`p-3 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${active ? 'border-teal-600 bg-teal-500/15 text-teal-600 font-extrabold' : subCardBg}`}
-                        >
-                          <Icon className="w-4 h-4 text-teal-600" />
-                          <span className="text-xs">{pm.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {depositPayMethod === 'DIRECT_UPI' && (() => {
-                    const upiUri = 'upi://pay?pa=aquamark@sbi&pn=AquaMarkDeposit&am=10000&cu=INR&tn=HatcherySecurityDeposit10K';
-                    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
-                    return (
-                      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 space-y-3 text-xs">
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                          <div className="bg-white p-2.5 rounded-xl border border-emerald-300 text-center text-slate-900 relative">
-                            <img
-                              src={qrApiUrl}
-                              alt="Deposit UPI QR"
-                              className={`w-32 h-32 object-contain transition-all duration-300 ${depositQrRevealed ? '' : 'blur-md select-none'}`}
-                            />
-                            {!depositQrRevealed && (
-                              <button
-                                type="button"
-                                onClick={() => setDepositQrRevealed(true)}
-                                className="absolute inset-0 m-auto h-9 w-24 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer"
-                              >
-                                Show QR
-                              </button>
-                            )}
-                            <span className="text-[10px] font-bold block mt-1">₹10,000 Security Deposit</span>
-                          </div>
-                          <div className="flex-1 space-y-2 w-full">
-                            <p className="font-extrabold">Pay ₹10,000 via UPI QR or UPI App</p>
-                            <a
-                              href={upiUri}
-                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs inline-flex items-center justify-center gap-2"
-                            >
-                              <Smartphone className="w-4 h-4" /> Pay ₹10,000 By UPI App
-                            </a>
-                            <input
-                              required
-                              type="text"
-                              placeholder={t.utrPlaceholder}
-                              value={depositUtr}
-                              onChange={(e) => setDepositUtr(e.target.value)}
-                              className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {depositPayMethod === 'BANK_TO_BANK' && (
-                    <div className={`border rounded-xl p-3.5 space-y-2 text-xs ${subCardBg}`}>
-                      <div className="font-mono text-[11px] space-y-0.5 select-text">
-                        <div><b>Account Name:</b> Aqua Mark Escrow Deposit Account</div>
-                        <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
-                        <div><b>Deposit Amount:</b> ₹10,000 (Refundable)</div>
-                      </div>
-                      <input
-                        required
-                        type="text"
-                        placeholder={t.utrPlaceholder}
-                        value={depositUtr}
-                        onChange={(e) => setDepositUtr(e.target.value)}
-                        className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                      />
-                    </div>
-                  )}
-
-                  <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
-                    {t.depositPayBtn} →
-                  </button>
-                </form>
-              </div>
-            ) : !myFixedHatchery ? (
-              /* STEP B: ONE-STEP HATCHERY & BANK REGISTRATION AFTER DEPOSIT */
-              <div className={`rounded-2xl p-6 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
+            {/* ONE-STEP HATCHERY & BANK REGISTRATION (NO MANDATORY DEPOSIT) */}
+            {!myFixedHatchery ? (
+              <div className={`rounded-2xl p-5 sm:p-8 border shadow-xs space-y-5 ${cardBg}`}>
                 <div>
-                  <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                    ✓ ₹10,000 Security Deposit Verified
+                  <span className="bg-teal-500/15 text-teal-600 border border-teal-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                    ✓ CAA Hatchery Onboarding • Zero Upfront Deposit
                   </span>
                   <h2 className="text-xl font-extrabold mt-2">{t.unifiedRegTitle}</h2>
                   <p className="text-xs opacity-60 mt-1">{t.unifiedRegSub}</p>
@@ -5674,7 +5785,7 @@ Please advise immediate treatment protocol.`;
                           <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
                         </span>
                         <span className="inline-flex items-center gap-1 bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                          <ShieldCheck className="w-3.5 h-3.5" /> ₹10,000 Security Deposited
+                          <ShieldCheck className="w-3.5 h-3.5" /> {L('CAA Verified Partner', 'CAA వెరిఫైడ్ పార్టనర్')}
                         </span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white bg-slate-900 px-3 py-1 rounded-xl inline-block">
@@ -5722,14 +5833,7 @@ Please advise immediate treatment protocol.`;
                           >
                             <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => { setAddDepositQrRevealed(false); setAddDepositUtr(''); setShowSellerDepositModal(true); }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-xl inline-flex items-center justify-center cursor-pointer shadow-xs"
-                            title={L('Security Deposit Wallet', 'సెక్యూరిటీ డిపాజిట్ వాలెట్')}
-                          >
-                            <Wallet className="w-4 h-4" />
-                          </button>
+
                         </>
                       )}
                     </div>
@@ -5807,6 +5911,38 @@ Please advise immediate treatment protocol.`;
                       <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedHatchery.bankDetails?.upiId}</b></div>
                     </div>
                   )}
+                </div>
+
+                {/* B2B HATCHERY OWNER ADVANTAGE & NO-SHOW PROTECTION BAR */}
+                <div className={`rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('Zero No-Show Shield', 'నో-షో రక్షణ')}</span>
+                      <span className="text-[10px] opacity-65">{L('Non-refundable 4% advance', 'నాన్-రిఫండబుల్ 4% అడ్వాన్స్')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-teal-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('Direct Farmer + Broker Reach', 'రైతు + బ్రోకర్ నెట్‌వర్క్')}</span>
+                      <span className="text-[10px] opacity-65">{L('Instant batch alerts to brokers', 'బ్రోకర్లకు తక్షణ అలర్ట్')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('1-Scan Gate Settlement', '1-స్కాన్ సెటిల్‌మెంట్')}</span>
+                      <span className="text-[10px] opacity-65">{L('QR verifies & clears invoice', 'QR తో తక్షణ రసీదు')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{hatcheryClearedOrders.length} {L('Verified Dispatches', 'పూర్తయిన ఆర్డర్లు')}</span>
+                      <span className="text-[10px] opacity-65">{L('Boosts coastal trust rank', 'మార్కెట్ ర్యాంక్ పెంచుతుంది')}</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* BELOW HATCHERY DETAILS: 3 CLICKABLE TABS */}
@@ -6085,185 +6221,206 @@ Please advise immediate treatment protocol.`;
                       </div>
                     </div>
 
-                    {/* PCR REPORTS (AI ANALYZED) + SEED PHOTOS + TANK VIDEOS + GPS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                      {/* 1. PCR LAB REPORTS (AI ANALYZED) */}
-                      <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                    {/* UNIFIED UPLOAD IMAGES/VIDEOS BUTTON + TANK GPS */}
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
                         <button
                           type="button"
                           disabled={uploadProgress.active}
-                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_PCR' ? null : 'NEW_PCR')}
-                          className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                          onClick={() => setShowNewMediaPanel(prev => !prev)}
+                          className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showNewMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${subCardBg} text-teal-600`}`}
                         >
-                          <FileCheck2 className="w-4 h-4" /> {L('Upload PCR Reports (AI)', 'PCR రిపోర్ట్స్ అప్‌లోడ్ (AI)')}
+                          <span className="inline-flex items-center gap-2">
+                            <Upload className="w-4 h-4 shrink-0" />
+                            {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showNewMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
+                            PCR: {pcrImages.length} • Seed: {seedImages.length} • Vid: {tankVideos.length}
+                          </span>
                         </button>
-                        {mediaPickerTarget === 'NEW_PCR' && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                              <Camera className="w-4 h-4" /> Camera
-                            </button>
-                            <button type="button" onClick={() => pcrFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                              <FolderOpen className="w-4 h-4" /> Files
-                            </button>
-                          </div>
-                        )}
-                        {pcrImages.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2.5 pt-1">
-                            {pcrImages.map((img, i) => {
-                              const isBad = img.aiPcrStatus === 'NOT_A_PCR_REPORT';
-                              return (
-                                <div key={i} className={`relative rounded-xl border overflow-hidden ${isBad ? 'border-rose-500/60' : 'border-teal-500/30'} ${cardBg}`}>
-                                  <button
-                                    type="button"
-                                    title={L('Delete image', 'ఫోటో తొలగించు')}
-                                    onClick={() => {
-                                      deleteStorageFilesByUrls([img.url]);
-                                      setPcrImages(prev => prev.filter((_, idx) => idx !== i));
-                                      showToast(L('PCR image removed.', 'PCR ఫోటో తొలగించబడింది.'));
-                                    }}
-                                    className="absolute top-1.5 right-1.5 z-10 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shadow cursor-pointer"
-                                  >
-                                    ✕
-                                  </button>
-                                  <img
-                                    src={img.url}
-                                    alt={img.label}
-                                    onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                    className="w-full h-24 object-cover cursor-pointer hover:opacity-90 transition"
-                                  />
-                                  <div className="p-1.5 text-[10px] font-bold flex items-center justify-between gap-1">
-                                    <span className="truncate">{img.label}</span>
-                                    <span className={isBad ? 'text-rose-500' : 'text-emerald-500'}>
-                                      {isBad ? '✕ Not PCR' : `✓ ${img.aiConfidence || 92}%`}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <span className="text-[11px] opacity-65 block text-center">{L('Required: Lab PCR Report (AI checked)', 'తప్పనిసరి: ల్యాబ్ PCR రిపోర్ట్ (AI తనిఖీ)')}</span>
-                        )}
-                      </div>
 
-                      {/* 2. DEDICATED SEED / PL PHOTOS UPLOAD (UNIFIED TEAL BORDER) */}
-                      <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
-                        <button
-                          type="button"
-                          disabled={uploadProgress.active}
-                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_SEED' ? null : 'NEW_SEED')}
-                          className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
-                        >
-                          <Camera className="w-4 h-4" /> {L('Upload Seed / PL Images', 'సీడ్ / PL ఫోటోలు అప్‌లోడ్')}
-                        </button>
-                        {mediaPickerTarget === 'NEW_SEED' && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <button type="button" onClick={() => seedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                              <Camera className="w-4 h-4" /> Camera
-                            </button>
-                            <button type="button" onClick={() => seedFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                              <FolderOpen className="w-4 h-4" /> Files
-                            </button>
+                        {/* TANK GPS STAMP */}
+                        <div className={`border rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 ${subCardBg}`}>
+                          <div className="min-w-0">
+                            <span className="text-xs font-extrabold flex items-center gap-1.5"><Camera className="w-4 h-4 text-teal-600 shrink-0" /> Tank GPS</span>
+                            <p className="text-[11px] opacity-65 truncate mt-0.5">{gpsLocation || 'Auto Stamp'}</p>
                           </div>
-                        )}
-                        {seedImages.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2.5 pt-1">
-                            {seedImages.map((img, i) => (
-                              <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
-                                <button
-                                  type="button"
-                                  title={L('Delete image', 'ఫోటో తొలగించు')}
-                                  onClick={() => {
-                                    deleteStorageFilesByUrls([img.url]);
-                                    setSeedImages(prev => prev.filter((_, idx) => idx !== i));
-                                    showToast(L('Seed image removed.', 'సీడ్ ఫోటో తొలగించబడింది.'));
-                                  }}
-                                  className="absolute top-1.5 right-1.5 z-10 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shadow cursor-pointer"
-                                >
-                                  ✕
-                                </button>
-                                <img
-                                  src={img.url}
-                                  alt={img.label}
-                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                  className="w-full h-24 object-cover cursor-pointer hover:opacity-90 transition"
-                                />
-                                <div className="p-1.5 text-[10px] font-bold flex items-center justify-between">
-                                  <span className="truncate">{img.label}</span>
-                                  <span className="text-emerald-500">✓ Seed</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-[11px] opacity-65 block text-center">{L('Optional: Live PL / Tank Seed Photos', 'ఐచ్ఛికం: లైవ్ సీడ్ / ట్యాంక్ ఫోటోలు')}</span>
-                        )}
-                      </div>
-
-                      {/* 3. TANK VIDEOS UPLOAD (UNIFIED TEAL BORDER + DELETE) */}
-                      <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
-                        <button
-                          type="button"
-                          disabled={uploadProgress.active}
-                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_VID' ? null : 'NEW_VID')}
-                          className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
-                        >
-                          <Video className="w-4 h-4" /> {t.videoUploadBtnLabel}
-                        </button>
-                        {mediaPickerTarget === 'NEW_VID' && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                              <Camera className="w-4 h-4" /> Camera
-                            </button>
-                            <button type="button" onClick={() => vidFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                              <FolderOpen className="w-4 h-4" /> Files
-                            </button>
-                          </div>
-                        )}
-                        {tankVideos.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2.5 pt-1">
-                            {tankVideos.map((vid, i) => (
-                              <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
-                                <button
-                                  type="button"
-                                  title={L('Delete video', 'వీడియో తొలగించు')}
-                                  onClick={() => {
-                                    deleteStorageFilesByUrls([vid.url]);
-                                    setTankVideos(prev => prev.filter((_, idx) => idx !== i));
-                                    showToast(L('Tank video removed.', 'ట్యాంక్ వీడియో తొలగించబడింది.'));
-                                  }}
-                                  className="absolute top-1.5 right-1.5 z-10 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shadow cursor-pointer"
-                                >
-                                  ✕
-                                </button>
-                                <video
-                                  src={vid.url}
-                                  muted
-                                  onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
-                                  className="w-full h-24 object-cover bg-black cursor-pointer"
-                                />
-                                <div className="p-1.5 text-[10px] font-bold flex items-center justify-between">
-                                  <span className="truncate">{vid.label}</span>
-                                  <span className="text-teal-500">▶ Video</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-[11px] opacity-65 block text-center">Optional: Tank PL activity videos</span>
-                        )}
-                      </div>
-
-                      {/* 4. TANK GPS STAMP */}
-                      <div className={`border rounded-2xl p-3.5 flex items-center justify-between gap-2 ${subCardBg}`}>
-                        <div>
-                          <span className="text-xs font-extrabold flex items-center gap-1.5"><Camera className="w-4 h-4 text-teal-600" /> Tank GPS</span>
-                          <p className="text-[11px] opacity-65 truncate max-w-[180px] mt-0.5">{gpsLocation || 'Auto Stamp'}</p>
+                          <button type="button" onClick={handleCaptureGps} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap">
+                            <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
+                          </button>
                         </div>
-                        <button type="button" onClick={handleCaptureGps} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0">
-                          <MapPin className="w-3.5 h-3.5" /> {gpsLocation ? t.gpsLockedBtn : t.captureGpsBtn}
-                        </button>
                       </div>
+
+                      {showNewMediaPanel && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+                          {/* 1. UPLOAD PCR */}
+                          <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                            <button
+                              type="button"
+                              disabled={uploadProgress.active}
+                              onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_PCR' ? null : 'NEW_PCR')}
+                              className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                            >
+                              <FileCheck2 className="w-4 h-4" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({pcrImages.length})
+                            </button>
+                            {mediaPickerTarget === 'NEW_PCR' && (
+                              <div className="grid grid-cols-2 gap-2">
+                                <button type="button" onClick={() => pcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                  <Camera className="w-4 h-4" /> Camera
+                                </button>
+                                <button type="button" onClick={() => pcrFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                  <FolderOpen className="w-4 h-4" /> Files
+                                </button>
+                              </div>
+                            )}
+                            {pcrImages.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                {pcrImages.map((img, i) => {
+                                  const isBad = img.aiPcrStatus === 'NOT_A_PCR_REPORT';
+                                  return (
+                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${isBad ? 'border-rose-500/60' : 'border-teal-500/30'} ${cardBg}`}>
+                                      <button
+                                        type="button"
+                                        title={L('Delete image', 'ఫోటో తొలగించు')}
+                                        onClick={() => {
+                                          deleteStorageFilesByUrls([img.url]);
+                                          setPcrImages(prev => prev.filter((_, idx) => idx !== i));
+                                          showToast(L('PCR image removed.', 'PCR ఫోటో తొలగించబడింది.'));
+                                        }}
+                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
+                                      >
+                                        ✕
+                                      </button>
+                                      <img
+                                        src={img.url}
+                                        alt={img.label}
+                                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                        className="w-full h-20 object-cover cursor-pointer hover:opacity-90 transition"
+                                      />
+                                      <div className="p-1 text-[10px] font-bold flex items-center justify-between gap-1">
+                                        <span className="truncate">{img.label}</span>
+                                        <span className={isBad ? 'text-rose-500' : 'text-emerald-500'}>
+                                          {isBad ? '✕' : '✓'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-[11px] opacity-65 block text-center">{L('Required: Lab PCR Report (AI checked)', 'తప్పనిసరి: ల్యాబ్ PCR రిపోర్ట్ (AI తనిఖీ)')}</span>
+                            )}
+                          </div>
+
+                          {/* 2. UPLOAD SEED IMAGES */}
+                          <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                            <button
+                              type="button"
+                              disabled={uploadProgress.active}
+                              onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_SEED' ? null : 'NEW_SEED')}
+                              className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                            >
+                              <Camera className="w-4 h-4" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({seedImages.length})
+                            </button>
+                            {mediaPickerTarget === 'NEW_SEED' && (
+                              <div className="grid grid-cols-2 gap-2">
+                                <button type="button" onClick={() => seedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                  <Camera className="w-4 h-4" /> Camera
+                                </button>
+                                <button type="button" onClick={() => seedFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                  <FolderOpen className="w-4 h-4" /> Files
+                                </button>
+                              </div>
+                            )}
+                            {seedImages.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                {seedImages.map((img, i) => (
+                                  <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
+                                    <button
+                                      type="button"
+                                      title={L('Delete image', 'ఫోటో తొలగించు')}
+                                      onClick={() => {
+                                        deleteStorageFilesByUrls([img.url]);
+                                        setSeedImages(prev => prev.filter((_, idx) => idx !== i));
+                                        showToast(L('Seed image removed.', 'సీడ్ ఫోటో తొలగించబడింది.'));
+                                      }}
+                                      className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
+                                    >
+                                      ✕
+                                    </button>
+                                    <img
+                                      src={img.url}
+                                      alt={img.label}
+                                      onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                      className="w-full h-20 object-cover cursor-pointer hover:opacity-90 transition"
+                                    />
+                                    <div className="p-1 text-[10px] font-bold flex items-center justify-between">
+                                      <span className="truncate">{img.label}</span>
+                                      <span className="text-emerald-500">✓</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-[11px] opacity-65 block text-center">{L('Optional: Live PL / Tank Seed Photos', 'ఐచ్ఛికం: లైవ్ సీడ్ / ట్యాంక్ ఫోటోలు')}</span>
+                            )}
+                          </div>
+
+                          {/* 3. UPLOAD VIDEOS */}
+                          <div className={`border rounded-2xl p-3.5 space-y-3 ${subCardBg}`}>
+                            <button
+                              type="button"
+                              disabled={uploadProgress.active}
+                              onClick={() => setMediaPickerTarget(mediaPickerTarget === 'NEW_VID' ? null : 'NEW_VID')}
+                              className={`w-full ${cardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2.5 px-3 rounded-xl inline-flex items-center justify-center gap-2 transition cursor-pointer`}
+                            >
+                              <Video className="w-4 h-4" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({tankVideos.length})
+                            </button>
+                            {mediaPickerTarget === 'NEW_VID' && (
+                              <div className="grid grid-cols-2 gap-2">
+                                <button type="button" onClick={() => vidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                  <Camera className="w-4 h-4" /> Camera
+                                </button>
+                                <button type="button" onClick={() => vidFileRef.current?.click()} className={`${cardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                  <FolderOpen className="w-4 h-4" /> Files
+                                </button>
+                              </div>
+                            )}
+                            {tankVideos.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                {tankVideos.map((vid, i) => (
+                                  <div key={i} className={`relative rounded-xl border border-teal-500/30 overflow-hidden ${cardBg}`}>
+                                    <button
+                                      type="button"
+                                      title={L('Delete video', 'వీడియో తొలగించు')}
+                                      onClick={() => {
+                                        deleteStorageFilesByUrls([vid.url]);
+                                        setTankVideos(prev => prev.filter((_, idx) => idx !== i));
+                                        showToast(L('Tank video removed.', 'ట్యాంక్ వీడియో తొలగించబడింది.'));
+                                      }}
+                                      className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center shadow cursor-pointer"
+                                    >
+                                      ✕
+                                    </button>
+                                    <video
+                                      src={vid.url}
+                                      muted
+                                      onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                      className="w-full h-20 object-cover bg-black cursor-pointer"
+                                    />
+                                    <div className="p-1 text-[10px] font-bold flex items-center justify-between">
+                                      <span className="truncate">{vid.label}</span>
+                                      <span className="text-teal-500">▶</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-[11px] opacity-65 block text-center">{L('Optional: Tank PL activity videos', 'ఐచ్ఛికం: ట్యాంక్ PL వీడియోలు')}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <button type="submit" disabled={uploadProgress.active} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm shadow-xs cursor-pointer">
@@ -6402,139 +6559,173 @@ Please advise immediate treatment protocol.`;
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-3 border-t border-slate-300/20">
-                                  {/* EDIT PCR REPORTS */}
-                                  <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-extrabold text-teal-600 flex items-center gap-1.5">
-                                        <FileCheck2 className="w-3.5 h-3.5" /> PCR Reports ({(editBatchValues.pcrImages || []).length})
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                        <Camera className="w-3.5 h-3.5" /> Camera
-                                      </button>
-                                      <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                        <FolderOpen className="w-3.5 h-3.5" /> Files
-                                      </button>
-                                    </div>
-                                    {(editBatchValues.pcrImages || []).length > 0 && (
-                                      <div className="grid grid-cols-2 gap-2 pt-1">
-                                        {(editBatchValues.pcrImages || []).map((img, i) => (
-                                          <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                            <button
-                                              type="button"
-                                              onClick={() => setEditBatchValues(prev => ({
-                                                ...prev,
-                                                removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
-                                                pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
-                                              }))}
-                                              className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                            >
-                                              ✕
-                                            </button>
-                                            <img
-                                              src={img.url}
-                                              alt={img.label}
-                                              onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                              className="w-full h-20 object-cover cursor-pointer"
-                                            />
-                                            <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
+                                <div className="pt-3 border-t border-slate-300/20 space-y-3">
+                                  <button
+                                    type="button"
+                                    disabled={uploadProgress.active}
+                                    onClick={() => setShowEditMediaPanel(prev => !prev)}
+                                    className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showEditMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${cardBg} text-teal-600`}`}
+                                  >
+                                    <span className="inline-flex items-center gap-2">
+                                      <Upload className="w-4 h-4 shrink-0" />
+                                      {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
+                                    </span>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showEditMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
+                                      PCR: {(editBatchValues.pcrImages || []).length} • Seed: {(editBatchValues.seedImages || []).length} • Vid: {(editBatchValues.tankVideos || []).length}
+                                    </span>
+                                  </button>
 
-                                  {/* EDIT SEED IMAGES */}
-                                  <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-extrabold text-teal-600 flex items-center gap-1.5">
-                                        <Camera className="w-3.5 h-3.5" /> Seed Images ({(editBatchValues.seedImages || []).length})
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                        <Camera className="w-3.5 h-3.5" /> Camera
-                                      </button>
-                                      <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                        <FolderOpen className="w-3.5 h-3.5" /> Files
-                                      </button>
-                                    </div>
-                                    {(editBatchValues.seedImages || []).length > 0 && (
-                                      <div className="grid grid-cols-2 gap-2 pt-1">
-                                        {(editBatchValues.seedImages || []).map((img, i) => (
-                                          <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                            <button
-                                              type="button"
-                                              onClick={() => setEditBatchValues(prev => ({
-                                                ...prev,
-                                                removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
-                                                seedImages: prev.seedImages.filter((_, idx) => idx !== i)
-                                              }))}
-                                              className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                            >
-                                              ✕
+                                  {showEditMediaPanel && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                      {/* 1. UPLOAD PCR */}
+                                      <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                        <button
+                                          type="button"
+                                          disabled={uploadProgress.active}
+                                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_PCR' ? null : 'EDIT_PCR')}
+                                          className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                        >
+                                          <FileCheck2 className="w-3.5 h-3.5" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({(editBatchValues.pcrImages || []).length})
+                                        </button>
+                                        {mediaPickerTarget === 'EDIT_PCR' && (
+                                          <div className="grid grid-cols-2 gap-2">
+                                            <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                              <Camera className="w-3.5 h-3.5" /> Camera
                                             </button>
-                                            <img
-                                              src={img.url}
-                                              alt={img.label}
-                                              onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                              className="w-full h-20 object-cover cursor-pointer"
-                                            />
-                                            <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                            <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                              <FolderOpen className="w-3.5 h-3.5" /> Files
+                                            </button>
                                           </div>
-                                        ))}
+                                        )}
+                                        {(editBatchValues.pcrImages || []).length > 0 && (
+                                          <div className="grid grid-cols-2 gap-2 pt-1">
+                                            {(editBatchValues.pcrImages || []).map((img, i) => (
+                                              <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setEditBatchValues(prev => ({
+                                                    ...prev,
+                                                    removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
+                                                    pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
+                                                  }))}
+                                                  className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                >
+                                                  ✕
+                                                </button>
+                                                <img
+                                                  src={img.url}
+                                                  alt={img.label}
+                                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                                  className="w-full h-20 object-cover cursor-pointer"
+                                                />
+                                                <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
-                                  </div>
 
-                                  {/* EDIT TANK VIDEOS */}
-                                  <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-extrabold text-teal-600 flex items-center gap-1.5">
-                                        <Video className="w-3.5 h-3.5" /> Tank Videos ({(editBatchValues.tankVideos || []).length})
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                        <Camera className="w-3.5 h-3.5" /> Camera
-                                      </button>
-                                      <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                        <FolderOpen className="w-3.5 h-3.5" /> Files
-                                      </button>
-                                    </div>
-                                    {(editBatchValues.tankVideos || []).length > 0 && (
-                                      <div className="grid grid-cols-2 gap-2 pt-1">
-                                        {(editBatchValues.tankVideos || []).map((vid, i) => (
-                                          <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                            <button
-                                              type="button"
-                                              onClick={() => setEditBatchValues(prev => ({
-                                                ...prev,
-                                                removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
-                                                tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
-                                              }))}
-                                              className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                            >
-                                              ✕
+                                      {/* 2. UPLOAD SEED IMAGES */}
+                                      <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                        <button
+                                          type="button"
+                                          disabled={uploadProgress.active}
+                                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_SEED' ? null : 'EDIT_SEED')}
+                                          className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                        >
+                                          <Camera className="w-3.5 h-3.5" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({(editBatchValues.seedImages || []).length})
+                                        </button>
+                                        {mediaPickerTarget === 'EDIT_SEED' && (
+                                          <div className="grid grid-cols-2 gap-2">
+                                            <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                              <Camera className="w-3.5 h-3.5" /> Camera
                                             </button>
-                                            <video
-                                              src={vid.url}
-                                              muted
-                                              onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
-                                              className="w-full h-20 object-cover bg-black cursor-pointer"
-                                            />
-                                            <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
+                                            <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                              <FolderOpen className="w-3.5 h-3.5" /> Files
+                                            </button>
                                           </div>
-                                        ))}
+                                        )}
+                                        {(editBatchValues.seedImages || []).length > 0 && (
+                                          <div className="grid grid-cols-2 gap-2 pt-1">
+                                            {(editBatchValues.seedImages || []).map((img, i) => (
+                                              <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setEditBatchValues(prev => ({
+                                                    ...prev,
+                                                    removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
+                                                    seedImages: prev.seedImages.filter((_, idx) => idx !== i)
+                                                  }))}
+                                                  className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                >
+                                                  ✕
+                                                </button>
+                                                <img
+                                                  src={img.url}
+                                                  alt={img.label}
+                                                  onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                                  className="w-full h-20 object-cover cursor-pointer"
+                                                />
+                                                <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
-                                  </div>
+
+                                      {/* 3. UPLOAD VIDEOS */}
+                                      <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                        <button
+                                          type="button"
+                                          disabled={uploadProgress.active}
+                                          onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_VID' ? null : 'EDIT_VID')}
+                                          className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                        >
+                                          <Video className="w-3.5 h-3.5" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({(editBatchValues.tankVideos || []).length})
+                                        </button>
+                                        {mediaPickerTarget === 'EDIT_VID' && (
+                                          <div className="grid grid-cols-2 gap-2">
+                                            <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                              <Camera className="w-3.5 h-3.5" /> Camera
+                                            </button>
+                                            <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                              <FolderOpen className="w-3.5 h-3.5" /> Files
+                                            </button>
+                                          </div>
+                                        )}
+                                        {(editBatchValues.tankVideos || []).length > 0 && (
+                                          <div className="grid grid-cols-2 gap-2 pt-1">
+                                            {(editBatchValues.tankVideos || []).map((vid, i) => (
+                                              <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setEditBatchValues(prev => ({
+                                                    ...prev,
+                                                    removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
+                                                    tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
+                                                  }))}
+                                                  className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                >
+                                                  ✕
+                                                </button>
+                                                <video
+                                                  src={vid.url}
+                                                  muted
+                                                  onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                                  className="w-full h-20 object-cover bg-black cursor-pointer"
+                                                />
+                                                <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ) : (
-                              <div className={`grid grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
+                              <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
                                 <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
                                 <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
@@ -6652,6 +6843,38 @@ Please advise immediate treatment protocol.`;
               </div>
             ) : (
               <>
+                {/* B2B BROKER ADVANTAGE & COMMISSION PROTECTION STRIP */}
+                <div className={`rounded-2xl p-3.5 border border-teal-500/30 bg-teal-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-teal-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('365-Day Farmer Lock', '365 రోజుల రైతు లాక్')}</span>
+                      <span className="text-[10px] opacity-65">{L('Zero bypass by hatcheries', 'నేరుగా బైపాస్ ఉండదు')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('Guaranteed 2% + Margin', 'ఖచ్చితమైన 2% + మార్జిన్')}</span>
+                      <span className="text-[10px] opacity-65">{L('Auto-tracked every order', 'ప్రతి ఆర్డర్ ట్రాక్ అవుతుంది')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('Live Deal Notifications', 'లైవ్ డీల్ నోటిఫికేషన్లు')}</span>
+                      <span className="text-[10px] opacity-65">{L('New batches, packing & payout', 'బ్యాచ్, ప్యాకింగ్ & పేమెంట్ అలర్ట్')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Send className="w-4 h-4 text-green-500 shrink-0" />
+                    <div>
+                      <span className="font-extrabold block leading-tight">{L('1-Click WhatsApp Quotes', '1-క్లిక్ WhatsApp కోట్స్')}</span>
+                      <span className="text-[10px] opacity-65">{L('Close deals 3x faster', 'వేగంగా బుకింగ్స్ పూర్తి')}</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div
                     onClick={() => setBrokerTxListModal({ title: 'Upcoming 2% Commission Transactions (On Hold)', list: brokerHeldBookings })}
@@ -6944,17 +7167,91 @@ Please advise immediate treatment protocol.`;
                         return (
                           <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
                             <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 px-2 py-0.5 rounded">{batch.id}</span>
-                                    <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                      <ShieldCheck className="w-3.5 h-3.5" /> {t.caaVerified}
-                                    </span>
+                              <div className="space-y-2.5">
+                                <div className="flex items-start justify-between gap-2.5">
+                                  <div className="min-w-0 space-y-1.5">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded">{batch.id}</span>
+                                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> {t.caaVerified}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                                      <span className="font-semibold opacity-70">{batch.zone}</span>
+                                      <span className="font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {(() => {
+                                    const conv = formatConvertedRate(batch.pricePer1000);
+                                    return (
+                                      <div className="text-right shrink-0">
+                                        <div className="text-xl sm:text-2xl font-black leading-none">{conv.value}</div>
+                                        <div className="text-[11px] opacity-60 mt-0.5">{conv.unit}</div>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+
+                                <div className="flex items-center justify-between gap-2 pt-0.5">
+                                  <h3 className="text-base sm:text-lg font-extrabold tracking-tight leading-snug min-w-0 flex-1 break-words">
+                                    {isUnlocked ? (
+                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                        <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        <span className="truncate sm:whitespace-normal">{batch.realName}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                        <Lock className="w-4 h-4 opacity-70 shrink-0" />
+                                        <span className="truncate sm:whitespace-normal">{batch.hatcheryCode || 'Verified Hatchery'}</span>
+                                      </span>
+                                    )}
+                                  </h3>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
+                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                      title={L('Transit Route & Oxygen Risk Predictor', 'రవాణా & ఆక్సిజన్ రిస్క్ అంచనా')}
+                                    >
+                                      <Navigation className="w-3.5 h-3.5 text-indigo-500" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
+                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                      title={L('Share Batch Quote on WhatsApp', 'WhatsApp లో షేర్ చేయండి')}
+                                    >
+                                      <Share2 className="w-3.5 h-3.5 text-teal-600" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <p className="text-xs opacity-75 font-medium leading-relaxed">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
+                                  {isUnlocked ? (
+                                    <div className="space-y-1">
+                                      <p className="text-xs opacity-80 leading-relaxed">{batch.realAddress} • +91 {batch.realPhone}</p>
+                                      {mapsUrl && (
+                                        <a
+                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                        >
+                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[11px] opacity-55">{t.unlockHint}</p>
+                                  )}
+                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                                     <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                                       <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
                                     </span>
-                                    {/* AI PCR REPORT VERIFICATION STATUS FOR FARMER & BROKER */}
                                     {(batch.pcrImages || []).length > 0 && (() => {
                                       const hasInvalid = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'NOT_A_PCR_REPORT');
                                       const hasVerified = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'VERIFIED_PCR');
@@ -6974,64 +7271,7 @@ Please advise immediate treatment protocol.`;
                                       }
                                       return null;
                                     })()}
-                                    <span className="text-xs font-semibold opacity-60">{batch.zone}</span>
-                                    <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
-                                    </span>
                                   </div>
-                                  <h3 className="text-base font-extrabold mt-2 flex items-center gap-2">
-                                    {isUnlocked ? (
-                                      <span className="text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1.5"><Unlock className="w-4 h-4 text-emerald-400" /> {batch.realName}</span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1.5"><Lock className="w-4 h-4 opacity-50" /> {batch.hatcheryCode || 'Verified Hatchery'}</span>
-                                    )}
-                                  </h3>
-                                  <p className="text-xs opacity-70 font-medium mt-0.5">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
-                                  {isUnlocked ? (
-                                    <div className="mt-1 space-y-1">
-                                      <p className="text-xs opacity-80">{batch.realAddress} • +91 {batch.realPhone}</p>
-                                      {mapsUrl && (
-                                        <a
-                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
-                                        >
-                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
-                                        </a>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <p className="text-[11px] opacity-50 mt-0.5">{t.unlockHint}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
-                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                    title={L('Transit Route & Oxygen Risk Predictor', 'రవాణా & ఆక్సిజన్ రిస్క్ అంచనా')}
-                                  >
-                                    <Navigation className="w-4 h-4 text-indigo-500" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
-                                    className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                    title={L('Share Batch Flyer on WhatsApp', 'WhatsApp లో షేర్ చేయండి')}
-                                  >
-                                    <Share2 className="w-4 h-4 text-teal-600" />
-                                  </button>
-                                  {(() => {
-                                    const conv = formatConvertedRate(batch.pricePer1000);
-                                    return (
-                                      <div className="text-right pl-1">
-                                        <div className="text-xl sm:text-2xl font-black">{conv.value}</div>
-                                        <div className="text-[11px] opacity-60">{conv.unit}</div>
-                                      </div>
-                                    );
-                                  })()}
                                 </div>
                               </div>
 
@@ -7125,7 +7365,7 @@ Please advise immediate treatment protocol.`;
                                     utrReference: ''
                                   }));
                                 }}
-                                className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer"
+                                className="w-full sm:w-auto sm:flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer whitespace-nowrap"
                               >
                                 {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
                               </button>
@@ -8193,7 +8433,7 @@ Please advise immediate treatment protocol.`;
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{t.farmerNameLabel}</label>
                     <input required type="text" value={bookingForm.farmerName} onChange={(e) => setBookingForm({ ...bookingForm, farmerName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-sm select-text ${inputCls}`} />
@@ -8270,7 +8510,7 @@ Please advise immediate treatment protocol.`;
                 })()}
 
                 {/* FEATURE 3: MULTI-POND SPLIT-ORDER PLANNER */}
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{t.packingDateLabel}</label>
                     <input required type="date" value={bookingForm.packingDate} onChange={(e) => setBookingForm({ ...bookingForm, packingDate: e.target.value })} className={`w-full border rounded-xl px-2.5 py-2 text-xs font-bold select-text ${inputCls}`} />
@@ -9221,13 +9461,13 @@ Please advise immediate treatment protocol.`;
         </div>
       )}
 
-      {/* ROUND-3 FEATURE: FLOATING SCROLL-TO-TOP BUTTON */}
+      {/* FLOATING SCROLL-TO-TOP BUTTON (RIGHT SIDE) */}
       {showScrollTop && (
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           title="Back to Top"
-          className="fixed bottom-5 left-5 z-40 bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-full shadow-xl border border-teal-400/40 cursor-pointer transition"
+          className="fixed bottom-5 right-5 z-40 bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-full shadow-xl border border-teal-400/40 cursor-pointer transition active:scale-95"
         >
           <ArrowUp className="w-4 h-4" />
         </button>
@@ -9323,6 +9563,34 @@ Please advise immediate treatment protocol.`;
                 {t.closeBtn}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* NO INTERNET CONNECTION POPUP OVERLAY (KEEPS USER ON EXACT SAME PAGE) */}
+      {(!isOnline || networkError) && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[9998] flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-sm w-full p-6 shadow-2xl border-2 border-rose-500/40 text-center space-y-4 ${cardBg}`}>
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center mx-auto">
+              <WifiOff className="w-7 h-7" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-extrabold">{L('No Internet Connection', 'ఇంటర్నెట్ కనెక్షన్ లేదు')}</h3>
+              <p className="text-xs opacity-75 leading-relaxed">
+                {L(
+                  'Your network appears to be offline or unreachable. Your current page and data are safely preserved — reconnect and tap Retry.',
+                  'మీ నెట్‌వర్క్ ఆఫ్‌లో ఉంది లేదా కనెక్ట్ అవ్వడం లేదు. మీరు ఉన్న పేజీ సురక్షితంగా ఉంది — నెట్ ఆన్ చేసి Retry నొక్కండి.'
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={isRetryingNetwork}
+              onClick={handleRetryConnection}
+              className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-sm inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRetryingNetwork ? 'animate-spin' : ''}`} />
+              {isRetryingNetwork ? L('Retrying...', 'ప్రయత్నిస్తోంది...') : L('Retry', 'మళ్ళీ ప్రయత్నించండి (Retry)')}
+            </button>
           </div>
         </div>
       )}
