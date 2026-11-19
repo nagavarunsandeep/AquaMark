@@ -11,7 +11,7 @@ import {
   Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink,
   FolderOpen, Maximize2, RefreshCw, Share2, PauseCircle, PlayCircle,
   Sparkles, ShieldAlert, KeyRound, Activity, Navigation, Thermometer,
-  Award, CheckCircle, Bell, Phone, ScanLine, ShoppingCart,
+  Award, Bell, Phone, ScanLine, ShoppingCart,
   Download, Volume2, VolumeX, Zap, RotateCcw, Target,
   Timer, PhoneCall, Megaphone, CloudSun, Sliders, ArrowUp,
   WifiOff, StickyNote, Plus, Minus, Copy
@@ -1445,6 +1445,7 @@ function AquaMarkApp() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [bookingStatusFilter, setBookingStatusFilter] = useState('ALL');
   const [showPublishBatchForm, setShowPublishBatchForm] = useState(false);
+  const [showActiveBatches, setShowActiveBatches] = useState(false);
   const [videoReqFilter, setVideoReqFilter] = useState('ALL');
   const [sellerBatchFilter, setSellerBatchFilter] = useState('ALL');
   const [sellerBatchSearch, setSellerBatchSearch] = useState('');
@@ -4941,8 +4942,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                              ? 'bg-teal-600 text-white border-teal-600'
-                              : `${subCardBg} opacity-80 hover:opacity-100`
+                                ? 'bg-teal-600 text-white border-teal-600'
+                                : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -5010,7 +5011,7 @@ function AquaMarkApp() {
                                     </p>
                                   </div>
 
-                                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto" onClick={(e) => e.stopPropagation()}>
+                                  <div className="grid grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0" onClick={(e) => e.stopPropagation()}>
                                     {/* STATUS ANIMATION BUTTON */}
                                     {!isCancelled && (
                                       <button
@@ -5051,24 +5052,6 @@ function AquaMarkApp() {
                                           <QrCode className="w-3.5 h-3.5 shrink-0" /> Gate-Pass QR
                                         </button>
                                       )
-                                    )}
-
-                                    {/* FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN */}
-                                    {!isCancelled && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const existing = survivalLogs[bk.bookingId];
-                                          setSurvivalDraft(existing ? { h24: existing.h24, h48: existing.h48, h72: existing.h72, note: existing.note || '' } : { h24: 96, h48: 92, h72: 88, note: '' });
-                                          setSurvivalModalBooking(bk);
-                                        }}
-                                        className={`border text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${survivalLogs[bk.bookingId] ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600' : cardBg}`}
-                                      >
-                                        <CheckCircle className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                                        {survivalLogs[bk.bookingId]
-                                          ? `72h: ${survivalLogs[bk.bookingId].h72}% ✓`
-                                          : L('72h Survival', '72h సర్వైవల్')}
-                                      </button>
                                     )}
 
                                     {/* FEATURE 15: 1-CLICK QUICK REORDER */}
@@ -6195,394 +6178,410 @@ Please advise immediate treatment protocol.`;
                   </div>
                 </div>
 
-                {/* OWNER'S ACTIVE BATCHES & EDIT */}
-                <div className={`rounded-2xl p-4 sm:p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
-                    <h3 className="font-bold text-sm sm:text-base flex items-center gap-2">
+                {/* OWNER'S ACTIVE BATCHES & EDIT (COLLAPSIBLE — OPENS ON CLICK) */}
+                <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowActiveBatches(prev => !prev)}
+                    className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-teal-500/5 transition"
+                  >
+                    <span className="text-sm sm:text-base font-extrabold flex items-center gap-2 min-w-0">
                       <Layers className="w-5 h-5 text-teal-600 shrink-0" />
-                      <span>{t.myBatchesTitle} ({myOwnedBatches.length})</span>
-                    </h3>
-                    {myOwnedBatches.length > 0 && (
-                      <div className="relative w-full sm:w-56">
-                        <Search className="w-3.5 h-3.5 opacity-50 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="text"
-                          value={sellerBatchSearch}
-                          onChange={(e) => setSellerBatchSearch(e.target.value)}
-                          placeholder={L('Search batch ID or species...', 'బ్యాచ్ ID / రకం వెతకండి...')}
-                          className={`w-full border rounded-xl pl-8 pr-3 py-1.5 text-xs select-text ${inputCls}`}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {myOwnedBatches.length === 0 ? (
-                    <p className="text-xs opacity-60">{t.noBatchesSeller}</p>
-                  ) : (() => {
-                    const liveCnt = myOwnedBatches.filter(b => !b.paused && (b.availablePl || 0) > 0).length;
-                    const pausedCnt = myOwnedBatches.filter(b => b.paused).length;
-                    const soldCnt = myOwnedBatches.filter(b => (b.availablePl || 0) <= 0).length;
-                    const q = sellerBatchSearch.trim().toLowerCase();
-                    const filteredOwnedBatches = myOwnedBatches.filter(b => {
-                      if (sellerBatchFilter === 'LIVE' && (b.paused || (b.availablePl || 0) <= 0)) return false;
-                      if (sellerBatchFilter === 'PAUSED' && !b.paused) return false;
-                      if (sellerBatchFilter === 'SOLD' && (b.availablePl || 0) > 0) return false;
-                      if (q && !`${b.id} ${b.species} ${b.plStage}`.toLowerCase().includes(q)) return false;
-                      return true;
-                    });
-                    return (
-                      <>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {[
-                            { id: 'ALL', label: L('All', 'అన్నీ'), cnt: myOwnedBatches.length },
-                            { id: 'LIVE', label: L('Live', 'లైవ్'), cnt: liveCnt },
-                            { id: 'PAUSED', label: L('Paused', 'పాజ్'), cnt: pausedCnt },
-                            { id: 'SOLD', label: L('Sold Out', 'అయిపోయాయి'), cnt: soldCnt },
-                          ].map((st) => (
-                            <button
-                              key={st.id}
-                              type="button"
-                              onClick={() => setSellerBatchFilter(st.id)}
-                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                ? 'bg-teal-600 text-white border-teal-600'
-                                : `${subCardBg} opacity-80 hover:opacity-100`
-                                }`}
-                            >
-                              {st.label} ({st.cnt})
-                            </button>
-                          ))}
+                      <span className="truncate">{t.myBatchesTitle} ({myOwnedBatches.length})</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 shrink-0">
+                      <span className="bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                        {showActiveBatches ? L('Close', 'మూసివేయి') : L('View / Edit', 'చూడండి / మార్చండి')}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform ${showActiveBatches ? 'rotate-90' : ''}`} />
+                    </span>
+                  </button>
+                  {showActiveBatches && (
+                    <div className="px-4 sm:px-6 pb-5 pt-3 border-t border-slate-300/20 space-y-4">
+                      {myOwnedBatches.length > 0 && (
+                        <div className="relative w-full sm:w-64">
+                          <Search className="w-3.5 h-3.5 opacity-50 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={sellerBatchSearch}
+                            onChange={(e) => setSellerBatchSearch(e.target.value)}
+                            placeholder={L('Search batch ID or species...', 'బ్యాచ్ ID / రకం వెతకండి...')}
+                            className={`w-full border rounded-xl pl-8 pr-3 py-1.5 text-xs select-text ${inputCls}`}
+                          />
                         </div>
-                        {filteredOwnedBatches.length === 0 ? (
-                          <p className="text-xs opacity-60 py-4 text-center">{L('No matching batches found.', 'సరిపోయే బ్యాచ్‌లు లేవు.')}</p>
-                        ) : (
-                          <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
-                            {filteredOwnedBatches.map((b) => {
-                              const isEditing = editingBatchId === b.id;
-                              return (
-                                <div key={b.id} className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
-                                  <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-mono text-xs font-bold text-teal-500">{b.id}</span>
-                                        <span className="font-bold text-sm">{b.species}</span>
-                                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.paused ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
-                                          {b.paused ? 'PAUSED' : 'LIVE'}
-                                        </span>
+                      )}
+                      {myOwnedBatches.length === 0 ? (
+                        <p className="text-xs opacity-60">{t.noBatchesSeller}</p>
+                      ) : (() => {
+                        const liveCnt = myOwnedBatches.filter(b => !b.paused && (b.availablePl || 0) > 0).length;
+                        const pausedCnt = myOwnedBatches.filter(b => b.paused).length;
+                        const soldCnt = myOwnedBatches.filter(b => (b.availablePl || 0) <= 0).length;
+                        const q = sellerBatchSearch.trim().toLowerCase();
+                        const filteredOwnedBatches = myOwnedBatches.filter(b => {
+                          if (sellerBatchFilter === 'LIVE' && (b.paused || (b.availablePl || 0) <= 0)) return false;
+                          if (sellerBatchFilter === 'PAUSED' && !b.paused) return false;
+                          if (sellerBatchFilter === 'SOLD' && (b.availablePl || 0) > 0) return false;
+                          if (q && !`${b.id} ${b.species} ${b.plStage}`.toLowerCase().includes(q)) return false;
+                          return true;
+                        });
+                        return (
+                          <>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {[
+                                { id: 'ALL', label: L('All', 'అన్నీ'), cnt: myOwnedBatches.length },
+                                { id: 'LIVE', label: L('Live', 'లైవ్'), cnt: liveCnt },
+                                { id: 'PAUSED', label: L('Paused', 'పాజ్'), cnt: pausedCnt },
+                                { id: 'SOLD', label: L('Sold Out', 'అయిపోయాయి'), cnt: soldCnt },
+                              ].map((st) => (
+                                <button
+                                  key={st.id}
+                                  type="button"
+                                  onClick={() => setSellerBatchFilter(st.id)}
+                                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
+                                      ? 'bg-teal-600 text-white border-teal-600'
+                                      : `${subCardBg} opacity-80 hover:opacity-100`
+                                    }`}
+                                >
+                                  {st.label} ({st.cnt})
+                                </button>
+                              ))}
+                            </div>
+                            {filteredOwnedBatches.length === 0 ? (
+                              <p className="text-xs opacity-60 py-4 text-center">{L('No matching batches found.', 'సరిపోయే బ్యాచ్‌లు లేవు.')}</p>
+                            ) : (
+                              <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
+                                {filteredOwnedBatches.map((b) => {
+                                  const isEditing = editingBatchId === b.id;
+                                  return (
+                                    <div key={b.id} className={`border rounded-xl p-4 space-y-3 ${subCardBg}`}>
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-mono text-xs font-bold text-teal-500">{b.id}</span>
+                                            <span className="font-bold text-sm">{b.species}</span>
+                                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.paused ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
+                                              {b.paused ? 'PAUSED' : 'LIVE'}
+                                            </span>
+                                          </div>
+                                          {(() => {
+                                            const batchOrders = myHatcheryOrders.filter(o => o.batch?.id === b.id && o.packingStatus !== 'CANCELLED');
+                                            const soldPl = batchOrders.reduce((s, o) => s + (o.quantity || 0), 0);
+                                            return (
+                                              <span className="block text-[11px] opacity-70 mt-0.5">
+                                                Packing: {b.availableDate} ({b.availableTimeSlot}) • Media: {(b.pcrImages || []).length} PCR / {(b.seedImages || []).length} Seed / {(b.tankVideos || []).length} Vid
+                                                {batchOrders.length > 0 && (
+                                                  <span className="text-emerald-500 font-bold"> • {batchOrders.length} Booked ({soldPl.toLocaleString('en-IN')} PL)</span>
+                                                )}
+                                              </span>
+                                            );
+                                          })()}
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">
+                                          {/* TOP-LEFT: CRATE QR */}
+                                          <button
+                                            type="button"
+                                            onClick={() => setCrateQrBatch(b)}
+                                            className="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-500 text-xs font-bold px-3 py-2 sm:py-1.5 rounded-xl sm:rounded-lg inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                                          >
+                                            <QrCode className="w-3.5 h-3.5 shrink-0" /> {L('Crate QR', 'క్రేట్ QR')}
+                                          </button>
+                                          {/* TOP-RIGHT: PAUSE / RESUME */}
+                                          <button
+                                            type="button"
+                                            onClick={() => togglePauseBatch(b.id)}
+                                            className={`border text-xs font-bold px-3 py-2 sm:py-1.5 rounded-xl sm:rounded-lg inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${b.paused ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : 'bg-amber-500/15 border-amber-500/30 text-amber-500'}`}
+                                          >
+                                            {b.paused ? <><PlayCircle className="w-3.5 h-3.5 shrink-0" /> Resume Live</> : <><PauseCircle className="w-3.5 h-3.5 shrink-0" /> Pause</>}
+                                          </button>
+                                          {/* BOTTOM-LEFT: EDIT BATCH (OR SAVE/CANCEL WHEN EDITING) */}
+                                          {isEditing ? (
+                                            <div className="flex items-center gap-1.5">
+                                              <button type="button" onClick={() => saveEditedBatch(b.id)} className="flex-1 bg-emerald-600 text-white text-xs font-bold px-3 py-2 sm:py-1.5 rounded-xl sm:rounded-lg cursor-pointer whitespace-nowrap">
+                                                {t.saveChangesBtn}
+                                              </button>
+                                              <button type="button" onClick={() => setEditingBatchId(null)} className={`border text-xs font-bold px-2.5 py-2 sm:py-1.5 rounded-xl sm:rounded-lg cursor-pointer whitespace-nowrap ${cardBg}`}>
+                                                Cancel
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <button type="button" onClick={() => startEditingBatch(b)} className={`border text-xs font-bold px-3 py-2 sm:py-1.5 rounded-xl sm:rounded-lg inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${cardBg}`}>
+                                              <Edit3 className="w-3.5 h-3.5 text-teal-600 shrink-0" /> {t.editBatchBtn}
+                                            </button>
+                                          )}
+                                          {/* BOTTOM-RIGHT: REMOVE */}
+                                          <button type="button" onClick={() => removeBatch(b.id)} className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-2 sm:py-1.5 rounded-xl sm:rounded-lg inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                            <Trash2 className="w-3.5 h-3.5 shrink-0" /> {t.removeBtn}
+                                          </button>
+                                        </div>
                                       </div>
-                                      {(() => {
-                                        const batchOrders = myHatcheryOrders.filter(o => o.batch?.id === b.id && o.packingStatus !== 'CANCELLED');
-                                        const soldPl = batchOrders.reduce((s, o) => s + (o.quantity || 0), 0);
-                                        return (
-                                          <span className="block text-[11px] opacity-70 mt-0.5">
-                                            Packing: {b.availableDate} ({b.availableTimeSlot}) • Media: {(b.pcrImages || []).length} PCR / {(b.seedImages || []).length} Seed / {(b.tankVideos || []).length} Vid
-                                            {batchOrders.length > 0 && (
-                                              <span className="text-emerald-500 font-bold"> • {batchOrders.length} Booked ({soldPl.toLocaleString('en-IN')} PL)</span>
-                                            )}
-                                          </span>
-                                        );
-                                      })()}
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      {/* FEATURE 7: PRINTABLE BATCH CRATE QR STICKER */}
-                                      <button
-                                        type="button"
-                                        onClick={() => setCrateQrBatch(b)}
-                                        className="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer"
-                                      >
-                                        <QrCode className="w-3.5 h-3.5" /> {L('Crate QR', 'క్రేట్ QR')}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => togglePauseBatch(b.id)}
-                                        className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${b.paused ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : 'bg-amber-500/15 border-amber-500/30 text-amber-500'}`}
-                                      >
-                                        {b.paused ? <><PlayCircle className="w-3.5 h-3.5" /> Resume Live</> : <><PauseCircle className="w-3.5 h-3.5" /> Pause</>}
-                                      </button>
 
                                       {isEditing ? (
-                                        <>
-                                          <button type="button" onClick={() => saveEditedBatch(b.id)} className="bg-emerald-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg cursor-pointer">
-                                            {t.saveChangesBtn}
-                                          </button>
-                                          <button type="button" onClick={() => setEditingBatchId(null)} className={`border text-xs font-bold px-2.5 py-1.5 rounded-lg cursor-pointer ${cardBg}`}>
-                                            Cancel
-                                          </button>
-                                        </>
+                                        <div className="space-y-3 pt-2 border-t border-slate-300/30">
+                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.speciesLabel}</label>
+                                              <input type="text" value={editBatchValues.species} onChange={(e) => setEditBatchValues({ ...editBatchValues, species: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.broodstockLabel}</label>
+                                              <select value={editBatchValues.broodstock} onChange={(e) => setEditBatchValues({ ...editBatchValues, broodstock: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${inputCls}`}>
+                                                {BROODSTOCK_ORIGINS.map(br => <option key={br} value={br}>{br}</option>)}
+                                              </select>
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.stage}</label>
+                                              <input type="text" value={editBatchValues.plStage} onChange={(e) => setEditBatchValues({ ...editBatchValues, plStage: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.salinity} (PPT)</label>
+                                              <input type="number" value={editBatchValues.salinity} onChange={(e) => setEditBatchValues({ ...editBatchValues, salinity: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.ratePerSeedLabel}</label>
+                                              <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">Min. Packing (Lakhs)</label>
+                                              <input type="number" min="1" max="100" value={editBatchValues.minPackingLakhs} onChange={(e) => setEditBatchValues({ ...editBatchValues, minPackingLakhs: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.bonus} (%)</label>
+                                              <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">Stock (1-100)</label>
+                                              <div className="flex gap-1">
+                                                <input
+                                                  type="text"
+                                                  inputMode="numeric"
+                                                  value={editBatchValues.stockAmount}
+                                                  onChange={(e) => {
+                                                    const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                                                    setEditBatchValues({ ...editBatchValues, stockAmount: clean === '' ? '' : Math.min(100, Number(clean)) });
+                                                  }}
+                                                  className={`w-11 border rounded-lg px-1 py-1.5 text-xs font-bold text-center select-text ${inputCls}`}
+                                                />
+                                                <select value={editBatchValues.stockUnit} onChange={(e) => setEditBatchValues({ ...editBatchValues, stockUnit: e.target.value })} className={`flex-1 border rounded-lg px-1 py-1.5 text-[10px] font-bold ${inputCls}`}>
+                                                  <option value="LAKHS">Lakhs</option>
+                                                  <option value="MILLIONS">Millions</option>
+                                                </select>
+                                              </div>
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.availDateLabel}</label>
+                                              <input type="date" value={editBatchValues.availableDate} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableDate: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                                            </div>
+                                            <div>
+                                              <label className="text-[10px] font-bold opacity-60 block">{t.availTimeLabel}</label>
+                                              <select value={editBatchValues.availableTimeSlot} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableTimeSlot: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-[10px] font-bold ${inputCls}`}>
+                                                {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                                              </select>
+                                            </div>
+                                          </div>
+
+                                          <div className="pt-3 border-t border-slate-300/20 space-y-3">
+                                            <button
+                                              type="button"
+                                              disabled={uploadProgress.active}
+                                              onClick={() => setShowEditMediaPanel(prev => !prev)}
+                                              className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showEditMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${cardBg} text-teal-600`}`}
+                                            >
+                                              <span className="inline-flex items-center gap-2">
+                                                <Upload className="w-4 h-4 shrink-0" />
+                                                {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
+                                              </span>
+                                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showEditMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
+                                                PCR: {(editBatchValues.pcrImages || []).length} • Seed: {(editBatchValues.seedImages || []).length} • Vid: {(editBatchValues.tankVideos || []).length}
+                                              </span>
+                                            </button>
+
+                                            {showEditMediaPanel && (
+                                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                {/* 1. UPLOAD PCR */}
+                                                <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                                  <button
+                                                    type="button"
+                                                    disabled={uploadProgress.active}
+                                                    onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_PCR' ? null : 'EDIT_PCR')}
+                                                    className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                                  >
+                                                    <FileCheck2 className="w-3.5 h-3.5" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({(editBatchValues.pcrImages || []).length})
+                                                  </button>
+                                                  {mediaPickerTarget === 'EDIT_PCR' && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                      <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                                        <Camera className="w-3.5 h-3.5" /> Camera
+                                                      </button>
+                                                      <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                                        <FolderOpen className="w-3.5 h-3.5" /> Files
+                                                      </button>
+                                                    </div>
+                                                  )}
+                                                  {(editBatchValues.pcrImages || []).length > 0 && (
+                                                    <div className="grid grid-cols-2 gap-2 pt-1">
+                                                      {(editBatchValues.pcrImages || []).map((img, i) => (
+                                                        <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => setEditBatchValues(prev => ({
+                                                              ...prev,
+                                                              removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
+                                                              pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
+                                                            }))}
+                                                            className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                          >
+                                                            ✕
+                                                          </button>
+                                                          <img
+                                                            src={img.url}
+                                                            alt={img.label}
+                                                            onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                                            className="w-full h-20 object-cover cursor-pointer"
+                                                          />
+                                                          <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+
+                                                {/* 2. UPLOAD SEED IMAGES */}
+                                                <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                                  <button
+                                                    type="button"
+                                                    disabled={uploadProgress.active}
+                                                    onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_SEED' ? null : 'EDIT_SEED')}
+                                                    className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                                  >
+                                                    <Camera className="w-3.5 h-3.5" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({(editBatchValues.seedImages || []).length})
+                                                  </button>
+                                                  {mediaPickerTarget === 'EDIT_SEED' && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                      <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                                        <Camera className="w-3.5 h-3.5" /> Camera
+                                                      </button>
+                                                      <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                                        <FolderOpen className="w-3.5 h-3.5" /> Files
+                                                      </button>
+                                                    </div>
+                                                  )}
+                                                  {(editBatchValues.seedImages || []).length > 0 && (
+                                                    <div className="grid grid-cols-2 gap-2 pt-1">
+                                                      {(editBatchValues.seedImages || []).map((img, i) => (
+                                                        <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => setEditBatchValues(prev => ({
+                                                              ...prev,
+                                                              removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
+                                                              seedImages: prev.seedImages.filter((_, idx) => idx !== i)
+                                                            }))}
+                                                            className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                          >
+                                                            ✕
+                                                          </button>
+                                                          <img
+                                                            src={img.url}
+                                                            alt={img.label}
+                                                            onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
+                                                            className="w-full h-20 object-cover cursor-pointer"
+                                                          />
+                                                          <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+
+                                                {/* 3. UPLOAD VIDEOS */}
+                                                <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
+                                                  <button
+                                                    type="button"
+                                                    disabled={uploadProgress.active}
+                                                    onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_VID' ? null : 'EDIT_VID')}
+                                                    className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
+                                                  >
+                                                    <Video className="w-3.5 h-3.5" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({(editBatchValues.tankVideos || []).length})
+                                                  </button>
+                                                  {mediaPickerTarget === 'EDIT_VID' && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                      <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                                        <Camera className="w-3.5 h-3.5" /> Camera
+                                                      </button>
+                                                      <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
+                                                        <FolderOpen className="w-3.5 h-3.5" /> Files
+                                                      </button>
+                                                    </div>
+                                                  )}
+                                                  {(editBatchValues.tankVideos || []).length > 0 && (
+                                                    <div className="grid grid-cols-2 gap-2 pt-1">
+                                                      {(editBatchValues.tankVideos || []).map((vid, i) => (
+                                                        <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => setEditBatchValues(prev => ({
+                                                              ...prev,
+                                                              removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
+                                                              tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
+                                                            }))}
+                                                            className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
+                                                          >
+                                                            ✕
+                                                          </button>
+                                                          <video
+                                                            src={vid.url}
+                                                            muted
+                                                            onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
+                                                            className="w-full h-20 object-cover bg-black cursor-pointer"
+                                                          />
+                                                          <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
                                       ) : (
-                                        <button type="button" onClick={() => startEditingBatch(b)} className={`border text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer ${cardBg}`}>
-                                          <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBatchBtn}
-                                        </button>
+                                        <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
+                                          <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
+                                          <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
+                                          <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
+                                          <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
+                                          <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
+                                        </div>
                                       )}
-                                      <button type="button" onClick={() => removeBatch(b.id)} className="bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1 cursor-pointer">
-                                        <Trash2 className="w-3.5 h-3.5" /> {t.removeBtn}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {isEditing ? (
-                                    <div className="space-y-3 pt-2 border-t border-slate-300/30">
-                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.speciesLabel}</label>
-                                          <input type="text" value={editBatchValues.species} onChange={(e) => setEditBatchValues({ ...editBatchValues, species: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.broodstockLabel}</label>
-                                          <select value={editBatchValues.broodstock} onChange={(e) => setEditBatchValues({ ...editBatchValues, broodstock: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold ${inputCls}`}>
-                                            {BROODSTOCK_ORIGINS.map(br => <option key={br} value={br}>{br}</option>)}
-                                          </select>
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.stage}</label>
-                                          <input type="text" value={editBatchValues.plStage} onChange={(e) => setEditBatchValues({ ...editBatchValues, plStage: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                      </div>
-
-                                      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.salinity} (PPT)</label>
-                                          <input type="number" value={editBatchValues.salinity} onChange={(e) => setEditBatchValues({ ...editBatchValues, salinity: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.ratePerSeedLabel}</label>
-                                          <input type="number" step="0.01" value={editBatchValues.pricePer1000} onChange={(e) => setEditBatchValues({ ...editBatchValues, pricePer1000: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">Min. Packing (Lakhs)</label>
-                                          <input type="number" min="1" max="100" value={editBatchValues.minPackingLakhs} onChange={(e) => setEditBatchValues({ ...editBatchValues, minPackingLakhs: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.bonus} (%)</label>
-                                          <input type="number" value={editBatchValues.bonusPercent} onChange={(e) => setEditBatchValues({ ...editBatchValues, bonusPercent: e.target.value })} className={`w-full border rounded-lg px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">Stock (1-100)</label>
-                                          <div className="flex gap-1">
-                                            <input
-                                              type="text"
-                                              inputMode="numeric"
-                                              value={editBatchValues.stockAmount}
-                                              onChange={(e) => {
-                                                const clean = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                                                setEditBatchValues({ ...editBatchValues, stockAmount: clean === '' ? '' : Math.min(100, Number(clean)) });
-                                              }}
-                                              className={`w-11 border rounded-lg px-1 py-1.5 text-xs font-bold text-center select-text ${inputCls}`}
-                                            />
-                                            <select value={editBatchValues.stockUnit} onChange={(e) => setEditBatchValues({ ...editBatchValues, stockUnit: e.target.value })} className={`flex-1 border rounded-lg px-1 py-1.5 text-[10px] font-bold ${inputCls}`}>
-                                              <option value="LAKHS">Lakhs</option>
-                                              <option value="MILLIONS">Millions</option>
-                                            </select>
+                                      {!isEditing && (
+                                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                                          <span className="opacity-65 font-semibold">{L('Quick Stock Adjust:', 'త్వరిత స్టాక్ మార్పు:')}</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <button type="button" onClick={() => handleQuickAdjustStock(b, -1)} className="px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                              <Minus className="w-3 h-3" /> 1L
+                                            </button>
+                                            <button type="button" onClick={() => handleQuickAdjustStock(b, 1)} className="px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                              <Plus className="w-3 h-3" /> 1L
+                                            </button>
+                                            <button type="button" onClick={() => handleQuickAdjustStock(b, 5)} className="px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-600 font-bold inline-flex items-center gap-0.5 cursor-pointer">
+                                              <Plus className="w-3 h-3" /> 5L
+                                            </button>
                                           </div>
                                         </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.availDateLabel}</label>
-                                          <input type="date" value={editBatchValues.availableDate} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableDate: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold opacity-60 block">{t.availTimeLabel}</label>
-                                          <select value={editBatchValues.availableTimeSlot} onChange={(e) => setEditBatchValues({ ...editBatchValues, availableTimeSlot: e.target.value })} className={`w-full border rounded-lg px-1.5 py-1.5 text-[10px] font-bold ${inputCls}`}>
-                                            {PACKING_TIME_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                                          </select>
-                                        </div>
-                                      </div>
-
-                                      <div className="pt-3 border-t border-slate-300/20 space-y-3">
-                                        <button
-                                          type="button"
-                                          disabled={uploadProgress.active}
-                                          onClick={() => setShowEditMediaPanel(prev => !prev)}
-                                          className={`w-full border-2 border-teal-500/60 hover:border-teal-500 rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center justify-between gap-2 transition cursor-pointer ${showEditMediaPanel ? 'bg-teal-600 text-white border-teal-600' : `${cardBg} text-teal-600`}`}
-                                        >
-                                          <span className="inline-flex items-center gap-2">
-                                            <Upload className="w-4 h-4 shrink-0" />
-                                            {L('Upload Images / Videos', 'ఫోటోలు / వీడియోలు అప్‌లోడ్')}
-                                          </span>
-                                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showEditMediaPanel ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-600'}`}>
-                                            PCR: {(editBatchValues.pcrImages || []).length} • Seed: {(editBatchValues.seedImages || []).length} • Vid: {(editBatchValues.tankVideos || []).length}
-                                          </span>
-                                        </button>
-
-                                        {showEditMediaPanel && (
-                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            {/* 1. UPLOAD PCR */}
-                                            <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                              <button
-                                                type="button"
-                                                disabled={uploadProgress.active}
-                                                onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_PCR' ? null : 'EDIT_PCR')}
-                                                className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
-                                              >
-                                                <FileCheck2 className="w-3.5 h-3.5" /> {L('Upload PCR', 'PCR అప్‌లోడ్')} ({(editBatchValues.pcrImages || []).length})
-                                              </button>
-                                              {mediaPickerTarget === 'EDIT_PCR' && (
-                                                <div className="grid grid-cols-2 gap-2">
-                                                  <button type="button" onClick={() => editPcrCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                                    <Camera className="w-3.5 h-3.5" /> Camera
-                                                  </button>
-                                                  <button type="button" onClick={() => editPcrFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                                    <FolderOpen className="w-3.5 h-3.5" /> Files
-                                                  </button>
-                                                </div>
-                                              )}
-                                              {(editBatchValues.pcrImages || []).length > 0 && (
-                                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                                  {(editBatchValues.pcrImages || []).map((img, i) => (
-                                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => setEditBatchValues(prev => ({
-                                                          ...prev,
-                                                          removedPcrUrls: [...(prev.removedPcrUrls || []), img.url],
-                                                          pcrImages: prev.pcrImages.filter((_, idx) => idx !== i)
-                                                        }))}
-                                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                                      >
-                                                        ✕
-                                                      </button>
-                                                      <img
-                                                        src={img.url}
-                                                        alt={img.label}
-                                                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                                        className="w-full h-20 object-cover cursor-pointer"
-                                                      />
-                                                      <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-
-                                            {/* 2. UPLOAD SEED IMAGES */}
-                                            <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                              <button
-                                                type="button"
-                                                disabled={uploadProgress.active}
-                                                onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_SEED' ? null : 'EDIT_SEED')}
-                                                className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
-                                              >
-                                                <Camera className="w-3.5 h-3.5" /> {L('Upload Seed Images', 'సీడ్ ఫోటోలు అప్‌లోడ్')} ({(editBatchValues.seedImages || []).length})
-                                              </button>
-                                              {mediaPickerTarget === 'EDIT_SEED' && (
-                                                <div className="grid grid-cols-2 gap-2">
-                                                  <button type="button" onClick={() => editSeedCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                                    <Camera className="w-3.5 h-3.5" /> Camera
-                                                  </button>
-                                                  <button type="button" onClick={() => editSeedFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                                    <FolderOpen className="w-3.5 h-3.5" /> Files
-                                                  </button>
-                                                </div>
-                                              )}
-                                              {(editBatchValues.seedImages || []).length > 0 && (
-                                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                                  {(editBatchValues.seedImages || []).map((img, i) => (
-                                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => setEditBatchValues(prev => ({
-                                                          ...prev,
-                                                          removedSeedUrls: [...(prev.removedSeedUrls || []), img.url],
-                                                          seedImages: prev.seedImages.filter((_, idx) => idx !== i)
-                                                        }))}
-                                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                                      >
-                                                        ✕
-                                                      </button>
-                                                      <img
-                                                        src={img.url}
-                                                        alt={img.label}
-                                                        onClick={() => setFullScreenMedia({ type: 'image', url: img.url, label: img.label })}
-                                                        className="w-full h-20 object-cover cursor-pointer"
-                                                      />
-                                                      <div className="px-1.5 py-1 text-[10px] font-bold truncate">{img.label}</div>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-
-                                            {/* 3. UPLOAD VIDEOS */}
-                                            <div className={`rounded-xl border p-3 space-y-2.5 ${cardBg}`}>
-                                              <button
-                                                type="button"
-                                                disabled={uploadProgress.active}
-                                                onClick={() => setMediaPickerTarget(mediaPickerTarget === 'EDIT_VID' ? null : 'EDIT_VID')}
-                                                className={`w-full ${subCardBg} border-2 border-teal-500/50 hover:border-teal-500 text-teal-600 text-xs font-extrabold py-2 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}
-                                              >
-                                                <Video className="w-3.5 h-3.5" /> {L('Upload Videos', 'వీడియోలు అప్‌లోడ్')} ({(editBatchValues.tankVideos || []).length})
-                                              </button>
-                                              {mediaPickerTarget === 'EDIT_VID' && (
-                                                <div className="grid grid-cols-2 gap-2">
-                                                  <button type="button" onClick={() => editVidCamRef.current?.click()} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                                                    <Camera className="w-3.5 h-3.5" /> Camera
-                                                  </button>
-                                                  <button type="button" onClick={() => editVidFileRef.current?.click()} className={`${subCardBg} border-2 border-teal-500/40 text-teal-600 text-xs font-bold py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer`}>
-                                                    <FolderOpen className="w-3.5 h-3.5" /> Files
-                                                  </button>
-                                                </div>
-                                              )}
-                                              {(editBatchValues.tankVideos || []).length > 0 && (
-                                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                                  {(editBatchValues.tankVideos || []).map((vid, i) => (
-                                                    <div key={i} className={`relative rounded-xl border overflow-hidden ${subCardBg}`}>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => setEditBatchValues(prev => ({
-                                                          ...prev,
-                                                          removedVideoUrls: [...(prev.removedVideoUrls || []), vid.url],
-                                                          tankVideos: prev.tankVideos.filter((_, idx) => idx !== i)
-                                                        }))}
-                                                        className="absolute top-1 right-1 z-10 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center cursor-pointer"
-                                                      >
-                                                        ✕
-                                                      </button>
-                                                      <video
-                                                        src={vid.url}
-                                                        muted
-                                                        onClick={() => setFullScreenMedia({ type: 'video', url: vid.url, label: vid.label })}
-                                                        className="w-full h-20 object-cover bg-black cursor-pointer"
-                                                      />
-                                                      <div className="px-1.5 py-1 text-[10px] font-bold truncate">{vid.label}</div>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
+                                      )}
                                     </div>
-                                  ) : (
-                                    <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 text-center p-2.5 rounded-lg border text-xs ${cardBg}`}>
-                                      <div><span className="text-[10px] opacity-55 block">{t.stage}</span><b>{b.plStage}</b></div>
-                                      <div><span className="text-[10px] opacity-55 block">{t.salinity}</span><b className="text-teal-500">{b.salinity} PPT</b></div>
-                                      <div><span className="text-[10px] opacity-55 block">{t.perSeed}</span><b>₹{b.pricePer1000.toFixed(2)}</b></div>
-                                      <div><span className="text-[10px] opacity-55 block">{t.bonus}</span><b className="text-emerald-500">+{b.bonusPercent}%</b></div>
-                                      <div><span className="text-[10px] opacity-55 block">{t.stock}</span><b>{(b.availableStock || 0).toLocaleString('en-IN')}</b></div>
-                                    </div>
-                                  )}
-                                  {!isEditing && (
-                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
-                                      <span className="opacity-65 font-semibold">{L('Quick Stock Adjust:', 'త్వరిత స్టాక్ మార్పు:')}</span>
-                                      <div className="flex items-center gap-1.5">
-                                        <button type="button" onClick={() => handleQuickAdjustStock(b, -1)} className="px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
-                                          <Minus className="w-3 h-3" /> 1L
-                                        </button>
-                                        <button type="button" onClick={() => handleQuickAdjustStock(b, 1)} className="px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-bold inline-flex items-center gap-0.5 cursor-pointer">
-                                          <Plus className="w-3 h-3" /> 1L
-                                        </button>
-                                        <button type="button" onClick={() => handleQuickAdjustStock(b, 5)} className="px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-600 font-bold inline-flex items-center gap-0.5 cursor-pointer">
-                                          <Plus className="w-3 h-3" /> 5L
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
 
                 {/* ADD NEW SEED BATCH (COLLAPSIBLE — OPENS ON CLICK) */}
@@ -8097,8 +8096,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : `${subCardBg} opacity-80 hover:opacity-100`
+                        ? 'bg-teal-600 text-white border-teal-600'
+                        : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -8148,8 +8147,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
