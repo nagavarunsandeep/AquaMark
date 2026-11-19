@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  ShieldCheck, Lock, Unlock, Calculator, CheckCircle2,
-  MapPin, FileText, Wallet, Users, Send, Printer, Camera,
-  BadgeCheck, ArrowRight, Globe, LogOut, Smartphone, UserCheck,
-  Landmark, Clock, CheckSquare, ShoppingBag, Building2, Star, Search,
-  AlertTriangle, Package, Edit3, Check, ChevronRight, Layers,
-  Trash2, ArrowUpDown, Scale, FileCheck2, Upload, PlusCircle,
-  Heart, Truck, TrendingUp, Eye, EyeOff, CreditCard, QrCode,
-  MessageSquare, BarChart3, Calendar, Droplets,
-  Receipt, Moon, Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink,
+  ShieldCheck, Lock, Unlock, Calculator, CheckCircle2, MapPin,
+  FileText, Wallet, Users, Send, Printer, Camera,
+  Globe, LogOut, Smartphone, UserCheck, Landmark, Clock,
+  CheckSquare, ShoppingBag, Building2, Star, Search, AlertTriangle,
+  Package, Edit3, Check, ChevronRight, Layers, Trash2,
+  ArrowUpDown, Scale, FileCheck2, Upload, PlusCircle, Heart,
+  Truck, TrendingUp, Eye, EyeOff, CreditCard, QrCode,
+  MessageSquare, BarChart3, Calendar, Droplets, Receipt, Moon,
+  Sun, XCircle, ClipboardList, Gauge, Video, ExternalLink,
   FolderOpen, Maximize2, RefreshCw, Share2, PauseCircle, PlayCircle,
-  Sparkles, ShieldAlert, KeyRound, Activity, Navigation, Split,
-  Thermometer, Award, Layers as LayersIcon, CheckCircle, Bell, Phone, ScanLine,
-  ShoppingCart, Download, Volume2, VolumeX, Zap, RotateCcw, Target, Timer,
-  PhoneCall, Megaphone, CloudSun, Sliders, ArrowUp, Wifi, WifiOff, StickyNote, Plus, Minus
+  Sparkles, ShieldAlert, KeyRound, Activity, Navigation, Thermometer,
+  Award, CheckCircle, Bell, Phone, ScanLine, ShoppingCart,
+  Download, Volume2, VolumeX, Zap, RotateCcw, Target,
+  Timer, PhoneCall, Megaphone, CloudSun, Sliders, ArrowUp,
+  WifiOff, StickyNote, Plus, Minus
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -229,7 +230,6 @@ async function analyzePcrReportImage(file) {
 
         let brightNeutral = 0;
         let vividColor = 0;
-        let darkInk = 0;
         const total = w * h;
         let textLikeRows = 0;
 
@@ -249,7 +249,7 @@ async function analyzePcrReportImage(file) {
             if (lum > 170 && sat < 40) { brightNeutral++; rowLight++; }
             if (sat > 62) vividColor++;
             const isDark = lum < 115 && sat < 70;
-            if (isDark) { darkInk++; rowDark++; }
+            if (isDark) { rowDark++; }
             if (x > 0 && isDark !== prevDark) transitions++;
             prevDark = isDark;
           }
@@ -611,14 +611,6 @@ async function stampAndCompressVideo(file, meta, maxBytes = 10 * 1024 * 1024) {
       resolve(file);
     }
   });
-}
-
-function extractStoragePathFromUrl(publicUrl, bucketName) {
-  if (!publicUrl || typeof publicUrl !== 'string') return null;
-  const marker = `/object/public/${bucketName}/`;
-  const idx = publicUrl.indexOf(marker);
-  if (idx === -1) return null;
-  return decodeURIComponent(publicUrl.slice(idx + marker.length));
 }
 
 // ============================================================================
@@ -1103,7 +1095,6 @@ function AquaMarkApp() {
   const photoQrInputRef = useRef(null);
 
   // 3. Smart Seed Matchmaker (Buyer Marketplace)
-  const [matchmakerOpen, setMatchmakerOpen] = useState(false);
   const [matchmaker, setMatchmaker] = useState(() => safeLoadStorage('aqm_v12_matchmaker', { enabled: false, pondPpt: 15, acres: 3, maxBudget: 0.45 }));
 
   // 4. Price Drop Watchlist & Alert
@@ -1116,7 +1107,7 @@ function AquaMarkApp() {
   const [acclimTimerRunning, setAcclimTimerRunning] = useState(false);
 
   // 9. Dynamic Coastal Weather & Packing Advisory Generator
-  const [weatherStep, setWeatherStep] = useState(0);
+  const [, setWeatherStep] = useState(0);
   const [currentAquaTip, setCurrentAquaTip] = useState(() => generateFreshAquaTip(0));
   const handleNextFreshTip = () => {
     setWeatherStep(prev => {
@@ -1437,11 +1428,6 @@ function AquaMarkApp() {
   const [isVerifyingWa, setIsVerifyingWa] = useState(false);
   const [waVerifiedDone, setWaVerifiedDone] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-
-  // Hatchery ₹10,000 Security Deposit States
-  const [depositPayMethod, setDepositPayMethod] = useState('DIRECT_UPI');
-  const [depositQrRevealed, setDepositQrRevealed] = useState(false);
-  const [depositUtr, setDepositUtr] = useState('');
 
   // Buyer & Broker Edit Profile Modal States
   const [showBasicEditProfileModal, setShowBasicEditProfileModal] = useState(false);
@@ -1801,72 +1787,6 @@ function AquaMarkApp() {
     } else {
       startCheckout();
     }
-  };
-
-  // =========================================================================
-  // HATCHERY ₹10,000 MANDATORY SECURITY DEPOSIT CONFIRMATION
-  // =========================================================================
-  const finalizeHatcheryDeposit = async (utrRef) => {
-    if (!currentUser?.phone) return;
-
-    const roleKey = getUserKey(currentUser.phone, 'seller');
-    const existingUser = registeredUsers[roleKey] || {
-      phone: currentUser.phone,
-      name: currentUser.name,
-      role: 'seller',
-      password: ''
-    };
-    const updatedUserRecord = { ...existingUser, depositPaid: true, depositUtr: utrRef };
-
-    setRegisteredUsers(prev => ({ ...prev, [roleKey]: updatedUserRecord }));
-    setCurrentUser(prev => ({ ...prev, depositPaid: true, depositUtr: utrRef }));
-
-    await supabase.from('app_users').upsert({
-      phone: roleKey,
-      name: currentUser.name,
-      role: 'seller',
-      password: existingUser.password,
-      last_login: new Date().toISOString()
-    });
-
-    if (hatcheryProfiles[currentUser.phone]) {
-      const nextProfiles = {
-        ...hatcheryProfiles,
-        [currentUser.phone]: {
-          ...hatcheryProfiles[currentUser.phone],
-          depositPaid: true,
-          depositUtr: utrRef,
-          depositAmount: Number(hatcheryProfiles[currentUser.phone]?.depositAmount || 0) + 10000,
-          depositSourceAccount: utrRef
-        }
-      };
-      setHatcheryProfiles(nextProfiles);
-      await saveKvToSupabase('hatcheries', nextProfiles);
-    }
-
-    setDepositUtr('');
-    setDepositQrRevealed(false);
-    showToast(t.toasts.depositComplete);
-  };
-
-  const handleConfirmHatcheryDeposit = async (e) => {
-    e.preventDefault();
-    if (!currentUser?.phone) return;
-    if ((depositPayMethod === 'DIRECT_UPI' || depositPayMethod === 'BANK_TO_BANK') && !depositUtr.trim()) {
-      showToast(t.toasts.enterUtr);
-      return;
-    }
-    if (depositPayMethod === 'RAZORPAY') {
-      launchRazorpayPayment({
-        amountInr: 10000,
-        description: L('Hatchery Mandatory Security Deposit (₹10,000)', 'హేచరీ తప్పనిసరి సెక్యూరిటీ డిపాజిట్ (₹10,000)'),
-        onSuccess: (rzpId) => finalizeHatcheryDeposit(rzpId),
-        onFailure: (msg) => showToast(msg)
-      });
-      return;
-    }
-    const utrRef = `${depositPayMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT'}_${depositUtr.trim().toUpperCase()}`;
-    await finalizeHatcheryDeposit(utrRef);
   };
 
   // =========================================================================
@@ -3361,7 +3281,7 @@ function AquaMarkApp() {
         } else {
           setScannerStatus(L('Live auto-detect needs Chrome/Edge/Android. Use Photo QR or Manual tab.', 'ఆటో-డిటెక్ట్ Chrome/Android లో పనిచేస్తుంది. Photo QR లేదా Manual వాడండి.'));
         }
-      } catch (err) {
+      } catch {
         setScannerStatus(L('Camera permission denied or unavailable. Use Photo QR or Manual tab.', 'కెమెరా అనుమతి లేదు. Photo QR లేదా Manual ట్యాబ్ వాడండి.'));
       }
     };
@@ -4235,9 +4155,7 @@ function AquaMarkApp() {
   // ROLE-SPECIFIC COMPUTED DATA
   // =========================================================================
   const myFixedHatchery = currentUser.role === 'seller' ? hatcheryProfiles[currentUser.phone] : null;
-  const sellerRoleRecord = currentUser.role === 'seller' ? registeredUsers[getUserKey(currentUser.phone, 'seller')] : null;
-  // Mandatory Hatchery Security Deposit removed — sellers go directly to Hatchery & Bank Registration
-  const isSellerDepositPaid = true;
+
 
   const myOwnedBatches = currentUser.role === 'seller' && myFixedHatchery
     ? batches.filter(b => b.ownerPhone === currentUser.phone)
@@ -4260,11 +4178,6 @@ function AquaMarkApp() {
     ? bookings.filter(bk => bk.bookedByPhone === currentUser.phone && bk.bookedByRole === 'mediator')
     : [];
 
-  const buyerRefundedTotal = currentUser.role === 'buyer'
-    ? bookings
-      .filter(b => b.farmerPhone === currentUser.phone && !b.isBrokerLinked && (b.settlement?.status === 'BALANCE_CLEARED' || b.settlement?.status === 'CANCELLED_REFUNDED'))
-      .reduce((sum, b) => sum + (b.settlement?.farmerRefundable2Pct || 0), 0)
-    : 0;
 
   return (
     <div className={`min-h-screen font-sans select-none transition-colors overflow-x-hidden ${pageBg}`}>
@@ -4971,8 +4884,6 @@ function AquaMarkApp() {
                               const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
                               const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
                               const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
-                              const isPacked = bk.packingStatus === 'PACKING_DONE_BY_SELLER' || isFinalCleared;
-                              const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
 
                               return (
                                 <div
