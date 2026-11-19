@@ -14,7 +14,7 @@ import {
   Award, CheckCircle, Bell, Phone, ScanLine, ShoppingCart,
   Download, Volume2, VolumeX, Zap, RotateCcw, Target,
   Timer, PhoneCall, Megaphone, CloudSun, Sliders, ArrowUp,
-  WifiOff, StickyNote, Plus, Minus
+  WifiOff, StickyNote, Plus, Minus, Copy
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -1428,6 +1428,20 @@ function AquaMarkApp() {
   const [isVerifyingWa, setIsVerifyingWa] = useState(false);
   const [waVerifiedDone, setWaVerifiedDone] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [bookingStatusFilter, setBookingStatusFilter] = useState('ALL');
+
+  const handleCopyText = (textToCopy, label = 'Copied') => {
+    if (!textToCopy) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(String(textToCopy)).then(() => {
+        showToast(`${label}: ${textToCopy}`);
+      }).catch(() => {
+        showToast(`${label}: ${textToCopy}`);
+      });
+    } else {
+      showToast(`${label}: ${textToCopy}`);
+    }
+  };
 
   // Buyer & Broker Edit Profile Modal States
   const [showBasicEditProfileModal, setShowBasicEditProfileModal] = useState(false);
@@ -3791,21 +3805,21 @@ function AquaMarkApp() {
           </div>
         )}
 
-        <header className={`border-b px-6 py-4 flex items-center justify-between ${cardBg}`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
+        <header className={`border-b px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2.5 ${cardBg}`}>
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5 shadow-xs">
               <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <span className="text-lg font-extrabold tracking-tight block leading-none">Aqua Mark</span>
-              <span className="text-[11px] opacity-60 font-medium">{t.brandSub}</span>
+            <div className="min-w-0">
+              <span className="text-base sm:text-lg font-extrabold tracking-tight block leading-tight">Aqua Mark</span>
+              <span className="text-[11px] sm:text-xs opacity-65 font-medium block leading-snug">{t.brandSub}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+              className={`p-2 rounded-xl border cursor-pointer shrink-0 ${subCardBg}`}
               title="Toggle Dark Mode"
             >
               {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
@@ -3813,9 +3827,9 @@ function AquaMarkApp() {
             <button
               type="button"
               onClick={() => setLang(lang === 'te' ? 'en' : 'te')}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer ${subCardBg}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer whitespace-nowrap shrink-0 ${subCardBg}`}
             >
-              <Globe className="w-3.5 h-3.5 text-teal-600" />
+              <Globe className="w-3.5 h-3.5 text-teal-600 shrink-0" />
               {lang === 'te' ? 'English' : 'తెలుగు'}
             </button>
           </div>
@@ -4220,15 +4234,15 @@ function AquaMarkApp() {
 
       {/* TOP NAVBAR */}
       <header className={`border-b sticky top-0 z-40 ${cardBg}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center p-1.5">
               <img src="/favicon.svg" alt="Aqua Mark Logo" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-base font-extrabold tracking-tight">Aqua Mark</h1>
-                <span className="text-[11px] bg-teal-500/15 text-teal-600 border border-teal-500/30 px-2.5 py-0.5 rounded-full font-bold">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h1 className="text-base font-extrabold tracking-tight leading-tight">Aqua Mark</h1>
+                <span className="text-[10px] sm:text-[11px] bg-teal-500/15 text-teal-600 border border-teal-500/30 px-2 sm:px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">
                   {t.portalBadges[currentUser.role] || currentUser.role}
                 </span>
                 {/* FEATURE 8: FARMER LOYALTY TIER BADGE */}
@@ -4237,26 +4251,29 @@ function AquaMarkApp() {
                   return (
                     <span
                       title={lt.next ? `${lt.count} orders completed • ${lt.next} more for next tier` : `${lt.count} orders completed • Top Platinum Tier`}
-                      className={`text-[10px] border px-2.5 py-0.5 rounded-full font-extrabold inline-flex items-center gap-1 ${lt.cls}`}
+                      className={`text-[10px] border px-2 py-0.5 rounded-full font-extrabold inline-flex items-center gap-1 whitespace-nowrap ${lt.cls}`}
                     >
-                      <Award className="w-3 h-3" /> {lt.tier} Farmer
+                      <Award className="w-3 h-3 shrink-0" /> {lt.tier} Farmer
                     </span>
                   );
                 })()}
               </div>
-              <p className="text-xs opacity-60">{currentUser.name} • +91 {currentUser.phone}</p>
+              <p className="text-xs opacity-60 truncate">{currentUser.name} • +91 {currentUser.phone}</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-end">
+          <div className="flex flex-nowrap items-center justify-between sm:justify-end gap-1 sm:gap-2 w-full sm:w-auto">
             {/* BUYER & BROKER EDIT PROFILE BUTTON IN HEADER */}
             {(currentUser.role === 'buyer' || currentUser.role === 'mediator') && (
               <button
                 type="button"
                 onClick={openBasicEditProfile}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${subCardBg}`}
+                className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold border cursor-pointer whitespace-nowrap shrink-0 ${subCardBg}`}
+                title={t.editBuyerProfileBtn}
               >
-                <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBuyerProfileBtn}
+                <Edit3 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                <span className="sm:hidden">{L('Profile', 'ప్రొఫైల్')}</span>
+                <span className="hidden sm:inline">{t.editBuyerProfileBtn}</span>
               </button>
             )}
 
@@ -4265,23 +4282,21 @@ function AquaMarkApp() {
               <button
                 type="button"
                 onClick={() => { setScanQrInput(''); setScanQrError(''); setShowSellerScanQrModal(true); }}
-                className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer"
+                className="inline-flex items-center justify-center gap-1 sm:gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold cursor-pointer whitespace-nowrap shrink-0"
                 title="Scan Buyer Gate-Pass QR"
               >
-                <ScanLine className="w-4 h-4" /> {L('Scan QR', 'QR స్కాన్')}
+                <ScanLine className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> {L('Scan QR', 'QR స్కాన్')}
               </button>
             )}
-
-
 
             {/* LIVE CLOUD SYNC REFRESH BUTTON */}
             <button
               type="button"
               onClick={handleManualCloudSync}
-              className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+              className={`p-1.5 sm:p-2 rounded-xl border cursor-pointer shrink-0 ${subCardBg}`}
               title="Sync Live Cloud Data"
             >
-              <RefreshCw className={`w-4 h-4 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`} />
             </button>
 
             {/* NOTIFICATION BELL BUTTON FOR ALL USERS */}
@@ -4293,10 +4308,10 @@ function AquaMarkApp() {
                 <button
                   type="button"
                   onClick={() => { setSelectedNotifDetail(null); setShowNotifPanel(true); }}
-                  className={`relative p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                  className={`relative p-1.5 sm:p-2 rounded-xl border cursor-pointer shrink-0 ${subCardBg}`}
                   title="Notifications"
                 >
-                  <Bell className="w-4 h-4 text-teal-600" />
+                  <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600" />
                   {myUnreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
                       {myUnreadCount > 9 ? '9+' : myUnreadCount}
@@ -4309,25 +4324,25 @@ function AquaMarkApp() {
             <button
               type="button"
               onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+              className={`p-1.5 sm:p-2 rounded-xl border cursor-pointer shrink-0 ${subCardBg}`}
               title="Toggle Dark Mode"
             >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+              {darkMode ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />}
             </button>
             <button
               type="button"
               onClick={() => setLang(lang === 'te' ? 'en' : 'te')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${subCardBg}`}
+              className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold border cursor-pointer whitespace-nowrap shrink-0 ${subCardBg}`}
             >
-              <Globe className="w-3.5 h-3.5 text-teal-600" />
+              <Globe className="w-3.5 h-3.5 text-teal-600 shrink-0" />
               {lang === 'te' ? 'English' : 'తెలుగు'}
             </button>
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 px-[13px] py-[5px] rounded-xl text-[11px] font-bold text-white cursor-pointer"
+              className="inline-flex items-center justify-center gap-1 sm:gap-1.5 bg-teal-600 hover:bg-teal-700 px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold text-white cursor-pointer whitespace-nowrap shrink-0"
             >
-              <LogOut className="w-3 h-3" /> {t.logout}
+              <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" /> {t.logout}
             </button>
           </div>
         </div>
@@ -4855,180 +4870,228 @@ function AquaMarkApp() {
                     <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
                   </button>
                 </div>
-                {bookings.filter(b => b.farmerPhone === currentUser.phone).length === 0 ? (
-                  <p className="text-xs opacity-60">{t.noBookingsYet}</p>
-                ) : (
-                  <div className="max-h-[68vh] overflow-y-auto overflow-x-hidden pr-0.5 space-y-4">
-                    {bookings.filter(b => b.farmerPhone === currentUser.phone).map((bk) => {
-                      const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
-                      const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
-                      const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
+                {(() => {
+                  const allMyBookings = bookings.filter(b => b.farmerPhone === currentUser.phone);
+                  const isBkSettled = (b) => b.settlement?.status === 'BALANCE_CLEARED';
+                  const isBkCancelled = (b) => b.packingStatus === 'CANCELLED' || b.settlement?.status === 'CANCELLED_REFUNDED' || b.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
+                  const activeCount = allMyBookings.filter(b => !isBkSettled(b) && !isBkCancelled(b)).length;
+                  const settledCount = allMyBookings.filter(isBkSettled).length;
+                  const cancelledCount = allMyBookings.filter(isBkCancelled).length;
+                  const filteredMyBookings = allMyBookings.filter(b => {
+                    if (bookingStatusFilter === 'ACTIVE') return !isBkSettled(b) && !isBkCancelled(b);
+                    if (bookingStatusFilter === 'SETTLED') return isBkSettled(b);
+                    if (bookingStatusFilter === 'CANCELLED') return isBkCancelled(b);
+                    return true;
+                  });
+                  if (allMyBookings.length === 0) {
+                    return <p className="text-xs opacity-60">{t.noBookingsYet}</p>;
+                  }
+                  return (
+                    <>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {[
+                          { id: 'ALL', label: L('All', 'అన్నీ'), count: allMyBookings.length },
+                          { id: 'ACTIVE', label: L('Active', 'యాక్టివ్'), count: activeCount },
+                          { id: 'SETTLED', label: L('Settled', 'పూర్తయినవి'), count: settledCount },
+                          { id: 'CANCELLED', label: L('Cancelled', 'రద్దు'), count: cancelledCount },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setBookingStatusFilter(tab.id)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : `${subCardBg} opacity-80 hover:opacity-100`
+                              }`}
+                          >
+                            {tab.label} ({tab.count})
+                          </button>
+                        ))}
+                      </div>
+                      {filteredMyBookings.length === 0 ? (
+                        <p className="text-xs opacity-60 py-4 text-center">{L('No bookings in this status.', 'ఈ స్టేటస్‌లో బుకింగ్స్ లేవు.')}</p>
+                      ) : (
+                        <div className="max-h-[68vh] overflow-y-auto overflow-x-hidden pr-0.5 space-y-4">
+                          {filteredMyBookings.map((bk) => {
+                            const draft = ratingDrafts[bk.bookingId] || { stars: 5, comment: '' };
+                            const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                            const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
 
-                      return (
-                        <div
-                          key={bk.bookingId}
-                          onClick={() => setInspectedBuyerBooking(bk)}
-                          className={`border hover:border-teal-500 rounded-2xl p-3.5 sm:p-4 space-y-3 transition cursor-pointer overflow-hidden ${subCardBg}`}
-                        >
-                          {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
-                            <div className="bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold">
-                              {t.packingReadyAlert}
-                            </div>
-                          )}
-
-                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                            <div className="space-y-1.5 min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="font-mono font-bold text-xs text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/30">{bk.bookingId}</span>
-                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
-                                  ? 'bg-emerald-500/15 text-emerald-500'
-                                  : isCancelled
-                                    ? 'bg-rose-500/15 text-rose-500'
-                                    : 'bg-amber-500/15 text-amber-500'
-                                  }`}>
-                                  {isFinalCleared
-                                    ? t.clearedSettlementBadge
-                                    : isCancelled
-                                      ? t.cancelledRefundBadge
-                                      : t.pendingSettlementBadge}
-                                </span>
-                              </div>
-                              <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400 break-words leading-snug">
-                                {bk.batch?.realName} • +91 {bk.batch?.realPhone}
-                              </p>
-                              <p className="text-xs opacity-80 leading-relaxed break-words">
-                                Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
-                              </p>
-                              <p className="text-[11px] opacity-70 leading-relaxed break-words">
-                                {isFinalCleared
-                                  ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
-                                  : isCancelled
-                                    ? <span className="text-rose-500 font-bold">Cancelled • Non-Refundable</span>
-                                    : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
-                                {' '}• <span className="text-teal-500 underline font-semibold">Tap card for full details & receipts</span>
-                              </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto" onClick={(e) => e.stopPropagation()}>
-                              {/* STATUS ANIMATION BUTTON */}
-                              {!isCancelled && (
-                                <button
-                                  type="button"
-                                  onClick={() => openAnimatedStatusModal(bk)}
-                                  className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${cardBg}`}
-                                >
-                                  <Activity className="w-3.5 h-3.5 shrink-0" /> Status
-                                </button>
-                              )}
-
-                              {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
-                              {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
-                                    setPayRemainingBooking(bk);
-                                  }}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
-                                >
-                                  <CreditCard className="w-3.5 h-3.5 shrink-0" /> Full Payment
-                                </button>
-                              )}
-
-                              {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
-                              {!isCancelled && (
-                                bk.gatePassCleared ? (
-                                  <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap">
-                                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Gate-Pass Cleared
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => setGatePassBooking(bk)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
-                                  >
-                                    <QrCode className="w-3.5 h-3.5 shrink-0" /> Gate-Pass QR
-                                  </button>
-                                )
-                              )}
-
-                              {/* FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN */}
-                              {!isCancelled && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const existing = survivalLogs[bk.bookingId];
-                                    setSurvivalDraft(existing ? { h24: existing.h24, h48: existing.h48, h72: existing.h72, note: existing.note || '' } : { h24: 96, h48: 92, h72: 88, note: '' });
-                                    setSurvivalModalBooking(bk);
-                                  }}
-                                  className={`border text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${survivalLogs[bk.bookingId] ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600' : cardBg}`}
-                                >
-                                  <CheckCircle className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                                  {survivalLogs[bk.bookingId]
-                                    ? `72h: ${survivalLogs[bk.bookingId].h72}% ✓`
-                                    : L('72h Survival', '72h సర్వైవల్')}
-                                </button>
-                              )}
-
-                              {/* FEATURE 15: 1-CLICK QUICK REORDER */}
-                              <button
-                                type="button"
-                                onClick={() => handleQuickReorder(bk)}
-                                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                            return (
+                              <div
+                                key={bk.bookingId}
+                                onClick={() => setInspectedBuyerBooking(bk)}
+                                className={`border hover:border-teal-500 rounded-2xl p-3.5 sm:p-4 space-y-3 transition cursor-pointer overflow-hidden ${subCardBg}`}
                               >
-                                <RefreshCw className="w-3.5 h-3.5 shrink-0" /> {L('Reorder', 'రీఆర్డర్')}
-                              </button>
-                            </div>
-                          </div>
-
-                          {isFinalCleared && (
-                            <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
-                              {!bk.rated ? (
-                                <div className={`flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
-                                  <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
-                                    <span className="text-xs font-bold">{t.rateSeedLabel}</span>
-                                    <div className="flex items-center gap-1">
-                                      {[1, 2, 3, 4, 5].map(star => (
-                                        <button
-                                          key={star}
-                                          type="button"
-                                          onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
-                                          className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
-                                        >
-                                          {star}★
-                                        </button>
-                                      ))}
-                                    </div>
+                                {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
+                                  <div className="bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold">
+                                    {t.packingReadyAlert}
                                   </div>
-                                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:flex-1">
-                                    <input
-                                      type="text"
-                                      placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
-                                      value={draft.comment}
-                                      onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
-                                      className={`w-full sm:flex-1 border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
-                                    />
+                                )}
+
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                                  <div className="space-y-1.5 min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleCopyText(bk.bookingId, L('Booking ID Copied', 'బుకింగ్ ID కాపీ అయింది')); }}
+                                        title={L('Tap to copy Booking ID', 'బుకింగ్ ID కాపీ చేయండి')}
+                                        className="inline-flex items-center gap-1 font-mono font-bold text-xs text-teal-600 bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded border border-teal-500/30 cursor-pointer transition"
+                                      >
+                                        {bk.bookingId} <Copy className="w-3 h-3 opacity-75" />
+                                      </button>
+                                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
+                                        ? 'bg-emerald-500/15 text-emerald-500'
+                                        : isCancelled
+                                          ? 'bg-rose-500/15 text-rose-500'
+                                          : 'bg-amber-500/15 text-amber-500'
+                                        }`}>
+                                        {isFinalCleared
+                                          ? t.clearedSettlementBadge
+                                          : isCancelled
+                                            ? t.cancelledRefundBadge
+                                            : t.pendingSettlementBadge}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400 break-words leading-snug">
+                                      {bk.batch?.realName} • +91 {bk.batch?.realPhone}
+                                    </p>
+                                    <p className="text-xs opacity-80 leading-relaxed break-words">
+                                      Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
+                                    </p>
+                                    <p className="text-[11px] opacity-70 leading-relaxed break-words">
+                                      {isFinalCleared
+                                        ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
+                                        : isCancelled
+                                          ? <span className="text-rose-500 font-bold">Cancelled • Non-Refundable</span>
+                                          : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
+                                      {' '}• <span className="text-teal-500 underline font-semibold">Tap card for full details & receipts</span>
+                                    </p>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto" onClick={(e) => e.stopPropagation()}>
+                                    {/* STATUS ANIMATION BUTTON */}
+                                    {!isCancelled && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openAnimatedStatusModal(bk)}
+                                        className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${cardBg}`}
+                                      >
+                                        <Activity className="w-3.5 h-3.5 shrink-0" /> Status
+                                      </button>
+                                    )}
+
+                                    {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
+                                    {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                                          setPayRemainingBooking(bk);
+                                        }}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                      >
+                                        <CreditCard className="w-3.5 h-3.5 shrink-0" /> Full Payment
+                                      </button>
+                                    )}
+
+                                    {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
+                                    {!isCancelled && (
+                                      bk.gatePassCleared ? (
+                                        <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap">
+                                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Gate-Pass Cleared
+                                        </span>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => setGatePassBooking(bk)}
+                                          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                        >
+                                          <QrCode className="w-3.5 h-3.5 shrink-0" /> Gate-Pass QR
+                                        </button>
+                                      )
+                                    )}
+
+                                    {/* FEATURE 14: 72-HOUR POST-STOCKING SURVIVAL CHECK-IN */}
+                                    {!isCancelled && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const existing = survivalLogs[bk.bookingId];
+                                          setSurvivalDraft(existing ? { h24: existing.h24, h48: existing.h48, h72: existing.h72, note: existing.note || '' } : { h24: 96, h48: 92, h72: 88, note: '' });
+                                          setSurvivalModalBooking(bk);
+                                        }}
+                                        className={`border text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${survivalLogs[bk.bookingId] ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600' : cardBg}`}
+                                      >
+                                        <CheckCircle className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                        {survivalLogs[bk.bookingId]
+                                          ? `72h: ${survivalLogs[bk.bookingId].h72}% ✓`
+                                          : L('72h Survival', '72h సర్వైవల్')}
+                                      </button>
+                                    )}
+
+                                    {/* FEATURE 15: 1-CLICK QUICK REORDER */}
                                     <button
                                       type="button"
-                                      onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
-                                      className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer whitespace-nowrap"
+                                      onClick={() => handleQuickReorder(bk)}
+                                      className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
                                     >
-                                      {t.submitReviewBtn}
+                                      <RefreshCw className="w-3.5 h-3.5 shrink-0" /> {L('Reorder', 'రీఆర్డర్')}
                                     </button>
                                   </div>
                                 </div>
-                              ) : (
-                                <div className="text-xs text-emerald-500 font-bold">
-                                  ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
-                                </div>
-                              )}
-                            </div>
-                          )}
+
+                                {isFinalCleared && (
+                                  <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
+                                    {!bk.rated ? (
+                                      <div className={`flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
+                                        <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
+                                          <span className="text-xs font-bold">{t.rateSeedLabel}</span>
+                                          <div className="flex items-center gap-1">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                              <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
+                                                className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
+                                              >
+                                                {star}★
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:flex-1">
+                                          <input
+                                            type="text"
+                                            placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
+                                            value={draft.comment}
+                                            onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
+                                            className={`w-full sm:flex-1 border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
+                                            className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer whitespace-nowrap"
+                                          >
+                                            {t.submitReviewBtn}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="text-xs text-emerald-500 font-bold">
+                                        ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 
@@ -5702,9 +5765,9 @@ Please advise immediate treatment protocol.`;
             ) : (
               /* STEP C: ACTIVE HATCHERY DASHBOARD — PROMINENT HATCHERY DETAILS AT TOP, 3 TABS BELOW */
               <>
-                <div className={`rounded-2xl p-6 sm:p-7 border-2 border-teal-500/30 shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-1.5 flex-1 min-w-[260px]">
+                <div className={`rounded-2xl p-4 sm:p-7 border-2 border-teal-500/30 shadow-xs space-y-4 ${cardBg}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3.5 sm:gap-4">
+                    <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                           <Lock className="w-3 h-3" /> {t.hatcheryLockedBanner} {currentUser.phone}
@@ -5733,7 +5796,7 @@ Please advise immediate treatment protocol.`;
                         </a>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end shrink-0">
                       {!isEditingSellerProfile && (
                         <>
                           <button
@@ -5754,11 +5817,21 @@ Please advise immediate treatment protocol.`;
                               });
                               setIsEditingSellerProfile(true);
                             }}
-                            className={`border text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                            className={`flex-1 sm:flex-none justify-center border text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${subCardBg}`}
                           >
-                            <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editSellerProfileBtn}
+                            <Edit3 className="w-3.5 h-3.5 text-teal-600 shrink-0" /> {t.editSellerProfileBtn}
                           </button>
-
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const liveCount = batches.filter(b => b.ownerPhone === currentUser.phone && (b.availablePl || 0) > 0 && !b.isPaused).length;
+                              const msg = `🦐 *${myFixedHatchery.realName}* (CAA Verified Partner)\n📜 CAA: ${myFixedHatchery.caaLicense}\n📍 Zone: ${myFixedHatchery.zone}\n✅ Live Seed Batches: ${liveCount}\n\nBook verified PCR-tested shrimp seed directly on Aqua Mark:\n${window.location.origin}`;
+                              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="flex-1 sm:flex-none justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                          >
+                            <Share2 className="w-3.5 h-3.5 shrink-0" /> {L('Share Hatchery', 'హ్యాచరీ షేర్')}
+                          </button>
                         </>
                       )}
                     </div>
