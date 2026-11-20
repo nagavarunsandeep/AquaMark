@@ -643,12 +643,12 @@ const DICT = {
     nameLabels: { buyer: 'Farmer Full Name', seller: 'Owner Full Name', mediator: 'Broker Full Name' },
     namePlaceholders: { buyer: 'e.g., Ramu Naidu', seller: 'e.g., Venkata Subba Rao', mediator: 'e.g., Srinivas Rao' },
     mobileLabel: 'Mobile Number (10 Digits)',
-    verifyWaBtn: 'Verify via WhatsApp',
-    verifyingWaAnim: 'Auto-Sending on WhatsApp & Verifying...',
+    verifyWaBtn: 'Verify via Email OTP',
+    verifyingWaAnim: 'Sending Email OTP & Verifying...',
     setPasswordLabel: 'Set Password (Min 6 Characters — Letters or Numbers)',
     enterPasswordLabel: 'Enter Password',
     forgotPasswordLink: 'Forgot Password?',
-    resetPasswordTitle: 'Reset Password via WhatsApp Verification',
+    resetPasswordTitle: 'Reset Password via Email OTP Verification',
     completeSignUpBtn: 'Set Password & Enter Portal',
     loginBtn: 'Login to Portal',
     logout: 'Sign Out',
@@ -796,7 +796,7 @@ const DICT = {
     calculateBtn: 'Calculate Harvest & Profit',
     toasts: {
       invalidPhone: 'Please enter a valid 10-digit mobile number.',
-      waVerified: 'WhatsApp verified! Set your 6+ character password below.',
+      waVerified: 'Email OTP verified! Set your 6+ character password below.',
       passwordShort: 'Password must be at least 6 characters (letters or numbers).',
       wrongPassword: 'Incorrect password! Please try again or click Forgot Password.',
       notRegistered: 'No account found for this mobile in this role. Please Sign Up first.',
@@ -836,12 +836,12 @@ const DICT = {
     nameLabels: { buyer: 'రైతు పూర్తి పేరు', seller: 'యజమాని పూర్తి పేరు', mediator: 'బ్రోకర్ పూర్తి పేరు' },
     namePlaceholders: { buyer: 'ఉదా: రాము నాయుడు', seller: 'ఉదా: వెంకట సుబ్బారావు', mediator: 'ఉదా: శ్రీనివాస రావు' },
     mobileLabel: 'మొబైల్ నంబర్ (10 అంకెలు)',
-    verifyWaBtn: 'Verify via WhatsApp',
-    verifyingWaAnim: 'WhatsApp లో ఆటోమేటిక్‌గా వెరిఫై అవుతోంది...',
+    verifyWaBtn: 'Verify via Email OTP',
+    verifyingWaAnim: 'Email OTP వెరిఫై అవుతోంది...',
     setPasswordLabel: 'కొత్త పాస్‌వర్డ్ సెట్ చేయండి (కనీసం 6 అక్షరాలు లేదా అంకెలు)',
     enterPasswordLabel: 'మీ పాస్‌వర్డ్ ఎంటర్ చేయండి',
     forgotPasswordLink: 'పాస్‌వర్డ్ మర్చిపోయారా?',
-    resetPasswordTitle: 'WhatsApp వెరిఫికేషన్ ద్వారా కొత్త పాస్‌వర్డ్ సెట్ చేయండి',
+    resetPasswordTitle: 'Email OTP వెరిఫికేషన్ ద్వారా కొత్త పాస్‌వర్డ్ సెట్ చేయండి',
     completeSignUpBtn: 'పాస్‌వర్డ్ సేవ్ చేసి ప్రవేశించండి',
     loginBtn: 'పాస్‌వర్డ్‌తో లాగిన్ అవ్వండి',
     logout: 'లాగౌట్',
@@ -989,7 +989,7 @@ const DICT = {
     calculateBtn: 'దిగుబడి & లాభం లెక్కించండి',
     toasts: {
       invalidPhone: 'దయచేసి సరైన 10-అంకెల మొబైల్ నంబర్ ఎంటర్ చేయండి.',
-      waVerified: 'WhatsApp వెరిఫికేషన్ పూర్తయింది! కింద 6 అక్షరాల పాస్‌వర్డ్ సెట్ చేయండి.',
+      waVerified: 'Email OTP వెరిఫికేషన్ పూర్తయింది! కింద 6 అక్షరాల పాస్‌వర్డ్ సెట్ చేయండి.',
       passwordShort: 'పాస్‌వర్డ్ కనీసం 6 అక్షరాలు లేదా అంకెలు ఉండాలి.',
       wrongPassword: 'తప్పు పాస్‌వర్డ్! మళ్ళీ ప్రయత్నించండి లేదా Forgot Password నొక్కండి.',
       notRegistered: 'ఈ విభాగంలో ఈ నంబర్ రిజిస్టర్ కాలేదు. ముందుగా Sign Up అవ్వండి.',
@@ -1973,13 +1973,24 @@ function AquaMarkApp() {
 
     let cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
     let roleKey = '';
+    let resolvedExisting = null;
     if (authMode === 'forgot') {
       roleKey = forgotResolvedRoleKey || getUserKey(cleanPhone, loginRole);
-      const foundRec = registeredUsers[roleKey];
+      let foundRec = registeredUsers[roleKey];
+      if (!foundRec && roleKey) {
+        try {
+          const { data: uRow } = await supabase.from('app_users').select('*').eq('phone', roleKey).maybeSingle();
+          if (uRow) {
+            foundRec = { ...uRow, phone: String(uRow.phone || '').split('_')[0].replace(/\D/g, '').slice(-10) };
+            setRegisteredUsers(prev => ({ ...prev, [roleKey]: foundRec }));
+          }
+        } catch { }
+      }
       if (!foundRec) {
         showToast(t.toasts.notRegistered);
         return;
       }
+      resolvedExisting = foundRec;
       cleanPhone = String(foundRec.phone || cleanPhone).replace(/\D/g, '').slice(-10);
     } else {
       if (cleanPhone.length !== 10) {
@@ -1993,7 +2004,7 @@ function AquaMarkApp() {
       }
     }
 
-    const existing = registeredUsers[roleKey];
+    const existing = resolvedExisting || registeredUsers[roleKey];
     const finalName = authMode === 'forgot'
       ? (existing?.name || loginName.trim() || 'Verified User')
       : (loginName.trim() || (loginRole === 'buyer' ? 'Farmer' : loginRole === 'seller' ? 'Hatchery Owner' : 'Broker Partner'));
@@ -4549,7 +4560,7 @@ function AquaMarkApp() {
   if (!currentUser) {
     const activeRoleMeta = t.roles[loginRole] || t.roles.buyer;
     return (
-      <div className={`min-h-screen flex flex-col justify-between font-sans select-none transition-colors ${pageBg}`}>
+      <div className={`min-h-screen flex flex-col justify-between font-sans select-none transition-colors overflow-x-hidden ${pageBg}`}>
         {toast && (
           <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> {toast}
@@ -4607,7 +4618,7 @@ function AquaMarkApp() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => { setLoginRole(item.id); setWaVerifiedDone(false); setLoginPassword(''); }}
+                    onClick={() => { setLoginRole(item.id); resetEmailOtpFlow(); setLoginPassword(''); }}
                     className={`px-3.5 py-3 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-row sm:flex-col items-center sm:items-start justify-between gap-3 sm:gap-2.5 ${active
                       ? 'border-teal-500 bg-teal-500/12 ring-2 ring-teal-500/25 shadow-xs'
                       : `${subCardBg} hover:border-teal-500/40`
@@ -4671,7 +4682,7 @@ function AquaMarkApp() {
 
                 <div>
                   <label className="text-xs font-bold block mb-1.5">{L('Email Address (For Real OTP Verification)', 'Email చిరునామా (OTP వెరిఫికేషన్ కోసం)')}</label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       required
                       type="email"
@@ -4841,9 +4852,9 @@ function AquaMarkApp() {
             {/* MODE C: FORGOT PASSWORD — EMAIL OR MOBILE -> EMAIL OTP -> NEW PASSWORD */}
             {authMode === 'forgot' && (
               <form onSubmit={handleCompleteSignUpOrReset} className="space-y-4">
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs font-bold text-amber-500 flex items-center justify-between">
-                  <span>{t.resetPasswordTitle}</span>
-                  <button type="button" onClick={() => { setAuthMode('login'); resetEmailOtpFlow(); }} className="underline text-[11px] cursor-pointer">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs font-bold text-amber-500 flex items-center justify-between gap-3">
+                  <span className="leading-snug">{t.resetPasswordTitle}</span>
+                  <button type="button" onClick={() => { setAuthMode('login'); resetEmailOtpFlow(); }} className="underline text-[11px] shrink-0 cursor-pointer">
                     {t.back}
                   </button>
                 </div>
@@ -4852,7 +4863,7 @@ function AquaMarkApp() {
                   <label className="text-xs font-bold block mb-1.5">
                     {L('Registered Email or 10-Digit Mobile', 'రిజిస్టర్డ్ Email లేదా 10 అంకెల మొబైల్')} ({activeRoleMeta.title})
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       required
                       type="text"
@@ -5773,8 +5784,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                                ? 'bg-teal-600 text-white border-teal-600'
-                                : `${subCardBg} opacity-80 hover:opacity-100`
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -7096,8 +7107,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : `${subCardBg} opacity-80 hover:opacity-100`
+                                    ? 'bg-teal-600 text-white border-teal-600'
+                                    : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -8986,8 +8997,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                        ? 'bg-teal-600 text-white border-teal-600'
-                        : `${subCardBg} opacity-80 hover:opacity-100`
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -9037,8 +9048,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
