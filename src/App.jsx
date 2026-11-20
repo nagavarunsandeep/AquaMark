@@ -1068,6 +1068,8 @@ function AquaMarkApp() {
   const [dismissedBroadcastId, setDismissedBroadcastId] = useState(() => {
     try { return localStorage.getItem('aqm_v11_dismissed_bcast') || ''; } catch { return ''; }
   });
+  const [adminUserAlerts, setAdminUserAlerts] = useState(() => safeLoadStorage('aqm_v11_admin_user_alerts', []));
+  const [dismissedUserAlertIds, setDismissedUserAlertIds] = useState(() => safeLoadStorage('aqm_v11_dismissed_ualerts', []));
   // Unified Upload Images/Videos toggle states for Publish Batch & Edit Batch
   const [showNewMediaPanel, setShowNewMediaPanel] = useState(false);
   const [showEditMediaPanel, setShowEditMediaPanel] = useState(false);
@@ -1223,6 +1225,8 @@ function AquaMarkApp() {
   useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_admin_broadcast', JSON.stringify(adminBroadcast)); } catch { } }, [adminBroadcast]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_admin_user_alerts', JSON.stringify(adminUserAlerts)); } catch { } }, [adminUserAlerts]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_dismissed_ualerts', JSON.stringify(dismissedUserAlertIds)); } catch { } }, [dismissedUserAlertIds]);
 
   useEffect(() => { try { localStorage.setItem('aqm_v12_matchmaker', JSON.stringify(matchmaker)); } catch { } }, [matchmaker]);
   useEffect(() => { try { localStorage.setItem('aqm_v12_watchlist_price', JSON.stringify(watchlistPrice)); } catch { } }, [watchlistPrice]);
@@ -1340,6 +1344,7 @@ function AquaMarkApp() {
           if (item.key === 'live_videos') setLiveVideoRequests(item.value || []);
           if (item.key === 'notifications') setNotifications(item.value || []);
           if (item.key === 'admin_broadcast') setAdminBroadcast(item.value || null);
+          if (item.key === 'admin_user_alerts') setAdminUserAlerts(Array.isArray(item.value) ? item.value : []);
           if (item.key === 'user_emails') setUserEmails(item.value || {});
         });
       }
@@ -1644,6 +1649,7 @@ function AquaMarkApp() {
   // Buyer & Broker Edit Profile Modal States
   const [showBasicEditProfileModal, setShowBasicEditProfileModal] = useState(false);
   const [editProfileDraft, setEditProfileDraft] = useState({ name: '', phone: '', phoneVerified: true, verifying: false });
+  const [pwdChangeForm, setPwdChangeForm] = useState({ oldPwd: '', newPwd: '', confirmPwd: '', showOld: false, showNew: false, saving: false, error: '', success: '' });
 
   // Account Deletion Verification Modal
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
@@ -2464,8 +2470,78 @@ function AquaMarkApp() {
   // =========================================================================
   // BUYER & BROKER EDIT PROFILE (NAME + MOBILE WITH RE-VERIFICATION)
   // =========================================================================
+  const handleChangeUserPassword = async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    setPwdChangeForm(prev => ({ ...prev, error: '', success: '' }));
+    const oldPwd = (pwdChangeForm.oldPwd || '').trim();
+    const newPwd = (pwdChangeForm.newPwd || '').trim();
+    const confirmPwd = (pwdChangeForm.confirmPwd || '').trim();
+    if (!oldPwd) {
+      setPwdChangeForm(prev => ({ ...prev, error: L('Please enter your current (old) password.', 'దయచేసి మీ పాత పాస్‌వర్డ్ నమోదు చేయండి.') }));
+      return;
+    }
+    if (newPwd.length < 6) {
+      setPwdChangeForm(prev => ({ ...prev, error: L('New password must be at least 6 characters.', 'కొత్త పాస్‌వర్డ్ కనీసం 6 అక్షరాలు ఉండాలి.') }));
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setPwdChangeForm(prev => ({ ...prev, error: L('New password and Confirm password do not match.', 'కొత్త పాస్‌వర్డ్ మరియు కన్ఫర్మ్ పాస్‌వర్డ్ సరిపోలడం లేదు.') }));
+      return;
+    }
+    if (newPwd === oldPwd) {
+      setPwdChangeForm(prev => ({ ...prev, error: L('New password must be different from your old password.', 'కొత్త పాస్‌వర్డ్ పాత పాస్‌వర్డ్ కంటే భిన్నంగా ఉండాలి.') }));
+      return;
+    }
+
+    setPwdChangeForm(prev => ({ ...prev, saving: true, error: '', success: '' }));
+    try {
+      const cleanPhone = String(currentUser.phone || '').replace(/\D/g, '').slice(-10);
+      const roleKey = getUserKey(cleanPhone, currentUser.role);
+      let userRec = registeredUsers[roleKey];
+      if (!userRec) {
+        const { data: uRow } = await supabase.from('app_users').select('*').eq('phone', roleKey).maybeSingle();
+        if (uRow) userRec = { ...uRow, phone: cleanPhone };
+      }
+      if (!userRec || !userRec.password) {
+        setPwdChangeForm(prev => ({ ...prev, saving: false, error: L('Account record not found. Please refresh and try again.', 'ఖాతా వివరాలు దొరకలేదు. దయచేసి రీఫ్రెష్ చేసి ప్రయత్నించండి.') }));
+        return;
+      }
+      const oldOk = await verifyPasswordPbkdf2(oldPwd, userRec.password);
+      if (!oldOk) {
+        setPwdChangeForm(prev => ({ ...prev, saving: false, error: L('Current (old) password is incorrect!', 'మీరు ఇచ్చిన పాత పాస్‌వర్డ్ తప్పు!') }));
+        return;
+      }
+
+      const newHash = await hashPasswordPbkdf2(newPwd);
+      const { error } = await supabase.from('app_users').update({ password: newHash }).eq('phone', roleKey);
+      if (error) {
+        setPwdChangeForm(prev => ({ ...prev, saving: false, error: `Update failed: ${error.message}` }));
+        return;
+      }
+      setRegisteredUsers(prev => ({
+        ...prev,
+        [roleKey]: { ...(prev[roleKey] || userRec), password: newHash }
+      }));
+      setPwdChangeForm({
+        oldPwd: '',
+        newPwd: '',
+        confirmPwd: '',
+        showOld: false,
+        showNew: false,
+        saving: false,
+        error: '',
+        success: L('Password updated successfully!', 'పాస్‌వర్డ్ విజయవంతంగా మార్చబడింది!')
+      });
+      showToast(L('Password updated successfully!', 'పాస్‌వర్డ్ విజయవంతంగా మార్చబడింది!'));
+    } catch (err) {
+      setPwdChangeForm(prev => ({ ...prev, saving: false, error: err?.message || 'Error updating password.' }));
+    }
+  };
+
   const openBasicEditProfile = () => {
     if (!currentUser) return;
+    setPwdChangeForm({ oldPwd: '', newPwd: '', confirmPwd: '', showOld: false, showNew: false, saving: false, error: '', success: '' });
     setEditProfileDraft({
       name: currentUser.name || '',
       phone: currentUser.phone || '',
@@ -4707,9 +4783,14 @@ function AquaMarkApp() {
 
                 {otpSentToEmail && !emailOtpVerified && (
                   <div className="border border-teal-500/40 bg-teal-500/5 rounded-2xl p-3.5 space-y-3">
-                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400">
-                      {L(`Enter 6-digit OTP sent to ${otpSentToEmail}:`, `${otpSentToEmail} కు వచ్చిన 6 అంకెల OTP ఇవ్వండి:`)}
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-teal-600 dark:text-teal-400 break-words">
+                        {L(`Enter 6-digit OTP sent to ${otpSentToEmail}:`, `${otpSentToEmail} కు వచ్చిన 6 అంకెల OTP ఇవ్వండి:`)}
+                      </p>
+                      <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5 leading-snug">
+                        {L('📩 Check both your Inbox and Spam / Junk folder for the OTP email.', '📩 OTP కోసం మీ Email లోని Inbox మరియు Spam / Junk ఫోల్డర్ రెండింటినీ చెక్ చేయండి.')}
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <input
                         autoFocus
@@ -4888,9 +4969,14 @@ function AquaMarkApp() {
 
                 {otpSentToEmail && !emailOtpVerified && (
                   <div className="border border-teal-500/40 bg-teal-500/5 rounded-2xl p-3.5 space-y-3">
-                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400">
-                      {L(`Enter 6-digit OTP sent to ${maskEmailAddr(otpSentToEmail)}:`, `${maskEmailAddr(otpSentToEmail)} కు వచ్చిన 6 అంకెల OTP ఇవ్వండి:`)}
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-teal-600 dark:text-teal-400 break-words">
+                        {L(`Enter 6-digit OTP sent to ${maskEmailAddr(otpSentToEmail)}:`, `${maskEmailAddr(otpSentToEmail)} కు వచ్చిన 6 అంకెల OTP ఇవ్వండి:`)}
+                      </p>
+                      <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5 leading-snug">
+                        {L('📩 Check both your Inbox and Spam / Junk folder for the OTP email.', '📩 OTP కోసం మీ Email లోని Inbox మరియు Spam / Junk ఫోల్డర్ రెండింటినీ చెక్ చేయండి.')}
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <input
                         autoFocus
@@ -5076,8 +5162,8 @@ function AquaMarkApp() {
           </div>
 
           <div className="flex flex-nowrap items-center justify-between sm:justify-end gap-1 sm:gap-2 w-full sm:w-auto">
-            {/* BUYER & BROKER EDIT PROFILE BUTTON IN HEADER */}
-            {(currentUser.role === 'buyer' || currentUser.role === 'mediator') && (
+            {/* EDIT PROFILE & CHANGE PASSWORD BUTTON IN HEADER (ALL PORTALS) */}
+            {(currentUser.role === 'buyer' || currentUser.role === 'mediator' || currentUser.role === 'seller') && (
               <button
                 type="button"
                 onClick={openBasicEditProfile}
@@ -5219,6 +5305,67 @@ function AquaMarkApp() {
             </div>
           );
         })()}
+        {/* =========================================================
+            SUPER ADMIN DIRECT USER DASHBOARD ALERTS (PER-USER PINNED)
+           ========================================================= */}
+        {(() => {
+          const myCleanPhone = String(currentUser.phone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+          const myDirectAlerts = (Array.isArray(adminUserAlerts) ? adminUserAlerts : []).filter((a) => {
+            if (!a || a.active === false) return false;
+            const aPhone = String(a.targetPhone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+            const roleOk = !a.targetRole || a.targetRole === 'ALL' || a.targetRole === currentUser.role;
+            return aPhone === myCleanPhone && roleOk && !dismissedUserAlertIds.includes(a.id);
+          });
+          if (myDirectAlerts.length === 0) return null;
+          return (
+            <div className="space-y-2.5">
+              {myDirectAlerts.map((alertItem) => {
+                const isUrgent = alertItem.priority === 'urgent';
+                const isWarning = alertItem.priority === 'warning';
+                const boxCls = isUrgent
+                  ? (darkMode ? 'bg-rose-950/70 border-rose-500 text-rose-100' : 'bg-rose-50 border-rose-400 text-rose-950')
+                  : isWarning
+                    ? (darkMode ? 'bg-amber-950/60 border-amber-500 text-amber-100' : 'bg-amber-50 border-amber-400 text-amber-950')
+                    : (darkMode ? 'bg-indigo-950/60 border-indigo-400 text-indigo-100' : 'bg-indigo-50 border-indigo-300 text-indigo-950');
+                const pillCls = isUrgent
+                  ? 'bg-rose-600 text-white'
+                  : isWarning
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-indigo-600 text-white';
+                return (
+                  <div key={alertItem.id} className={`rounded-2xl border-2 px-4 py-3.5 shadow-md flex items-start justify-between gap-3 ${boxCls}`}>
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${pillCls}`}>
+                        <ShieldAlert className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wide ${pillCls}`}>
+                            {L('DIRECT ADMIN ALERT', 'అడ్మిన్ ప్రత్యక్ష అలర్ట్')}
+                          </span>
+                          <h4 className="font-extrabold text-xs sm:text-sm leading-snug">{alertItem.title}</h4>
+                          {alertItem.createdAt && (
+                            <span className="text-[10px] opacity-65 font-mono">{alertItem.createdAt}</span>
+                          )}
+                        </div>
+                        <p className="text-xs sm:text-[13px] opacity-95 leading-relaxed break-words">{alertItem.message}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDismissedUserAlertIds(prev => prev.includes(alertItem.id) ? prev : [...prev, alertItem.id])}
+                      className="p-1 rounded-lg opacity-70 hover:opacity-100 font-bold text-sm shrink-0 cursor-pointer"
+                      title={L('Dismiss alert', 'అలర్ట్ మూసివేయండి')}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+
         {/* =========================================================
             1. BUYER (FARMER) PORTAL
            ========================================================= */}
@@ -5784,8 +5931,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                              ? 'bg-teal-600 text-white border-teal-600'
-                              : `${subCardBg} opacity-80 hover:opacity-100`
+                                ? 'bg-teal-600 text-white border-teal-600'
+                                : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -7107,8 +7254,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                    ? 'bg-teal-600 text-white border-teal-600'
-                                    : `${subCardBg} opacity-80 hover:opacity-100`
+                                      ? 'bg-teal-600 text-white border-teal-600'
+                                      : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -8579,7 +8726,7 @@ Please advise immediate treatment protocol.`;
          ========================================================= */}
       {showBasicEditProfileModal && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${cardBg}`}>
+          <div className={`rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border space-y-4 max-h-[90vh] overflow-y-auto ${cardBg}`}>
             <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
               <h3 className="font-extrabold text-base flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-teal-600" /> Edit {t.portalBadges[currentUser?.role]} Profile
@@ -8656,6 +8803,90 @@ Please advise immediate treatment protocol.`;
                   </button>
                 </div>
               </div>
+            </form>
+
+            {/* CHANGE PASSWORD SECTION (REQUIRES OLD PASSWORD VERIFICATION) */}
+            <form onSubmit={handleChangeUserPassword} className="pt-4 border-t border-slate-300/30 space-y-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <KeyRound className="w-4 h-4 text-teal-600 shrink-0" />
+                <h4 className="font-extrabold text-sm">{L('Change Password', 'పాస్‌వర్డ్ మార్చండి')}</h4>
+              </div>
+
+              {pwdChangeForm.error && (
+                <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-xl p-2.5 text-xs font-bold">
+                  {pwdChangeForm.error}
+                </div>
+              )}
+              {pwdChangeForm.success && (
+                <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 rounded-xl p-2.5 text-xs font-bold">
+                  ✓ {pwdChangeForm.success}
+                </div>
+              )}
+
+              <div>
+                <label className="font-bold opacity-75 block mb-1">{L('Current (Old) Password', 'ప్రస్తుత (పాత) పాస్‌వర్డ్')}</label>
+                <div className="relative flex items-center">
+                  <input
+                    required
+                    type={pwdChangeForm.showOld ? 'text' : 'password'}
+                    placeholder="Enter your current password"
+                    value={pwdChangeForm.oldPwd}
+                    onChange={(e) => setPwdChangeForm(prev => ({ ...prev, oldPwd: e.target.value, error: '', success: '' }))}
+                    className={`w-full border rounded-xl pl-3.5 pr-10 py-2 text-sm font-bold select-text ${inputCls}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPwdChangeForm(prev => ({ ...prev, showOld: !prev.showOld }))}
+                    className="absolute right-3 opacity-60 hover:opacity-100 cursor-pointer"
+                  >
+                    {pwdChangeForm.showOld ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold opacity-75 block mb-1">{L('New Password', 'కొత్త పాస్‌వర్డ్')}</label>
+                  <div className="relative flex items-center">
+                    <input
+                      required
+                      minLength={6}
+                      type={pwdChangeForm.showNew ? 'text' : 'password'}
+                      placeholder="Min 6 chars"
+                      value={pwdChangeForm.newPwd}
+                      onChange={(e) => setPwdChangeForm(prev => ({ ...prev, newPwd: e.target.value, error: '', success: '' }))}
+                      className={`w-full border rounded-xl pl-3 pr-9 py-2 text-sm font-bold select-text ${inputCls}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPwdChangeForm(prev => ({ ...prev, showNew: !prev.showNew }))}
+                      className="absolute right-2.5 opacity-60 hover:opacity-100 cursor-pointer"
+                    >
+                      {pwdChangeForm.showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="font-bold opacity-75 block mb-1">{L('Confirm New Password', 'కొత్త పాస్‌వర్డ్ నిర్ధారించండి')}</label>
+                  <input
+                    required
+                    minLength={6}
+                    type={pwdChangeForm.showNew ? 'text' : 'password'}
+                    placeholder="Re-enter new"
+                    value={pwdChangeForm.confirmPwd}
+                    onChange={(e) => setPwdChangeForm(prev => ({ ...prev, confirmPwd: e.target.value, error: '', success: '' }))}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={pwdChangeForm.saving}
+                className="w-full bg-slate-900 dark:bg-teal-600 hover:opacity-90 disabled:opacity-50 text-white font-extrabold py-2.5 rounded-xl text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5" /> {pwdChangeForm.saving ? L('Verifying & Updating...', 'అప్‌డేట్ అవుతోంది...') : L('Verify Old Password & Update', 'పాత పాస్‌వర్డ్ చెక్ చేసి మార్చండి')}
+              </button>
             </form>
           </div>
         </div>
@@ -8997,8 +9228,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : `${subCardBg} opacity-80 hover:opacity-100`
+                        ? 'bg-teal-600 text-white border-teal-600'
+                        : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -9048,8 +9279,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -10044,7 +10275,7 @@ Please advise immediate treatment protocol.`;
                     <p className="text-[11px] opacity-60">{L('Click any notification to view full details', 'పూర్తి వివరాల కోసం ఏదైనా నోటిఫికేషన్‌పై క్లిక్ చేయండి')}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
                   {myNotifs.some(n => !n.read) && (
                     <button
                       type="button"
@@ -10059,9 +10290,24 @@ Please advise immediate treatment protocol.`;
                         setNotifications(next);
                         saveKvToSupabase('notifications', next);
                       }}
-                      className="text-[11px] font-bold text-teal-600 hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-teal-600 hover:underline cursor-pointer whitespace-nowrap"
                     >
-                      Mark all read
+                      {L('Mark all read', 'అన్నీ చదివినట్లు')}
+                    </button>
+                  )}
+                  {myNotifs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const myIds = new Set(myNotifs.map(m => m.id));
+                        const next = notifications.filter(n => !myIds.has(n.id));
+                        setNotifications(next);
+                        saveKvToSupabase('notifications', next);
+                        showToast(L('All notifications deleted.', 'అన్ని నోటిఫికేషన్లు తొలగించబడ్డాయి.'));
+                      }}
+                      className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer whitespace-nowrap"
+                    >
+                      {L('Clear All', 'అన్నీ డిలీట్')}
                     </button>
                   )}
                   <button type="button" onClick={() => setShowNotifPanel(false)} className="opacity-60 hover:opacity-100 font-bold text-lg cursor-pointer">✕</button>
@@ -10085,12 +10331,27 @@ Please advise immediate treatment protocol.`;
                       }}
                       className={`border rounded-xl p-3.5 space-y-1.5 cursor-pointer transition hover:border-teal-500 ${!n.read ? 'border-teal-500 bg-teal-500/5' : subCardBg}`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-extrabold flex items-center gap-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-xs font-extrabold flex items-center gap-1.5 min-w-0">
                           {!n.read && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
-                          {n.title}
+                          <span className="truncate">{n.title}</span>
                         </span>
-                        <span className="text-[10px] opacity-60 shrink-0">{n.createdAt}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] opacity-60">{n.createdAt || n.time || ''}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const next = notifications.filter(item => item.id !== n.id);
+                              setNotifications(next);
+                              saveKvToSupabase('notifications', next);
+                            }}
+                            className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer"
+                            title={L('Delete notification', 'నోటిఫికేషన్ డిలీట్ చేయండి')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-xs opacity-80 leading-relaxed line-clamp-2">{n.message}</p>
                     </div>

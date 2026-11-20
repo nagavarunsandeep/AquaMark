@@ -57,6 +57,7 @@ export default function SuperAdmin() {
     const [broadcastTargetPhone, setBroadcastTargetPhone] = useState('');
     const [broadcastPriority, setBroadcastPriority] = useState('info'); // 'info' | 'warning' | 'urgent'
     const [broadcastPinBanner, setBroadcastPinBanner] = useState(true);
+    const [broadcastPinUserAlert, setBroadcastPinUserAlert] = useState(true);
     const [broadcastTitle, setBroadcastTitle] = useState('');
     const [broadcastMsg, setBroadcastMsg] = useState('');
     const [sendingBroadcast, setSendingBroadcast] = useState(false);
@@ -606,6 +607,8 @@ export default function SuperAdmin() {
             }
 
             let updatedBanner = kvStore.admin_broadcast || null;
+            let updatedUserAlerts = Array.isArray(kvStore.admin_user_alerts) ? kvStore.admin_user_alerts : [];
+
             if (broadcastMode === 'role' && broadcastPinBanner) {
                 updatedBanner = {
                     id: `BCAST-${Date.now()}`,
@@ -626,19 +629,99 @@ export default function SuperAdmin() {
                 }
             }
 
+            if (broadcastMode === 'single' && broadcastPinUserAlert) {
+                const wantedPhone = cleanPhone10(broadcastTargetPhone);
+                const { data: freshAlertsKv } = await supabase
+                    .from('app_kv_store')
+                    .select('value')
+                    .eq('key', 'admin_user_alerts')
+                    .maybeSingle();
+                const existingAlerts = Array.isArray(freshAlertsKv?.value)
+                    ? freshAlertsKv.value
+                    : updatedUserAlerts;
+                const newAlert = {
+                    id: `UALERT-${Date.now()}`,
+                    targetPhone: wantedPhone,
+                    targetRole: 'ALL',
+                    title: broadcastTitle.trim(),
+                    message: broadcastMsg.trim(),
+                    priority: broadcastPriority,
+                    createdAt: nowStr,
+                    active: true,
+                };
+                updatedUserAlerts = [newAlert, ...existingAlerts].slice(0, 100);
+                const { error: uErr } = await supabase.from('app_kv_store').upsert({
+                    key: 'admin_user_alerts',
+                    value: updatedUserAlerts,
+                    updated_at: new Date().toISOString(),
+                });
+                if (uErr) {
+                    notify(`Notification sent, but direct dashboard alert failed: ${uErr.message}`);
+                }
+            }
+
             setKvStore((prev) => ({
                 ...prev,
                 notifications: merged,
                 ...(updatedBanner ? { admin_broadcast: updatedBanner } : {}),
+                admin_user_alerts: updatedUserAlerts,
             }));
             setBroadcastTitle('');
             setBroadcastMsg('');
             if (broadcastMode === 'single') setBroadcastTargetPhone('');
             notify(
                 broadcastMode === 'single'
-                    ? `Direct notification sent to ${targets.length} account(s)!`
+                    ? `Direct alert sent to +91 ${targets[0]?.phone || ''}${broadcastPinUserAlert ? ' + pinned on their Dashboard!' : '!'}`
                     : `Sent to ${targets.length} user(s)${broadcastPinBanner ? ' + pinned as Top Portal Banner!' : '!'}`
             );
+        } finally {
+            setSendingBroadcast(false);
+        }
+    };
+
+    const handleDeleteUserAlert = async (alertId) => {
+        setSendingBroadcast(true);
+        try {
+            const { data: freshKv } = await supabase.from('app_kv_store').select('value').eq('key', 'admin_user_alerts').maybeSingle();
+            const existing = Array.isArray(freshKv?.value) ? freshKv.value : (Array.isArray(kvStore.admin_user_alerts) ? kvStore.admin_user_alerts : []);
+            const filtered = existing.filter((a) => a.id !== alertId);
+            const { error } = await supabase.from('app_kv_store').upsert({
+                key: 'admin_user_alerts',
+                value: filtered,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) {
+                notify(`Delete failed: ${error.message}`);
+            } else {
+                setKvStore((prev) => ({ ...prev, admin_user_alerts: filtered }));
+                notify('Direct user dashboard alert deleted!');
+            }
+        } finally {
+            setSendingBroadcast(false);
+        }
+    };
+
+    const handleDeleteAnnouncement = async (notifObj) => {
+        setSendingBroadcast(true);
+        try {
+            const { data: freshKv } = await supabase.from('app_kv_store').select('value').eq('key', 'notifications').maybeSingle();
+            const existing = Array.isArray(freshKv?.value) ? freshKv.value : (Array.isArray(kvStore.notifications) ? kvStore.notifications : []);
+            const targetKey = `${notifObj.title}|${notifObj.createdAt || notifObj.time || ''}`;
+            const filtered = existing.filter((n) => {
+                if (!String(n.id || '').startsWith('ADMIN-')) return true;
+                return `${n.title}|${n.createdAt || n.time || ''}` !== targetKey;
+            });
+            const { error } = await supabase.from('app_kv_store').upsert({
+                key: 'notifications',
+                value: filtered,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) {
+                notify(`Delete failed: ${error.message}`);
+            } else {
+                setKvStore((prev) => ({ ...prev, notifications: filtered }));
+                notify('Announcement deleted from user notifications!');
+            }
         } finally {
             setSendingBroadcast(false);
         }
@@ -1719,7 +1802,7 @@ export default function SuperAdmin() {
                                     />
                                 </div>
 
-                                {broadcastMode === 'role' && (
+                                {broadcastMode === 'role' ? (
                                     <label className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer ${subBg}`}>
                                         <input
                                             type="checkbox"
@@ -1729,6 +1812,18 @@ export default function SuperAdmin() {
                                         />
                                         <span className="text-xs font-bold">
                                             Also display as a pinned Top Announcement Banner on user portals
+                                        </span>
+                                    </label>
+                                ) : (
+                                    <label className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer ${subBg}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={broadcastPinUserAlert}
+                                            onChange={(e) => setBroadcastPinUserAlert(e.target.checked)}
+                                            className="w-4 h-4 accent-teal-600 rounded"
+                                        />
+                                        <span className="text-xs font-bold">
+                                            Also show as a pinned Direct Alert Banner at the top of this user&apos;s Dashboard
                                         </span>
                                     </label>
                                 )}
@@ -1759,10 +1854,10 @@ export default function SuperAdmin() {
                                 {kvStore.admin_broadcast?.active ? (
                                     <div className="space-y-3">
                                         <div className={`rounded-xl p-3.5 border text-xs space-y-1 ${kvStore.admin_broadcast.priority === 'urgent'
-                                            ? 'bg-rose-500/10 border-rose-500/40'
-                                            : kvStore.admin_broadcast.priority === 'warning'
-                                                ? 'bg-amber-500/10 border-amber-500/40'
-                                                : 'bg-teal-500/10 border-teal-500/40'
+                                                ? 'bg-rose-500/10 border-rose-500/40'
+                                                : kvStore.admin_broadcast.priority === 'warning'
+                                                    ? 'bg-amber-500/10 border-amber-500/40'
+                                                    : 'bg-teal-500/10 border-teal-500/40'
                                             }`}>
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="font-extrabold">{kvStore.admin_broadcast.title}</span>
@@ -1789,8 +1884,52 @@ export default function SuperAdmin() {
                                 )}
                             </div>
 
+                            {/* Live Direct User Dashboard Alerts */}
                             <div className={`rounded-2xl p-4 sm:p-5 border shadow-xs space-y-2.5 ${cardBg}`}>
-                                <h4 className="font-extrabold text-sm">Recent Admin Notifications</h4>
+                                <div className="flex items-center justify-between gap-2">
+                                    <h4 className="font-extrabold text-sm flex items-center gap-1.5">
+                                        <ShieldAlert className="w-4 h-4 text-amber-500" /> Active Direct User Alerts
+                                    </h4>
+                                    <span className="text-[10px] font-bold opacity-60">
+                                        {(Array.isArray(kvStore.admin_user_alerts) ? kvStore.admin_user_alerts.filter(a => a.active !== false) : []).length} live
+                                    </span>
+                                </div>
+                                {(() => {
+                                    const activeUserAlerts = (Array.isArray(kvStore.admin_user_alerts) ? kvStore.admin_user_alerts : []).filter((a) => a.active !== false);
+                                    if (activeUserAlerts.length === 0) {
+                                        return <p className="text-xs opacity-60">No active direct user dashboard alerts. Switch to &quot;Direct User Notification&quot; to pin an alert on a specific user&apos;s dashboard.</p>;
+                                    }
+                                    return (
+                                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                            {activeUserAlerts.map((a) => (
+                                                <div key={a.id} className={`p-2.5 rounded-xl border text-xs space-y-1 ${subBg}`}>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <span className="text-[10px] font-mono font-black text-teal-500 block">+91 {a.targetPhone}</span>
+                                                            <span className="font-bold block truncate">{a.title}</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteUserAlert(a.id)}
+                                                            disabled={sendingBroadcast}
+                                                            className="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 shrink-0 cursor-pointer"
+                                                            title="Delete this user dashboard alert"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="opacity-80 line-clamp-2">{a.message}</p>
+                                                    <p className="text-[10px] opacity-55">{a.createdAt}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
+                            {/* Recent Admin Announcements (with 1-Click Delete) */}
+                            <div className={`rounded-2xl p-4 sm:p-5 border shadow-xs space-y-2.5 ${cardBg}`}>
+                                <h4 className="font-extrabold text-sm">Recent Admin Announcements</h4>
                                 {(() => {
                                     const allNotifs = Array.isArray(kvStore.notifications) ? kvStore.notifications : [];
                                     const seenKeys = new Set();
@@ -1802,19 +1941,30 @@ export default function SuperAdmin() {
                                                 seenKeys.add(k);
                                                 recentAdmin.push(n);
                                             }
-                                            if (recentAdmin.length >= 5) break;
+                                            if (recentAdmin.length >= 10) break;
                                         }
                                     }
                                     if (recentAdmin.length === 0) {
                                         return <p className="text-xs opacity-60">No admin broadcasts sent yet.</p>;
                                     }
                                     return (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                                             {recentAdmin.map((n) => (
-                                                <div key={n.id} className={`p-2.5 rounded-xl border text-xs space-y-0.5 ${subBg}`}>
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <span className="font-bold truncate">{n.title}</span>
-                                                        <span className="text-[10px] opacity-60 shrink-0">{n.createdAt || n.time || ''}</span>
+                                                <div key={n.id} className={`p-2.5 rounded-xl border text-xs space-y-1 ${subBg}`}>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <span className="font-bold block truncate">{n.title}</span>
+                                                            <span className="text-[10px] opacity-60 block">{n.createdAt || n.time || ''}</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteAnnouncement(n)}
+                                                            disabled={sendingBroadcast}
+                                                            className="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 shrink-0 cursor-pointer"
+                                                            title="Delete announcement"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
                                                     </div>
                                                     <p className="opacity-75 line-clamp-2">{n.message}</p>
                                                 </div>
