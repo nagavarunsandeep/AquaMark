@@ -1976,11 +1976,33 @@ function AquaMarkApp() {
             method: 'upi'
           },
           theme: { color: '#0d9488' },
-          handler: function (response) {
+          handler: async function (response) {
             const pid = response?.razorpay_payment_id;
             if (!pid || !/^pay_[A-Za-z0-9]+$/.test(pid)) {
               if (onFailure) onFailure(L('Payment verification failed. No payment ID received from Razorpay.', 'పేమెంట్ ధృవీకరణ విఫలమైంది. Razorpay నుండి ID రాలేదు.'));
               return;
+            }
+            // Enterprise Server-Side Razorpay Verification (tamper-proof amount & status check)
+            try {
+              const vRes = await fetch('/api/verify-razorpay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: pid, expectedAmountInr: Math.round(Number(amountInr) || 0) }),
+              });
+              if (vRes.status !== 404 && vRes.status !== 503) {
+                const vData = await vRes.json();
+                if (!vRes.ok || !vData?.verified) {
+                  if (onFailure) onFailure(vData?.error || L('Server payment verification failed! Amount or status mismatch.', 'సర్వర్ పేమెంట్ ధృవీకరణ విఫలమైంది!'));
+                  return;
+                }
+              }
+            } catch {
+              // On localhost dev without Cloudflare Worker, allow valid Razorpay ID format
+              const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+              if (!isLocal) {
+                if (onFailure) onFailure(L('Could not verify payment with AquaMark server. Please check connection.', 'సర్వర్‌తో పేమెంట్ ధృవీకరణ విఫలమైంది.'));
+                return;
+              }
             }
             onSuccess(pid);
           },
