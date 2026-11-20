@@ -1431,7 +1431,7 @@ function AquaMarkApp() {
     if (fileNames.length > 0) {
       await fetch('/api/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getSignedSessionHeaders() },
         body: JSON.stringify({ fileNames }),
       }).catch(() => { });
     }
@@ -1463,6 +1463,42 @@ function AquaMarkApp() {
 
   const MAX_UPI_AMOUNT_INR = 80000;
   const PLATFORM_UPI_ID = '9959933166@ybl';
+
+  // Enterprise Web Crypto PBKDF2-SHA256 Password Hashing (100% Free, Browser-Native)
+  const hashPasswordPbkdf2 = async (plainText) => {
+    const clean = String(plainText || '').trim();
+    if (!window.crypto?.subtle) return clean;
+    const saltBytes = window.crypto.getRandomValues(new Uint8Array(12));
+    const saltHex = Array.from(saltBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const enc = new TextEncoder();
+    const keyMat = await window.crypto.subtle.importKey('raw', enc.encode(clean), 'PBKDF2', false, ['deriveBits']);
+    const bits = await window.crypto.subtle.deriveBits({ name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' }, keyMat, 256);
+    const hashHex = Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `pbkdf2_v1$${saltHex}$${hashHex}`;
+  };
+
+  const verifyPasswordPbkdf2 = async (plainText, storedValue) => {
+    const clean = String(plainText || '').trim();
+    const stored = String(storedValue || '');
+    if (!stored.startsWith('pbkdf2_v1$')) {
+      return clean === stored; // Legacy plain-text match (auto-upgraded on login)
+    }
+    if (!window.crypto?.subtle) return false;
+    const parts = stored.split('$');
+    if (parts.length !== 3) return false;
+    const [, saltHex, expectedHash] = parts;
+    const saltBytes = new Uint8Array(saltHex.match(/.{1,2}/g).map(h => parseInt(h, 16)));
+    const enc = new TextEncoder();
+    const keyMat = await window.crypto.subtle.importKey('raw', enc.encode(clean), 'PBKDF2', false, ['deriveBits']);
+    const bits = await window.crypto.subtle.deriveBits({ name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' }, keyMat, 256);
+    const actualHash = Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return actualHash === expectedHash;
+  };
+
+  const getSignedSessionHeaders = () => {
+    const tok = sessionStorage.getItem('aqm_signed_session');
+    return tok ? { 'X-AquaMark-Session': tok } : {};
+  };
 
   const cleanNum = (raw) => {
     if (raw === '' || raw === null || raw === undefined) return '';
@@ -1878,11 +1914,12 @@ function AquaMarkApp() {
       ? (existing?.name || loginName.trim() || 'Verified User')
       : (loginName.trim() || (loginRole === 'buyer' ? 'Farmer' : loginRole === 'seller' ? 'Hatchery Owner' : 'Broker Partner'));
 
+    const hashedPassword = await hashPasswordPbkdf2(loginPassword.trim());
     const userRecord = {
       phone: cleanPhone,
       name: finalName,
       role: loginRole,
-      password: loginPassword.trim(),
+      password: hashedPassword,
       depositPaid: existing?.depositPaid || false,
       depositUtr: existing?.depositUtr || '',
       last_login: new Date().toISOString()
@@ -1893,7 +1930,7 @@ function AquaMarkApp() {
       phone: roleKey,
       name: finalName,
       role: loginRole,
-      password: loginPassword.trim(),
+      password: hashedPassword,
       last_login: new Date().toISOString()
     });
 
@@ -1918,14 +1955,20 @@ function AquaMarkApp() {
       showToast(t.toasts.notRegistered);
       return;
     }
-    if (loginPassword.trim() !== found.password) {
+    const passwordOk = await verifyPasswordPbkdf2(loginPassword.trim(), found.password);
+    if (!passwordOk) {
       showToast(t.toasts.wrongPassword);
       return;
     }
 
-    await supabase.from('app_users').update({
-      last_login: new Date().toISOString()
-    }).eq('phone', roleKey);
+    // Auto-upgrade legacy plain-text password to PBKDF2-SHA256 hash seamlessly
+    const updatePayload = { last_login: new Date().toISOString() };
+    if (found.password && !String(found.password).startsWith('pbkdf2_v1$')) {
+      const upgradedHash = await hashPasswordPbkdf2(loginPassword.trim());
+      updatePayload.password = upgradedHash;
+      setRegisteredUsers(prev => ({ ...prev, [roleKey]: { ...found, password: upgradedHash } }));
+    }
+    await supabase.from('app_users').update(updatePayload).eq('phone', roleKey);
 
     completePortalLogin({
       role: loginRole,
@@ -1948,10 +1991,18 @@ function AquaMarkApp() {
     }
     setWaVerifiedDone(false);
     setLoginPassword('');
+    fetch('/api/session-sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: userObj.phone, role: userObj.role })
+    }).then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.ok && d?.token) sessionStorage.setItem('aqm_signed_session', d.token);
+    }).catch(() => { });
     syncAllFromSupabase();
   };
 
   const handleLogout = () => {
+    sessionStorage.removeItem('aqm_signed_session');
     setCurrentUser(null);
     setWaVerifiedDone(false);
     setIsVerifyingWa(false);
@@ -2144,7 +2195,7 @@ function AquaMarkApp() {
     if (!currentUser?.phone) return;
     const roleKey = getUserKey(currentUser.phone, currentUser.role);
     const record = registeredUsers[roleKey];
-    if (record && record.password && deleteConfirmPassword.trim() !== record.password) {
+    if (record && record.password && !(await verifyPasswordPbkdf2(deleteConfirmPassword.trim(), record.password))) {
       showToast(t.toasts.wrongPassword);
       return;
     }
@@ -2330,7 +2381,7 @@ function AquaMarkApp() {
 
       const formData = new FormData();
       formData.append('file', readyFile);
-      const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
+      const upRes = await fetch('/api/upload', { method: 'POST', headers: getSignedSessionHeaders(), body: formData });
 
       if (upRes.ok) {
         const upData = await upRes.json();
@@ -2387,7 +2438,7 @@ function AquaMarkApp() {
 
       const formData = new FormData();
       formData.append('file', readyFile);
-      const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
+      const upRes = await fetch('/api/upload', { method: 'POST', headers: getSignedSessionHeaders(), body: formData });
 
       if (upRes.ok) {
         const upData = await upRes.json();
@@ -2436,7 +2487,7 @@ function AquaMarkApp() {
 
       const formData = new FormData();
       formData.append('file', readyVideo);
-      const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
+      const upRes = await fetch('/api/upload', { method: 'POST', headers: getSignedSessionHeaders(), body: formData });
 
       if (upRes.ok) {
         const upData = await upRes.json();

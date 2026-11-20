@@ -33,6 +33,44 @@ const ALLOWED_MIME_TYPES = new Set([
 // Layer 1 in-memory caches (per isolate)
 let memoryAuthCache = null;
 const adminFailedAttempts = new Map(); // ip -> { count, resetAt }
+const uploadRateLimits = new Map(); // ip -> { count, resetAt }
+
+async function hmacSign(secret, message) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(secret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+    return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function issueSignedSession(env, payloadObj) {
+    const secret = env.ADMIN_SECRET || env.B2_APP_KEY || "aquamark-fallback-key";
+    const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+    const body = btoa(JSON.stringify({ ...payloadObj, exp }));
+    const sig = await hmacSign(secret, body);
+    return `${body}.${sig}`;
+}
+
+async function verifySignedSession(env, token) {
+    if (!token || typeof token !== "string" || !token.includes(".")) return null;
+    const [body, sig] = token.split(".");
+    if (!body || !sig) return null;
+    const secret = env.ADMIN_SECRET || env.B2_APP_KEY || "aquamark-fallback-key";
+    const expected = await hmacSign(secret, body);
+    if (!timingSafeEqual(sig, expected)) return null;
+    try {
+        const parsed = JSON.parse(atob(body));
+        if (!parsed.exp || parsed.exp < Date.now()) return null;
+        return parsed;
+    } catch {
+        return null;
+    }
+}
 
 function withSecurityHeaders(response) {
     const res = new Response(response.body, response);
@@ -252,9 +290,44 @@ export default {
             }
         }
 
+        // 0C. SIGNED HMAC-SHA256 SESSION TOKEN ISSUER (POST /api/session-sign)
+        if (url.pathname === "/api/session-sign" && request.method === "POST") {
+            try {
+                const { phone, role } = await request.json();
+                const cleanPhone = String(phone || "").replace(/\D/g, "").slice(-10);
+                const allowedRoles = new Set(["buyer", "seller", "mediator"]);
+                if (cleanPhone.length !== 10 || !allowedRoles.has(role)) {
+                    return withSecurityHeaders(Response.json({ ok: false, error: "Invalid session parameters" }, { status: 400 }));
+                }
+                const token = await issueSignedSession(env, { phone: cleanPhone, role });
+                return withSecurityHeaders(Response.json({ ok: true, token }));
+            } catch {
+                return withSecurityHeaders(Response.json({ ok: false, error: "Session sign failed" }, { status: 400 }));
+            }
+        }
+
         // 1. ఫైల్ అప్‌లోడ్ API (POST /api/upload) — Strict MIME & Size Guard + Cached Auth
         if (url.pathname === "/api/upload" && request.method === "POST") {
             try {
+                // Verify HMAC-signed session token if provided (reject any forged/tampered token)
+                const sessHeader = request.headers.get("X-AquaMark-Session");
+                if (sessHeader) {
+                    const verifiedSess = await verifySignedSession(env, sessHeader);
+                    if (!verifiedSess) {
+                        return withSecurityHeaders(new Response("Invalid or expired session token", { status: 401 }));
+                    }
+                }
+                // Per-IP upload spam rate limit (max 35 uploads / 10 mins per IP)
+                const nowMs = Date.now();
+                const rl = uploadRateLimits.get(clientIp);
+                if (rl && rl.resetAt > nowMs && rl.count >= 35) {
+                    return withSecurityHeaders(new Response("Upload rate limit reached. Please wait a few minutes.", { status: 429 }));
+                }
+                uploadRateLimits.set(clientIp, {
+                    count: rl && rl.resetAt > nowMs ? rl.count + 1 : 1,
+                    resetAt: rl && rl.resetAt > nowMs ? rl.resetAt : nowMs + 10 * 60 * 1000,
+                });
+
                 const formData = await request.formData();
                 const file = formData.get("file");
                 if (!file) return withSecurityHeaders(new Response("No file", { status: 400 }));
@@ -334,6 +407,13 @@ export default {
         // 2. ఫైల్ డిలీట్ API (POST /api/delete) — Zero-Class-C Cached fileId Delete
         if (url.pathname === "/api/delete" && request.method === "POST") {
             try {
+                const sessHeader = request.headers.get("X-AquaMark-Session");
+                if (sessHeader) {
+                    const verifiedSess = await verifySignedSession(env, sessHeader);
+                    if (!verifiedSess) {
+                        return withSecurityHeaders(new Response("Invalid or expired session token", { status: 401 }));
+                    }
+                }
                 const { fileNames } = await request.json();
 
                 for (const rawName of (fileNames || []).slice(0, 30)) {
