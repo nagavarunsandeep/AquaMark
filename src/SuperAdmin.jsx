@@ -52,7 +52,11 @@ export default function SuperAdmin() {
     const [selectedUser, setSelectedUser] = useState(null);
 
     // Broadcast form
+    const [broadcastMode, setBroadcastMode] = useState('role'); // 'role' | 'single'
     const [broadcastRole, setBroadcastRole] = useState('ALL');
+    const [broadcastTargetPhone, setBroadcastTargetPhone] = useState('');
+    const [broadcastPriority, setBroadcastPriority] = useState('info'); // 'info' | 'warning' | 'urgent'
+    const [broadcastPinBanner, setBroadcastPinBanner] = useState(true);
     const [broadcastTitle, setBroadcastTitle] = useState('');
     const [broadcastMsg, setBroadcastMsg] = useState('');
     const [sendingBroadcast, setSendingBroadcast] = useState(false);
@@ -534,31 +538,126 @@ export default function SuperAdmin() {
         if (!broadcastTitle.trim() || !broadcastMsg.trim()) return;
         setSendingBroadcast(true);
         try {
-            const targets = usersList.filter((u) => broadcastRole === 'ALL' || u.role === broadcastRole);
-            const existingNotifs = Array.isArray(kvStore.notifications) ? kvStore.notifications : [];
-            const nowStr = new Date().toLocaleString('en-IN');
-            const newEntries = targets.map((u, idx) => ({
+            const cleanPhone10 = (raw) => String(raw || '').split('_')[0].replace(/\D/g, '').slice(-10);
+            const now = new Date();
+            const nowStr = `${now.toLocaleDateString('en-IN')} • ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+            let targets = [];
+
+            if (broadcastMode === 'single') {
+                const wanted = cleanPhone10(broadcastTargetPhone);
+                if (wanted.length !== 10) {
+                    notify('Please enter a valid 10-digit mobile number.');
+                    setSendingBroadcast(false);
+                    return;
+                }
+                const matched = usersList.filter((u) => cleanPhone10(u.phone) === wanted);
+                targets = matched.length > 0
+                    ? matched.map((u) => ({ phone: cleanPhone10(u.phone), role: u.role }))
+                    : [{ phone: wanted, role: 'ALL' }];
+            } else {
+                const seen = new Set();
+                usersList
+                    .filter((u) => broadcastRole === 'ALL' || u.role === broadcastRole)
+                    .forEach((u) => {
+                        const p = cleanPhone10(u.phone);
+                        const k = `${p}_${u.role}`;
+                        if (p.length === 10 && !seen.has(k)) {
+                            seen.add(k);
+                            targets.push({ phone: p, role: u.role });
+                        }
+                    });
+            }
+
+            // Fetch latest notifications from DB first so we never clobber recent user alerts
+            const { data: freshKv } = await supabase
+                .from('app_kv_store')
+                .select('value')
+                .eq('key', 'notifications')
+                .maybeSingle();
+            const existingNotifs = Array.isArray(freshKv?.value)
+                ? freshKv.value
+                : (Array.isArray(kvStore.notifications) ? kvStore.notifications : []);
+
+            const priorityLabel = broadcastPriority === 'urgent' ? 'URGENT' : broadcastPriority === 'warning' ? 'ADVISORY' : 'OFFICIAL';
+            const newEntries = targets.map((t, idx) => ({
                 id: `ADMIN-${Date.now()}-${idx}`,
-                targetPhone: String(u.phone || '').replace(/^(buyer|seller|mediator)_/, ''),
-                targetRole: u.role,
+                targetPhone: t.phone,
+                targetRole: t.role,
                 title: `📢 ${broadcastTitle.trim()}`,
                 message: broadcastMsg.trim(),
-                time: nowStr,
+                details: {
+                    source: 'AquaMark Super Admin',
+                    priority: priorityLabel,
+                    audience: broadcastMode === 'single' ? `Direct (+91 ${t.phone})` : (broadcastRole === 'ALL' ? 'All Portals' : broadcastRole.toUpperCase()),
+                },
                 read: false,
+                createdAt: nowStr,
             }));
+
             const merged = [...newEntries, ...existingNotifs].slice(0, 600);
-            const { error } = await supabase.from('app_kv_store').upsert({
+            const { error: notifErr } = await supabase.from('app_kv_store').upsert({
                 key: 'notifications',
                 value: merged,
                 updated_at: new Date().toISOString(),
             });
+            if (notifErr) {
+                notify(`Broadcast failed: ${notifErr.message}`);
+                return;
+            }
+
+            let updatedBanner = kvStore.admin_broadcast || null;
+            if (broadcastMode === 'role' && broadcastPinBanner) {
+                updatedBanner = {
+                    id: `BCAST-${Date.now()}`,
+                    title: broadcastTitle.trim(),
+                    message: broadcastMsg.trim(),
+                    targetRole: broadcastRole,
+                    priority: broadcastPriority,
+                    createdAt: nowStr,
+                    active: true,
+                };
+                const { error: bErr } = await supabase.from('app_kv_store').upsert({
+                    key: 'admin_broadcast',
+                    value: updatedBanner,
+                    updated_at: new Date().toISOString(),
+                });
+                if (bErr) {
+                    notify(`Notifications sent, but top banner failed: ${bErr.message}`);
+                }
+            }
+
+            setKvStore((prev) => ({
+                ...prev,
+                notifications: merged,
+                ...(updatedBanner ? { admin_broadcast: updatedBanner } : {}),
+            }));
+            setBroadcastTitle('');
+            setBroadcastMsg('');
+            if (broadcastMode === 'single') setBroadcastTargetPhone('');
+            notify(
+                broadcastMode === 'single'
+                    ? `Direct notification sent to ${targets.length} account(s)!`
+                    : `Sent to ${targets.length} user(s)${broadcastPinBanner ? ' + pinned as Top Portal Banner!' : '!'}`
+            );
+        } finally {
+            setSendingBroadcast(false);
+        }
+    };
+
+    const handleClearBanner = async () => {
+        setSendingBroadcast(true);
+        try {
+            const cleared = { ...(kvStore.admin_broadcast || {}), active: false, clearedAt: new Date().toISOString() };
+            const { error } = await supabase.from('app_kv_store').upsert({
+                key: 'admin_broadcast',
+                value: cleared,
+                updated_at: new Date().toISOString(),
+            });
             if (error) {
-                notify(`Broadcast failed: ${error.message}`);
+                notify(`Failed to clear banner: ${error.message}`);
             } else {
-                setKvStore((prev) => ({ ...prev, notifications: merged }));
-                setBroadcastTitle('');
-                setBroadcastMsg('');
-                notify(`Broadcast sent to ${targets.length} users!`);
+                setKvStore((prev) => ({ ...prev, admin_broadcast: cleared }));
+                notify('Top announcement banner removed from all user portals.');
             }
         } finally {
             setSendingBroadcast(false);
@@ -1503,73 +1602,229 @@ export default function SuperAdmin() {
                 )}
 
                 {/* ================================================================
-            TAB 8: GLOBAL BROADCAST
+            TAB 8: GLOBAL BROADCAST & DIRECT NOTIFICATIONS
            ================================================================ */}
                 {activeTab === 'broadcast' && (
-                    <form onSubmit={handleSendBroadcast} className={`rounded-2xl p-4 sm:p-6 border shadow-xs space-y-4 max-w-2xl ${cardBg}`}>
-                        <div>
-                            <h3 className="font-extrabold text-base flex items-center gap-2">
-                                <Megaphone className="w-5 h-5 text-teal-500" /> Send Global Announcement
-                            </h3>
-                            <p className="text-xs opacity-65 mt-0.5">Delivers an instant in-app notification bell alert to selected user portals.</p>
-                        </div>
-
-                        <div className="space-y-3 text-xs">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+                        <form onSubmit={handleSendBroadcast} className={`lg:col-span-3 rounded-2xl p-4 sm:p-6 border shadow-xs space-y-4 ${cardBg}`}>
                             <div>
-                                <label className="font-bold opacity-75 block mb-1">Target Audience</label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[
-                                        { id: 'ALL', label: 'All Users' },
-                                        { id: 'buyer', label: 'All Buyers' },
-                                        { id: 'seller', label: 'All Sellers' },
-                                        { id: 'mediator', label: 'All Brokers' },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            type="button"
-                                            onClick={() => setBroadcastRole(opt.id)}
-                                            className={`py-2 px-3 rounded-xl border font-bold cursor-pointer ${broadcastRole === opt.id ? 'bg-teal-600 text-white border-teal-600' : subBg
-                                                }`}
-                                        >
-                                            {opt.label}
-                                        </button>
-                                    ))}
+                                <h3 className="font-extrabold text-base flex items-center gap-2">
+                                    <Megaphone className="w-5 h-5 text-teal-500" /> Super Admin Notifications & Top Banner
+                                </h3>
+                                <p className="text-xs opacity-65 mt-0.5">
+                                    Send instant Notification Bell alerts to users AND pin a live announcement banner at the top of Buyer, Seller & Broker portals.
+                                </p>
+                            </div>
+
+                            <div className="space-y-3.5 text-xs">
+                                {/* Delivery Mode */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBroadcastMode('role')}
+                                        className={`py-2 px-3 rounded-xl border font-bold cursor-pointer ${broadcastMode === 'role' ? 'bg-teal-600 text-white border-teal-600' : subBg
+                                            }`}
+                                    >
+                                        📢 Broadcast to Portal(s)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBroadcastMode('single')}
+                                        className={`py-2 px-3 rounded-xl border font-bold cursor-pointer ${broadcastMode === 'single' ? 'bg-teal-600 text-white border-teal-600' : subBg
+                                            }`}
+                                    >
+                                        👤 Direct User Notification
+                                    </button>
                                 </div>
+
+                                {broadcastMode === 'role' ? (
+                                    <div>
+                                        <label className="font-bold opacity-75 block mb-1">Target Audience</label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                            {[
+                                                { id: 'ALL', label: 'All Users' },
+                                                { id: 'buyer', label: 'All Buyers' },
+                                                { id: 'seller', label: 'All Sellers' },
+                                                { id: 'mediator', label: 'All Brokers' },
+                                            ].map((opt) => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setBroadcastRole(opt.id)}
+                                                    className={`py-2 px-3 rounded-xl border font-bold cursor-pointer ${broadcastRole === opt.id ? 'bg-teal-600 text-white border-teal-600' : subBg
+                                                        }`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="font-bold opacity-75 block mb-1">User 10-Digit Mobile Number</label>
+                                        <input
+                                            required
+                                            type="tel"
+                                            maxLength={10}
+                                            value={broadcastTargetPhone}
+                                            onChange={(e) => setBroadcastTargetPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                            placeholder="e.g., 9959933166"
+                                            className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono ${inputCls}`}
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="font-bold opacity-75 block mb-1">Alert Style / Priority</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { id: 'info', label: 'Teal Official', activeCls: 'bg-teal-600 text-white border-teal-600' },
+                                            { id: 'warning', label: 'Amber Advisory', activeCls: 'bg-amber-600 text-white border-amber-600' },
+                                            { id: 'urgent', label: 'Red Urgent', activeCls: 'bg-rose-600 text-white border-rose-600' },
+                                        ].map((p) => (
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                onClick={() => setBroadcastPriority(p.id)}
+                                                className={`py-2 px-2.5 rounded-xl border font-bold cursor-pointer ${broadcastPriority === p.id ? p.activeCls : subBg
+                                                    }`}
+                                            >
+                                                {p.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="font-bold opacity-75 block mb-1">Notice Title</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        value={broadcastTitle}
+                                        onChange={(e) => setBroadcastTitle(e.target.value)}
+                                        placeholder="e.g., Peak Season Hatchery Verification Update"
+                                        className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="font-bold opacity-75 block mb-1">Message (English / Telugu)</label>
+                                    <textarea
+                                        required
+                                        rows={4}
+                                        value={broadcastMsg}
+                                        onChange={(e) => setBroadcastMsg(e.target.value)}
+                                        placeholder="Write your announcement in English or Telugu..."
+                                        className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}
+                                    />
+                                </div>
+
+                                {broadcastMode === 'role' && (
+                                    <label className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer ${subBg}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={broadcastPinBanner}
+                                            onChange={(e) => setBroadcastPinBanner(e.target.checked)}
+                                            className="w-4 h-4 accent-teal-600 rounded"
+                                        />
+                                        <span className="text-xs font-bold">
+                                            Also display as a pinned Top Announcement Banner on user portals
+                                        </span>
+                                    </label>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={sendingBroadcast}
+                                    className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-extrabold px-5 py-3 rounded-xl inline-flex items-center gap-2 cursor-pointer"
+                                >
+                                    <Send className="w-4 h-4" /> {sendingBroadcast ? 'Sending...' : (broadcastMode === 'single' ? 'Send Direct Notification' : 'Send Broadcast & Pin Banner')}
+                                </button>
+                            </div>
+                        </form>
+
+                        {/* Right Column: Live Top Banner Control + Recent Admin Broadcasts */}
+                        <div className="lg:col-span-2 space-y-4">
+                            <div className={`rounded-2xl p-4 sm:p-5 border shadow-xs space-y-3 ${cardBg}`}>
+                                <div className="flex items-center justify-between gap-2">
+                                    <h4 className="font-extrabold text-sm flex items-center gap-1.5">
+                                        <Megaphone className="w-4 h-4 text-teal-500" /> Live Top Portal Banner
+                                    </h4>
+                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${kvStore.admin_broadcast?.active ? 'bg-emerald-500/15 text-emerald-500' : 'bg-slate-500/15 opacity-60'
+                                        }`}>
+                                        {kvStore.admin_broadcast?.active ? 'LIVE' : 'OFF'}
+                                    </span>
+                                </div>
+
+                                {kvStore.admin_broadcast?.active ? (
+                                    <div className="space-y-3">
+                                        <div className={`rounded-xl p-3.5 border text-xs space-y-1 ${kvStore.admin_broadcast.priority === 'urgent'
+                                            ? 'bg-rose-500/10 border-rose-500/40'
+                                            : kvStore.admin_broadcast.priority === 'warning'
+                                                ? 'bg-amber-500/10 border-amber-500/40'
+                                                : 'bg-teal-500/10 border-teal-500/40'
+                                            }`}>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="font-extrabold">{kvStore.admin_broadcast.title}</span>
+                                                <span className="text-[10px] font-bold uppercase opacity-75">
+                                                    {kvStore.admin_broadcast.targetRole === 'ALL' ? 'All Portals' : kvStore.admin_broadcast.targetRole}
+                                                </span>
+                                            </div>
+                                            <p className="opacity-85 leading-relaxed">{kvStore.admin_broadcast.message}</p>
+                                            <p className="text-[10px] opacity-60">{kvStore.admin_broadcast.createdAt}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleClearBanner}
+                                            disabled={sendingBroadcast}
+                                            className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" /> Remove Top Banner from Portals
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs opacity-60 py-2">
+                                        No active top banner right now. Send a broadcast with &quot;Top Announcement Banner&quot; checked to pin a live notice across portals.
+                                    </p>
+                                )}
                             </div>
 
-                            <div>
-                                <label className="font-bold opacity-75 block mb-1">Notice Title</label>
-                                <input
-                                    required
-                                    type="text"
-                                    value={broadcastTitle}
-                                    onChange={(e) => setBroadcastTitle(e.target.value)}
-                                    placeholder="e.g., Peak Season Hatchery Verification Update"
-                                    className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}
-                                />
+                            <div className={`rounded-2xl p-4 sm:p-5 border shadow-xs space-y-2.5 ${cardBg}`}>
+                                <h4 className="font-extrabold text-sm">Recent Admin Notifications</h4>
+                                {(() => {
+                                    const allNotifs = Array.isArray(kvStore.notifications) ? kvStore.notifications : [];
+                                    const seenKeys = new Set();
+                                    const recentAdmin = [];
+                                    for (const n of allNotifs) {
+                                        if (String(n.id || '').startsWith('ADMIN-')) {
+                                            const k = `${n.title}|${n.createdAt || n.time || ''}`;
+                                            if (!seenKeys.has(k)) {
+                                                seenKeys.add(k);
+                                                recentAdmin.push(n);
+                                            }
+                                            if (recentAdmin.length >= 5) break;
+                                        }
+                                    }
+                                    if (recentAdmin.length === 0) {
+                                        return <p className="text-xs opacity-60">No admin broadcasts sent yet.</p>;
+                                    }
+                                    return (
+                                        <div className="space-y-2">
+                                            {recentAdmin.map((n) => (
+                                                <div key={n.id} className={`p-2.5 rounded-xl border text-xs space-y-0.5 ${subBg}`}>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="font-bold truncate">{n.title}</span>
+                                                        <span className="text-[10px] opacity-60 shrink-0">{n.createdAt || n.time || ''}</span>
+                                                    </div>
+                                                    <p className="opacity-75 line-clamp-2">{n.message}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
                             </div>
-
-                            <div>
-                                <label className="font-bold opacity-75 block mb-1">Message</label>
-                                <textarea
-                                    required
-                                    rows={4}
-                                    value={broadcastMsg}
-                                    onChange={(e) => setBroadcastMsg(e.target.value)}
-                                    placeholder="Write your announcement in English or Telugu..."
-                                    className={`w-full border rounded-xl px-3.5 py-2.5 text-sm ${inputCls}`}
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={sendingBroadcast}
-                                className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-extrabold px-5 py-3 rounded-xl inline-flex items-center gap-2 cursor-pointer"
-                            >
-                                <Send className="w-4 h-4" /> {sendingBroadcast ? 'Sending...' : 'Send Broadcast Now'}
-                            </button>
                         </div>
-                    </form>
+                    </div>
                 )}
             </main>
 

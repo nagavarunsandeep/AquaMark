@@ -1061,8 +1061,13 @@ function AquaMarkApp() {
   const [brokerFarmers, setBrokerFarmers] = useState(() => safeLoadStorage('aqm_v11_farmers', []));
   const [savedBatchIds, setSavedBatchIds] = useState(() => safeLoadStorage('aqm_v11_wishlist', []));
   const [liveVideoRequests, setLiveVideoRequests] = useState(() => safeLoadStorage('aqm_v11_live_videos', []));
+  const [userEmails, setUserEmails] = useState(() => safeLoadStorage('aqm_v11_user_emails', {}));
   const [farmerPonds, setFarmerPonds] = useState(() => safeLoadStorage('aqm_v11_ponds', []));
   const [notifications, setNotifications] = useState(() => safeLoadStorage('aqm_v11_notifications', []));
+  const [adminBroadcast, setAdminBroadcast] = useState(() => safeLoadStorage('aqm_v11_admin_broadcast', null));
+  const [dismissedBroadcastId, setDismissedBroadcastId] = useState(() => {
+    try { return localStorage.getItem('aqm_v11_dismissed_bcast') || ''; } catch { return ''; }
+  });
   // Unified Upload Images/Videos toggle states for Publish Batch & Edit Batch
   const [showNewMediaPanel, setShowNewMediaPanel] = useState(false);
   const [showEditMediaPanel, setShowEditMediaPanel] = useState(false);
@@ -1199,6 +1204,7 @@ function AquaMarkApp() {
   useEffect(() => { try { localStorage.setItem('aqm_v11_bookings', JSON.stringify(bookings)); } catch { } }, [bookings]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_live_videos', JSON.stringify(liveVideoRequests)); } catch { } }, [liveVideoRequests]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_user_emails', JSON.stringify(userEmails)); } catch { } }, [userEmails]);
 
   // Dynamic Browser Tab Title based on Login / Active User Role
   useEffect(() => {
@@ -1216,6 +1222,7 @@ function AquaMarkApp() {
   }, [currentUser]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_admin_broadcast', JSON.stringify(adminBroadcast)); } catch { } }, [adminBroadcast]);
 
   useEffect(() => { try { localStorage.setItem('aqm_v12_matchmaker', JSON.stringify(matchmaker)); } catch { } }, [matchmaker]);
   useEffect(() => { try { localStorage.setItem('aqm_v12_watchlist_price', JSON.stringify(watchlistPrice)); } catch { } }, [watchlistPrice]);
@@ -1332,6 +1339,8 @@ function AquaMarkApp() {
           if (item.key === 'ponds') setFarmerPonds(item.value || []);
           if (item.key === 'live_videos') setLiveVideoRequests(item.value || []);
           if (item.key === 'notifications') setNotifications(item.value || []);
+          if (item.key === 'admin_broadcast') setAdminBroadcast(item.value || null);
+          if (item.key === 'user_emails') setUserEmails(item.value || {});
         });
       }
 
@@ -1460,6 +1469,15 @@ function AquaMarkApp() {
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifyingWa, setIsVerifyingWa] = useState(false);
   const [waVerifiedDone, setWaVerifiedDone] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [otpCodeInput, setOtpCodeInput] = useState('');
+  const [otpSentToEmail, setOtpSentToEmail] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [emailOtpVerified, setEmailOtpVerified] = useState(false);
+  const [forgotResolvedRoleKey, setForgotResolvedRoleKey] = useState('');
+  const [authNotice, setAuthNotice] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [bookingStatusFilter, setBookingStatusFilter] = useState('ALL');
   const [showPublishBatchForm, setShowPublishBatchForm] = useState(false);
@@ -1938,9 +1956,8 @@ function AquaMarkApp() {
 
   const handleCompleteSignUpOrReset = async (e) => {
     e.preventDefault();
-    const cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
-    if (cleanPhone.length !== 10) {
-      showToast(t.toasts.invalidPhone);
+    if (!emailOtpVerified) {
+      showToast(L('Please verify your Email OTP first.', 'ముందుగా మీ Email OTP వెరిఫై చేయండి.'));
       return;
     }
     if ((loginPassword || '').trim().length < 6) {
@@ -1948,17 +1965,40 @@ function AquaMarkApp() {
       return;
     }
 
-    const roleKey = getUserKey(cleanPhone, loginRole);
+    let cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
+    let roleKey = '';
+    if (authMode === 'forgot') {
+      roleKey = forgotResolvedRoleKey || getUserKey(cleanPhone, loginRole);
+      const foundRec = registeredUsers[roleKey];
+      if (!foundRec) {
+        showToast(t.toasts.notRegistered);
+        return;
+      }
+      cleanPhone = String(foundRec.phone || cleanPhone).replace(/\D/g, '').slice(-10);
+    } else {
+      if (cleanPhone.length !== 10) {
+        showToast(t.toasts.invalidPhone);
+        return;
+      }
+      roleKey = getUserKey(cleanPhone, loginRole);
+      if (registeredUsers[roleKey]) {
+        showToast(L('This mobile number is already registered for this portal. Please Login.', 'ఈ మొబైల్ నంబర్ ఇప్పటికే రిజిస్టర్ అయింది. దయచేసి Login అవ్వండి.'));
+        return;
+      }
+    }
+
     const existing = registeredUsers[roleKey];
     const finalName = authMode === 'forgot'
       ? (existing?.name || loginName.trim() || 'Verified User')
       : (loginName.trim() || (loginRole === 'buyer' ? 'Farmer' : loginRole === 'seller' ? 'Hatchery Owner' : 'Broker Partner'));
+    const verifiedEmail = (otpSentToEmail || loginEmail || '').trim().toLowerCase();
 
     const hashedPassword = await hashPasswordPbkdf2(loginPassword.trim());
     const userRecord = {
       phone: cleanPhone,
       name: finalName,
       role: loginRole,
+      email: verifiedEmail || existing?.email || '',
       password: hashedPassword,
       depositPaid: existing?.depositPaid || false,
       depositUtr: existing?.depositUtr || '',
@@ -1974,23 +2014,195 @@ function AquaMarkApp() {
       last_login: new Date().toISOString()
     });
 
+    if (verifiedEmail) {
+      const nextEmails = { ...userEmails, [roleKey]: verifiedEmail };
+      setUserEmails(nextEmails);
+      await saveKvToSupabase('user_emails', nextEmails);
+    }
+
+    setEmailOtpVerified(false);
+    setOtpSentToEmail('');
+    setOtpCodeInput('');
+    setForgotResolvedRoleKey('');
+    setAuthNotice('');
+
     completePortalLogin({
       role: loginRole,
       name: finalName,
       phone: cleanPhone,
+      email: verifiedEmail || existing?.email || '',
       depositPaid: userRecord.depositPaid
     });
   };
 
-  const handlePasswordLoginSubmit = async (e) => {
-    e.preventDefault();
-    const cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
-    if (cleanPhone.length !== 10) {
-      showToast(t.toasts.invalidPhone);
+  const resetEmailOtpFlow = () => {
+    setEmailOtpVerified(false);
+    setOtpSentToEmail('');
+    setOtpCodeInput('');
+    setForgotResolvedRoleKey('');
+    setAuthNotice('');
+    setWaVerifiedDone(false);
+  };
+
+  const maskEmailAddr = (em) => {
+    const s = String(em || '');
+    const [u, d] = s.split('@');
+    if (!u || !d) return s;
+    return `${u.slice(0, 2)}${'*'.repeat(Math.max(2, u.length - 2))}@${d}`;
+  };
+
+  const handleSendSignupEmailOtp = async () => {
+    setAuthNotice('');
+    const cleanName = (loginName || '').trim();
+    const cleanEmail = (loginEmail || '').trim().toLowerCase();
+    if (!cleanName) {
+      showToast(L('Please enter your Full Name first.', 'ముందుగా మీ పేరు నమోదు చేయండి.'));
       return;
     }
-    const roleKey = getUserKey(cleanPhone, loginRole);
-    const found = registeredUsers[roleKey];
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      showToast(L('Please enter a valid Email address.', 'దయచేసి సరైన Email చిరునామా ఇవ్వండి.'));
+      return;
+    }
+    const alreadyEmailKey = Object.keys(userEmails).find(
+      (k) => k.startsWith(`${loginRole}_`) && String(userEmails[k] || '').toLowerCase() === cleanEmail
+    );
+    if (alreadyEmailKey && registeredUsers[alreadyEmailKey]) {
+      setAuthNotice(L('This email is already registered for this portal. Please switch to Login.', 'ఈ Email ఇప్పటికే రిజిస్టర్ అయింది. దయచేసి Login చేయండి.'));
+      return;
+    }
+
+    setIsSendingOtp(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: { shouldCreateUser: true }
+      });
+      if (error) {
+        setAuthNotice(error.message || L('Failed to send OTP. Check Supabase Custom SMTP settings.', 'OTP పంపడం విఫలమైంది.'));
+      } else {
+        setOtpSentToEmail(cleanEmail);
+        setOtpCodeInput('');
+        setEmailOtpVerified(false);
+        showToast(L(`OTP sent to ${cleanEmail}! Check Inbox/Spam.`, `${cleanEmail} కు OTP పంపబడింది! Inbox/Spam చెక్ చేయండి.`));
+      }
+    } catch (err) {
+      setAuthNotice(err?.message || 'Network error while sending Email OTP.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleSendForgotEmailOtp = async () => {
+    setAuthNotice('');
+    const rawId = (loginIdentifier || '').trim().toLowerCase();
+    if (!rawId) {
+      showToast(L('Enter your registered Email or 10-digit Mobile Number.', 'మీ రిజిస్టర్డ్ Email లేదా 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.'));
+      return;
+    }
+
+    let matchedKey = '';
+    if (rawId.includes('@')) {
+      matchedKey = Object.keys(userEmails).find(
+        (k) => k.startsWith(`${loginRole}_`) && String(userEmails[k] || '').toLowerCase() === rawId
+      ) || '';
+    } else {
+      const digits = rawId.replace(/\D/g, '').slice(-10);
+      if (digits.length === 10) {
+        const candidate = getUserKey(digits, loginRole);
+        if (registeredUsers[candidate]) matchedKey = candidate;
+      }
+    }
+
+    if (!matchedKey || !registeredUsers[matchedKey]) {
+      setAuthNotice(L('No account found for this portal with that Email / Mobile.', 'ఈ పోర్టల్‌లో ఆ Email / మొబైల్ నంబర్‌తో ఖాతా లేదు.'));
+      return;
+    }
+
+    const linkedEmail = (userEmails[matchedKey] || registeredUsers[matchedKey]?.email || '').trim().toLowerCase();
+    if (!linkedEmail) {
+      setAuthNotice(L('This older account has no verified email linked. Contact AquaMark Admin to reset.', 'ఈ పాత ఖాతాకు Email లింక్ లేదు. రీసెట్ కోసం AquaMark Admin ను సంప్రదించండి.'));
+      return;
+    }
+
+    setIsSendingOtp(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: linkedEmail,
+        options: { shouldCreateUser: true }
+      });
+      if (error) {
+        setAuthNotice(error.message || L('Failed to send reset OTP.', 'OTP పంపడం విఫలమైంది.'));
+      } else {
+        setForgotResolvedRoleKey(matchedKey);
+        setOtpSentToEmail(linkedEmail);
+        setOtpCodeInput('');
+        setEmailOtpVerified(false);
+        showToast(L(`Reset OTP sent to ${maskEmailAddr(linkedEmail)}!`, `${maskEmailAddr(linkedEmail)} కు OTP పంపబడింది!`));
+      }
+    } catch (err) {
+      setAuthNotice(err?.message || 'Network error while sending OTP.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    setAuthNotice('');
+    const codeStr = (otpCodeInput || '').replace(/\D/g, '');
+    if (codeStr.length < 6) {
+      setAuthNotice(L('Please enter the 6-digit OTP sent to your email.', 'మీ Email కు వచ్చిన 6 అంకెల OTP నమోదు చేయండి.'));
+      return;
+    }
+    setIsVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: otpSentToEmail,
+        token: codeStr,
+        type: 'email'
+      });
+      if (error || !data?.user) {
+        setAuthNotice(error?.message || L('Invalid or expired OTP. Please check and try again.', 'తప్పు లేదా గడువు ముగిసిన OTP. మళ్ళీ ప్రయత్నించండి.'));
+      } else {
+        supabase.auth.signOut().catch(() => { });
+        setEmailOtpVerified(true);
+        setAuthNotice('');
+        showToast(L('Email verified! Now complete your details below.', 'Email వెరిఫై అయింది! ఇప్పుడు క్రింది వివరాలు పూర్తి చేయండి.'));
+      }
+    } catch (err) {
+      setAuthNotice(err?.message || 'OTP verification failed.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handlePasswordLoginSubmit = async (e) => {
+    e.preventDefault();
+    setAuthNotice('');
+    const rawId = (loginIdentifier || '').trim().toLowerCase();
+    if (!rawId) {
+      showToast(L('Enter your Email or 10-digit Mobile Number.', 'మీ Email లేదా 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.'));
+      return;
+    }
+
+    let roleKey = '';
+    let cleanPhone = '';
+    if (rawId.includes('@')) {
+      roleKey = Object.keys(userEmails).find(
+        (k) => k.startsWith(`${loginRole}_`) && String(userEmails[k] || '').toLowerCase() === rawId
+      ) || '';
+      if (roleKey && registeredUsers[roleKey]) {
+        cleanPhone = String(registeredUsers[roleKey].phone || '').replace(/\D/g, '').slice(-10);
+      }
+    } else {
+      cleanPhone = rawId.replace(/\D/g, '').slice(-10);
+      if (cleanPhone.length !== 10) {
+        showToast(t.toasts.invalidPhone);
+        return;
+      }
+      roleKey = getUserKey(cleanPhone, loginRole);
+    }
+
+    const found = roleKey ? registeredUsers[roleKey] : null;
     if (!found) {
       showToast(t.toasts.notRegistered);
       return;
@@ -2001,7 +2213,6 @@ function AquaMarkApp() {
       return;
     }
 
-    // Auto-upgrade legacy plain-text password to PBKDF2-SHA256 hash seamlessly
     const updatePayload = { last_login: new Date().toISOString() };
     if (found.password && !String(found.password).startsWith('pbkdf2_v1$')) {
       const upgradedHash = await hashPasswordPbkdf2(loginPassword.trim());
@@ -2013,7 +2224,8 @@ function AquaMarkApp() {
     completePortalLogin({
       role: loginRole,
       name: found.name,
-      phone: cleanPhone,
+      phone: cleanPhone || String(found.phone || '').replace(/\D/g, '').slice(-10),
+      email: userEmails[roleKey] || found.email || '',
       depositPaid: Boolean(found.depositPaid || hatcheryProfiles[cleanPhone]?.depositPaid)
     });
   };
@@ -4322,21 +4534,28 @@ function AquaMarkApp() {
             <div className={`grid grid-cols-2 p-1 rounded-2xl border ${subCardBg}`}>
               <button
                 type="button"
-                onClick={() => { setAuthMode('signup'); setWaVerifiedDone(false); setLoginPassword(''); }}
+                onClick={() => { setAuthMode('signup'); resetEmailOtpFlow(); setLoginPassword(''); }}
                 className={`py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${authMode === 'signup' ? 'bg-teal-600 text-white shadow-xs' : 'opacity-70 hover:opacity-100'}`}
               >
                 {t.signUpTab}
               </button>
               <button
                 type="button"
-                onClick={() => { setAuthMode('login'); setWaVerifiedDone(false); setLoginPassword(''); }}
+                onClick={() => { setAuthMode('login'); resetEmailOtpFlow(); setLoginPassword(''); }}
                 className={`py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${authMode === 'login' || authMode === 'forgot' ? 'bg-teal-600 text-white shadow-xs' : 'opacity-70 hover:opacity-100'}`}
               >
                 {t.loginTab}
               </button>
             </div>
 
-            {/* MODE A: SIGN UP */}
+            {authNotice && (
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-xl p-3 text-xs font-bold flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{authNotice}</span>
+              </div>
+            )}
+
+            {/* MODE A: SIGN UP — EMAIL OTP VERIFY FIRST -> THEN MOBILE + PASSWORD */}
             {authMode === 'signup' && (
               <form onSubmit={handleCompleteSignUpOrReset} className="space-y-4">
                 <div>
@@ -4344,6 +4563,7 @@ function AquaMarkApp() {
                   <input
                     required
                     type="text"
+                    disabled={emailOtpVerified}
                     placeholder={t.namePlaceholders[loginRole]}
                     value={loginName}
                     onChange={(e) => setLoginName(e.target.value)}
@@ -4352,54 +4572,88 @@ function AquaMarkApp() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold block mb-1.5">{t.mobileLabel}</label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3.5 text-sm font-bold opacity-60">+91</span>
+                  <label className="text-xs font-bold block mb-1.5">{L('Email Address (For Real OTP Verification)', 'Email చిరునామా (OTP వెరిఫికేషన్ కోసం)')}</label>
+                  <div className="flex gap-2">
                     <input
                       required
-                      type="tel"
-                      maxLength={10}
-                      disabled={waVerifiedDone}
-                      placeholder="9876543210"
-                      value={loginPhone}
-                      onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                      className={`w-full border rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none ${inputCls}`}
+                      type="email"
+                      disabled={emailOtpVerified}
+                      placeholder="yourname@gmail.com"
+                      value={loginEmail}
+                      onChange={(e) => { setAuthNotice(''); setLoginEmail(e.target.value); }}
+                      className={`flex-1 min-w-0 border rounded-xl px-3.5 py-2.5 text-sm select-text focus:outline-none ${inputCls}`}
                     />
-                    <Smartphone className="w-4 h-4 opacity-50 absolute right-3.5" />
+                    {!emailOtpVerified && (
+                      <button
+                        type="button"
+                        disabled={isSendingOtp}
+                        onClick={handleSendSignupEmailOtp}
+                        className="bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        {isSendingOtp ? L('Sending...', 'పంపుతోంది...') : otpSentToEmail ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {!waVerifiedDone ? (
-                  <button
-                    type="button"
-                    disabled={isVerifyingWa}
-                    onClick={handleTriggerInstantWhatsAppVerify}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-75 text-white font-bold py-3 rounded-xl text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {isVerifyingWa ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" /> {t.verifyingWaAnim}
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" /> {t.verifyWaBtn}
-                      </>
-                    )}
-                  </button>
-                ) : (
+                {otpSentToEmail && !emailOtpVerified && (
+                  <div className="border border-teal-500/40 bg-teal-500/5 rounded-2xl p-3.5 space-y-3">
+                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400">
+                      {L(`Enter 6-digit OTP sent to ${otpSentToEmail}:`, `${otpSentToEmail} కు వచ్చిన 6 అంకెల OTP ఇవ్వండి:`)}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={8}
+                        placeholder="Enter 6-digit OTP"
+                        value={otpCodeInput}
+                        onChange={(e) => { setAuthNotice(''); setOtpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 8)); }}
+                        className={`flex-1 min-w-0 border-2 border-teal-500 rounded-xl px-3.5 py-2.5 text-sm font-mono font-black tracking-widest text-center select-text focus:outline-none ${inputCls}`}
+                      />
+                      <button
+                        type="button"
+                        disabled={isVerifyingOtp}
+                        onClick={handleVerifyEmailOtp}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        {isVerifyingOtp ? L('Checking...', 'చెక్ చేస్తోంది...') : L('Verify OTP', 'వెరిఫై చేయి')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {emailOtpVerified && (
                   <div className="space-y-4 pt-1">
-                    <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2.5 text-xs text-emerald-500 font-bold flex items-center justify-between">
-                      <span>✓ +91 {loginPhone} Verified ({activeRoleMeta.title})</span>
-                      <button type="button" onClick={() => setWaVerifiedDone(false)} className="underline text-[11px] cursor-pointer">
+                    <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2.5 text-xs text-emerald-500 font-bold flex items-center justify-between gap-2">
+                      <span className="truncate">✓ {otpSentToEmail} Verified</span>
+                      <button type="button" onClick={resetEmailOtpFlow} className="underline text-[11px] shrink-0 cursor-pointer">
                         Change
                       </button>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold block mb-1.5">{t.mobileLabel}</label>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-sm font-bold opacity-60">+91</span>
+                        <input
+                          required
+                          type="tel"
+                          maxLength={10}
+                          placeholder="9876543210"
+                          value={loginPhone}
+                          onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          className={`w-full border rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none ${inputCls}`}
+                        />
+                        <Smartphone className="w-4 h-4 opacity-50 absolute right-3.5" />
+                      </div>
                     </div>
 
                     <div>
                       <label className="text-xs font-bold block mb-1.5">{t.setPasswordLabel}</label>
                       <div className="relative flex items-center">
                         <input
-                          autoFocus
                           required
                           type={showPassword ? 'text' : 'password'}
                           minLength={6}
@@ -4429,24 +4683,21 @@ function AquaMarkApp() {
               </form>
             )}
 
-            {/* MODE B: LOGIN */}
+            {/* MODE B: LOGIN WITH EMAIL OR 10-DIGIT MOBILE + PASSWORD */}
             {authMode === 'login' && (
               <form onSubmit={handlePasswordLoginSubmit} className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold block mb-1.5">{t.mobileLabel} ({activeRoleMeta.title})</label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3.5 text-sm font-bold opacity-60">+91</span>
-                    <input
-                      required
-                      type="tel"
-                      maxLength={10}
-                      placeholder="9876543210"
-                      value={loginPhone}
-                      onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                      className={`w-full border rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none ${inputCls}`}
-                    />
-                    <Smartphone className="w-4 h-4 opacity-50 absolute right-3.5" />
-                  </div>
+                  <label className="text-xs font-bold block mb-1.5">
+                    {L('Email or 10-Digit Mobile Number', 'Email లేదా 10 అంకెల మొబైల్ నంబర్')} ({activeRoleMeta.title})
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="yourname@gmail.com or 9876543210"
+                    value={loginIdentifier}
+                    onChange={(e) => { setAuthNotice(''); setLoginIdentifier(e.target.value); }}
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-bold select-text focus:outline-none ${inputCls}`}
+                  />
                 </div>
 
                 <div>
@@ -4473,7 +4724,7 @@ function AquaMarkApp() {
                 <div className="flex items-center justify-between text-xs">
                   <button
                     type="button"
-                    onClick={() => { setAuthMode('forgot'); setWaVerifiedDone(false); setLoginPassword(''); }}
+                    onClick={() => { setAuthMode('forgot'); resetEmailOtpFlow(); setLoginPassword(''); }}
                     className="text-teal-500 font-bold hover:underline cursor-pointer"
                   >
                     {t.forgotPasswordLink}
@@ -4489,55 +4740,75 @@ function AquaMarkApp() {
               </form>
             )}
 
-            {/* MODE C: FORGOT PASSWORD */}
+            {/* MODE C: FORGOT PASSWORD — EMAIL OR MOBILE -> EMAIL OTP -> NEW PASSWORD */}
             {authMode === 'forgot' && (
               <form onSubmit={handleCompleteSignUpOrReset} className="space-y-4">
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs font-bold text-amber-500 flex items-center justify-between">
                   <span>{t.resetPasswordTitle}</span>
-                  <button type="button" onClick={() => setAuthMode('login')} className="underline text-[11px] cursor-pointer">
+                  <button type="button" onClick={() => { setAuthMode('login'); resetEmailOtpFlow(); }} className="underline text-[11px] cursor-pointer">
                     {t.back}
                   </button>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold block mb-1.5">{t.mobileLabel} ({activeRoleMeta.title})</label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3.5 text-sm font-bold opacity-60">+91</span>
+                  <label className="text-xs font-bold block mb-1.5">
+                    {L('Registered Email or 10-Digit Mobile', 'రిజిస్టర్డ్ Email లేదా 10 అంకెల మొబైల్')} ({activeRoleMeta.title})
+                  </label>
+                  <div className="flex gap-2">
                     <input
                       required
-                      type="tel"
-                      maxLength={10}
-                      disabled={waVerifiedDone}
-                      placeholder="9876543210"
-                      value={loginPhone}
-                      onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                      className={`w-full border rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none ${inputCls}`}
+                      type="text"
+                      disabled={emailOtpVerified}
+                      placeholder="yourname@gmail.com or 9876543210"
+                      value={loginIdentifier}
+                      onChange={(e) => { setAuthNotice(''); setLoginIdentifier(e.target.value); }}
+                      className={`flex-1 min-w-0 border rounded-xl px-3.5 py-2.5 text-sm font-bold select-text focus:outline-none ${inputCls}`}
                     />
-                    <Smartphone className="w-4 h-4 opacity-50 absolute right-3.5" />
+                    {!emailOtpVerified && (
+                      <button
+                        type="button"
+                        disabled={isSendingOtp}
+                        onClick={handleSendForgotEmailOtp}
+                        className="bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        {isSendingOtp ? L('Sending...', 'పంపుతోంది...') : otpSentToEmail ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {!waVerifiedDone ? (
-                  <button
-                    type="button"
-                    disabled={isVerifyingWa}
-                    onClick={handleTriggerInstantWhatsAppVerify}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-75 text-white font-bold py-3 rounded-xl text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {isVerifyingWa ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" /> {t.verifyingWaAnim}
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" /> {t.verifyWaBtn}
-                      </>
-                    )}
-                  </button>
-                ) : (
+                {otpSentToEmail && !emailOtpVerified && (
+                  <div className="border border-teal-500/40 bg-teal-500/5 rounded-2xl p-3.5 space-y-3">
+                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400">
+                      {L(`Enter 6-digit OTP sent to ${maskEmailAddr(otpSentToEmail)}:`, `${maskEmailAddr(otpSentToEmail)} కు వచ్చిన 6 అంకెల OTP ఇవ్వండి:`)}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={8}
+                        placeholder="Enter 6-digit OTP"
+                        value={otpCodeInput}
+                        onChange={(e) => { setAuthNotice(''); setOtpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 8)); }}
+                        className={`flex-1 min-w-0 border-2 border-teal-500 rounded-xl px-3.5 py-2.5 text-sm font-mono font-black tracking-widest text-center select-text focus:outline-none ${inputCls}`}
+                      />
+                      <button
+                        type="button"
+                        disabled={isVerifyingOtp}
+                        onClick={handleVerifyEmailOtp}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        {isVerifyingOtp ? L('Checking...', 'చెక్ చేస్తోంది...') : L('Verify OTP', 'వెరిఫై చేయి')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {emailOtpVerified && (
                   <div className="space-y-4">
                     <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2.5 text-xs text-emerald-500 font-bold">
-                      ✓ +91 {loginPhone} Verified! Set your new password below.
+                      ✓ {maskEmailAddr(otpSentToEmail)} Verified! Set your new password below.
                     </div>
                     <div>
                       <label className="text-xs font-bold block mb-1.5">{t.setPasswordLabel}</label>
@@ -4734,9 +5005,12 @@ function AquaMarkApp() {
 
             {/* NOTIFICATION BELL BUTTON FOR ALL USERS */}
             {(() => {
-              const myUnreadCount = notifications.filter(
-                n => n.targetPhone === currentUser.phone && (!n.targetRole || n.targetRole === currentUser.role) && !n.read
-              ).length;
+              const myCleanPhone = String(currentUser.phone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+              const myUnreadCount = notifications.filter(n => {
+                const nPhone = String(n.targetPhone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+                const roleMatch = !n.targetRole || n.targetRole === 'ALL' || n.targetRole === currentUser.role;
+                return (nPhone === myCleanPhone || n.targetPhone === 'ALL') && roleMatch && !n.read;
+              }).length;
               return (
                 <button
                   type="button"
@@ -4782,6 +5056,60 @@ function AquaMarkApp() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* =========================================================
+            SUPER ADMIN PINNED TOP ANNOUNCEMENT BANNER (ALL PORTALS)
+           ========================================================= */}
+        {adminBroadcast && adminBroadcast.active && (adminBroadcast.targetRole === 'ALL' || adminBroadcast.targetRole === currentUser.role) && dismissedBroadcastId !== adminBroadcast.id && (() => {
+          const isUrgent = adminBroadcast.priority === 'urgent';
+          const isWarning = adminBroadcast.priority === 'warning';
+          const bannerStyle = isUrgent
+            ? (darkMode ? 'bg-rose-950/60 border-rose-500/60 text-rose-100' : 'bg-rose-50 border-rose-300 text-rose-950')
+            : isWarning
+              ? (darkMode ? 'bg-amber-950/50 border-amber-500/60 text-amber-100' : 'bg-amber-50 border-amber-300 text-amber-950')
+              : (darkMode ? 'bg-teal-950/60 border-teal-500/60 text-teal-100' : 'bg-teal-50 border-teal-300 text-teal-950');
+          const badgeStyle = isUrgent
+            ? 'bg-rose-600 text-white'
+            : isWarning
+              ? 'bg-amber-600 text-white'
+              : 'bg-teal-600 text-white';
+          const badgeText = isUrgent
+            ? L('URGENT NOTICE', 'అత్యవసర ప్రకటన')
+            : isWarning
+              ? L('ADVISORY', 'ముఖ్య సూచన')
+              : L('ANNOUNCEMENT', 'అధికారిక ప్రకటన');
+          return (
+            <div className={`rounded-2xl border-2 px-4 py-3 shadow-sm flex items-start justify-between gap-3 ${bannerStyle}`}>
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${badgeStyle}`}>
+                  <Megaphone className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wide ${badgeStyle}`}>
+                      {badgeText}
+                    </span>
+                    <h4 className="font-extrabold text-xs sm:text-sm leading-snug">{adminBroadcast.title}</h4>
+                    {adminBroadcast.createdAt && (
+                      <span className="text-[10px] opacity-65 font-mono">{adminBroadcast.createdAt}</span>
+                    )}
+                  </div>
+                  <p className="text-xs opacity-90 leading-relaxed break-words">{adminBroadcast.message}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setDismissedBroadcastId(adminBroadcast.id);
+                  try { localStorage.setItem('aqm_v11_dismissed_bcast', adminBroadcast.id); } catch { }
+                }}
+                className="p-1 rounded-lg opacity-65 hover:opacity-100 font-bold text-sm shrink-0 cursor-pointer"
+                title={L('Dismiss announcement', 'ప్రకటనను మూసివేయండి')}
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })()}
         {/* =========================================================
             1. BUYER (FARMER) PORTAL
            ========================================================= */}
@@ -9590,9 +9918,12 @@ Please advise immediate treatment protocol.`;
           NOTIFICATIONS PANEL MODAL (ALL ROLES + FULL DETAILS)
          ========================================================= */}
       {showNotifPanel && (() => {
-        const myNotifs = notifications.filter(
-          n => n.targetPhone === currentUser?.phone && (!n.targetRole || n.targetRole === currentUser?.role)
-        );
+        const myCleanPhone = String(currentUser?.phone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+        const myNotifs = notifications.filter(n => {
+          const nPhone = String(n.targetPhone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+          const roleMatch = !n.targetRole || n.targetRole === 'ALL' || n.targetRole === currentUser?.role;
+          return (nPhone === myCleanPhone || n.targetPhone === 'ALL') && roleMatch;
+        });
         return (
           <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4 max-h-[88vh] flex flex-col ${cardBg}`}>
@@ -9609,11 +9940,13 @@ Please advise immediate treatment protocol.`;
                     <button
                       type="button"
                       onClick={() => {
-                        const next = notifications.map(n =>
-                          n.targetPhone === currentUser?.phone && (!n.targetRole || n.targetRole === currentUser?.role)
+                        const next = notifications.map(n => {
+                          const nPhone = String(n.targetPhone || '').split('_')[0].replace(/\D/g, '').slice(-10);
+                          const roleMatch = !n.targetRole || n.targetRole === 'ALL' || n.targetRole === currentUser?.role;
+                          return (nPhone === myCleanPhone || n.targetPhone === 'ALL') && roleMatch
                             ? { ...n, read: true }
-                            : n
-                        );
+                            : n;
+                        });
                         setNotifications(next);
                         saveKvToSupabase('notifications', next);
                       }}
