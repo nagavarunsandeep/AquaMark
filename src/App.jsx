@@ -2642,7 +2642,7 @@ function AquaMarkApp() {
   // =========================================================================
   // BOOKING & PAYMENT FLOW (WITH BLURRED-TO-REVEAL QR GENERATOR)
   // =========================================================================
-  const finalizeBookingRecord = async (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance5Pct, isFullPayment = false) => {
+  const finalizeBookingRecord = async (paymentRef, qty, hatcheryFixedCost, marginPaiseNum, transportCost, advance5Pct, isFullPayment = false, customPaidNow = null) => {
     // App-Exclusive +2% Extra Bonus PL so Farmer ALWAYS gets cheaper effective rate on Aqua Mark than offline!
     const appExtraBonusPct = 2;
     const totalBonusPct = (selectedBatch.bonusPercent || 15) + appExtraBonusPct;
@@ -2660,8 +2660,10 @@ function AquaMarkApp() {
     const hold2Pct = isBrokerLinked ? brokerBase2Pct : ownerAdvanceShare;
     const brokerExtraMarginTotal = isBrokerLinked ? Math.round(qty * (marginPaiseNum / 100)) : 0;
     const totalFarmerPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
-    const paidNow = isFullPayment ? totalFarmerPayable : advance5Pct;
-    const balanceAtPacking = isFullPayment ? 0 : (totalFarmerPayable - advance5Pct);
+    const rawCharge = isFullPayment ? totalFarmerPayable : advance5Pct;
+    const paidNow = customPaidNow !== null ? Math.min(totalFarmerPayable, Math.max(0, Number(customPaidNow) || 0)) : rawCharge;
+    const balanceAtPacking = Math.max(0, totalFarmerPayable - paidNow);
+    const isActuallySettled = balanceAtPacking === 0;
 
     const now = new Date();
     const issueDateStr = now.toLocaleDateString('en-IN');
@@ -2672,8 +2674,8 @@ function AquaMarkApp() {
       gatePassPin: `GP-${Math.floor(1000 + Math.random() * 9000)}`,
       paymentId: paymentRef,
       paymentMode: bookingForm.paymentMethod,
-      paymentOption: isFullPayment ? 'FULL' : 'ADVANCE',
-      fullPaid: isFullPayment,
+      paymentOption: isActuallySettled ? 'FULL' : 'ADVANCE',
+      fullPaid: isActuallySettled,
       date: issueDateStr,
       time: issueTimeStr,
       hatcheryOwnerPhone: selectedBatch.ownerPhone,
@@ -2698,7 +2700,7 @@ function AquaMarkApp() {
       totalSeedCost: totalFarmerPayable,
       tokenAdvance: paidNow,
       balanceAtPacking,
-      clearedAt: isFullPayment ? `${issueDateStr} ${issueTimeStr}` : undefined,
+      clearedAt: isActuallySettled ? `${issueDateStr} ${issueTimeStr}` : undefined,
       appExtraBonusPct,
       settlement: {
         hold2PctAmount: hold2Pct,
@@ -2706,7 +2708,7 @@ function AquaMarkApp() {
         ownerDirect2Pct: ownerAdvanceShare,
         brokerBase2Pct,
         farmerRefundable2Pct: 0,
-        status: isFullPayment ? 'BALANCE_CLEARED' : 'ADVANCE_HOLD'
+        status: isActuallySettled ? 'BALANCE_CLEARED' : 'ADVANCE_HOLD'
       },
       packingStatus: 'PACKING_PENDING',
       gatePassCleared: false,
@@ -2798,7 +2800,10 @@ function AquaMarkApp() {
     const totalPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
     const advance5Pct = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
     const isFullPayment = bookingForm.paymentOption === 'FULL';
-    const chargeNow = isFullPayment ? totalPayable : advance5Pct;
+    const rawChargeNow = isFullPayment ? totalPayable : advance5Pct;
+    const chargeNow = (bookingForm.paymentMethod === 'DIRECT_UPI' && rawChargeNow > MAX_UPI_AMOUNT_INR)
+      ? MAX_UPI_AMOUNT_INR
+      : rawChargeNow;
 
     const paymentCheck = validateStrictPayment({
       method: bookingForm.paymentMethod,
@@ -2819,7 +2824,8 @@ function AquaMarkApp() {
         marginPaiseNum,
         transportCost,
         advance5Pct,
-        isFullPayment
+        isFullPayment,
+        chargeNow
       );
       return;
     }
@@ -3128,17 +3134,21 @@ function AquaMarkApp() {
     showToast(`QR Verified! ${updatedBk.bookingId} marked Packing Completed & Payment Settled.`);
   };
 
-  const finalizeBuyerPayRemaining = async (bk, ref) => {
+  const finalizeBuyerPayRemaining = async (bk, ref, paidNowInr = null) => {
     const now = new Date();
     const clearedStamp = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    const prevBal = Math.max(0, Math.round(Number(bk.balanceAtPacking) || 0));
+    const paidThisStep = paidNowInr !== null ? Math.min(prevBal, Math.max(0, Math.round(Number(paidNowInr) || 0))) : prevBal;
+    const nextBal = Math.max(0, prevBal - paidThisStep);
+    const isNowCleared = nextBal === 0;
     const updatedBk = {
       ...bk,
-      fullPaid: true,
+      fullPaid: isNowCleared,
       balancePaymentRef: ref,
-      tokenAdvance: bk.totalSeedCost,
-      balanceAtPacking: 0,
-      clearedAt: clearedStamp,
-      settlement: { ...bk.settlement, status: 'BALANCE_CLEARED' }
+      tokenAdvance: (Number(bk.tokenAdvance) || 0) + paidThisStep,
+      balanceAtPacking: nextBal,
+      clearedAt: isNowCleared ? clearedStamp : bk.clearedAt,
+      settlement: { ...bk.settlement, status: isNowCleared ? 'BALANCE_CLEARED' : (bk.settlement?.status || 'ADVANCE_HOLD') }
     };
 
     const saveRes = await saveBookingToSupabase(updatedBk);
@@ -3195,9 +3205,13 @@ function AquaMarkApp() {
       return;
     }
 
+    const payNow = (payRemainingForm.paymentMethod === 'DIRECT_UPI' && dueAmt > MAX_UPI_AMOUNT_INR)
+      ? MAX_UPI_AMOUNT_INR
+      : dueAmt;
+
     const paymentCheck = validateStrictPayment({
       method: payRemainingForm.paymentMethod,
-      amountInr: dueAmt,
+      amountInr: payNow,
       utr: payRemainingForm.utrReference
     });
     if (!paymentCheck.ok) {
@@ -3212,14 +3226,14 @@ function AquaMarkApp() {
         description: L(`Remaining Balance Payment (${liveBk.bookingId})`, `మిగిలిన బ్యాలెన్స్ చెల్లింపు (${liveBk.bookingId})`),
         prefillName: liveBk.farmerName,
         prefillPhone: liveBk.farmerPhone,
-        onSuccess: (rzpId) => finalizeBuyerPayRemaining(liveBk, rzpId),
+        onSuccess: (rzpId) => finalizeBuyerPayRemaining(liveBk, rzpId, dueAmt),
         onFailure: (msg) => { setPayRemainingError(msg); showToast(msg); }
       });
       return;
     }
     const prefix = payRemainingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT';
     const ref = `${prefix}_${paymentCheck.cleanedUtr}`;
-    await finalizeBuyerPayRemaining(liveBk, ref);
+    await finalizeBuyerPayRemaining(liveBk, ref, payNow);
   };
 
   const openAnimatedStatusModal = (bk) => {
@@ -9283,42 +9297,31 @@ Please advise immediate treatment protocol.`;
 
                     // UPI PAYMENT: BLURRED QR UNTIL "Show QR" CLICKED + "Pay By App" (NO REQUEST BY VPA)
                     if (bookingForm.paymentMethod === 'DIRECT_UPI') {
-                      if (token > MAX_UPI_AMOUNT_INR) {
-                        return (
-                          <div className="bg-rose-500/10 border-2 border-rose-500/40 rounded-xl p-3.5 space-y-2.5 text-xs">
-                            <div className="flex items-start gap-2 text-rose-500 font-extrabold">
-                              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                              <span>
-                                {L(
-                                  `UPI Limit Exceeded (Max ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')})`,
-                                  `UPI పరిమితి దాటింది (గరిష్టం ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')})`
-                                )}
-                              </span>
-                            </div>
-                            <p className="opacity-85 leading-relaxed">
-                              {L(
-                                `Payable amount ₹${token.toLocaleString('en-IN')} exceeds the ₹80,000 safe UPI cap. To avoid bank transfer failures, please switch to Bank-to-Bank (NEFT/RTGS/IMPS) or Razorpay.`,
-                                `చెల్లించాల్సిన మొత్తం ₹${token.toLocaleString('en-IN')} ₹80,000 UPI పరిమితి కంటే ఎక్కువ. బ్యాంక్ ఫెయిల్యూర్స్ రాకుండా Bank-to-Bank (NEFT/RTGS) లేదా Razorpay ఎంచుకోండి.`
-                              )}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, paymentMethod: 'BANK_TO_BANK', utrReference: '' }); }}
-                              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-xl text-xs cursor-pointer"
-                            >
-                              {L('Switch to Bank-to-Bank (NEFT / RTGS) →', 'Bank-to-Bank (NEFT / RTGS) కు మారండి →')}
-                            </button>
-                          </div>
-                        );
-                      }
-                      const upiUri = `upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${token}&cu=INR&tn=${bookingForm.paymentOption === 'FULL' ? 'SeedFullPayment' : 'SeedAdvance5Pct'}`;
+                      const isUpiCapped = token > MAX_UPI_AMOUNT_INR;
+                      const upiPayNow = isUpiCapped ? MAX_UPI_AMOUNT_INR : token;
+                      const remainingAtPackingDiff = Math.max(0, token - upiPayNow);
+                      const upiUri = `upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${upiPayNow}&cu=INR&tn=${bookingForm.paymentOption === 'FULL' && !isUpiCapped ? 'SeedFullPayment' : 'SeedUpiBooking'}`;
                       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
 
                       return (
                         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 space-y-3 text-xs">
+                          {isUpiCapped && (
+                            <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-2.5 space-y-1.5 text-[11px]">
+                              <div className="font-extrabold text-amber-500 flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                <span>{L('UPI Max ₹80,000 Cap Applied', 'UPI గరిష్ట పరిమితి ₹80,000')}</span>
+                              </div>
+                              <p className="opacity-90 leading-snug">
+                                {L(
+                                  `Pay ₹80,000 via UPI now. Remaining ₹${remainingAtPackingDiff.toLocaleString('en-IN')} is payable at Packing / Hatchery (or switch to Bank Transfer for full payment).`,
+                                  `ఇప్పుడు UPI ద్వారా ₹80,000 చెల్లించండి. మిగిలిన ₹${remainingAtPackingDiff.toLocaleString('en-IN')} ప్యాకింగ్ వద్ద చెల్లించాలి (మొత్తం ఒకేసారి చెల్లించాలంటే Bank-to-Bank వాడండి).`
+                                )}
+                              </p>
+                            </div>
+                          )}
                           <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
                             <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
-                            <span className="opacity-75">Max ₹80,000</span>
+                            <span>Pay Now: <b>₹{upiPayNow.toLocaleString('en-IN')}</b></span>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <button
@@ -9354,7 +9357,7 @@ Please advise immediate treatment protocol.`;
                                 </button>
                               )}
                               <span className="text-xs font-extrabold mt-1">
-                                {bookingForm.qrRevealed ? `Scan QR with any UPI App • ₹${token.toLocaleString('en-IN')}` : `Click Show QR to reveal ₹${token.toLocaleString('en-IN')} code`}
+                                {bookingForm.qrRevealed ? `Scan QR with any UPI App • ₹${upiPayNow.toLocaleString('en-IN')}` : `Click Show QR to reveal ₹${upiPayNow.toLocaleString('en-IN')} code`}
                               </span>
                             </div>
                           ) : (
@@ -9363,7 +9366,7 @@ Please advise immediate treatment protocol.`;
                                 href={upiUri}
                                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs inline-flex items-center justify-center gap-2"
                               >
-                                <Smartphone className="w-4 h-4" /> Open GPay / PhonePe / Paytm (₹{token.toLocaleString('en-IN')})
+                                <Smartphone className="w-4 h-4" /> Open GPay / PhonePe / Paytm (₹{upiPayNow.toLocaleString('en-IN')})
                               </a>
                               <p className="text-[11px] opacity-70">After completing payment in your UPI app, enter the 12-digit UTR below.</p>
                             </div>
@@ -9982,63 +9985,63 @@ Please advise immediate treatment protocol.`;
                   <span>{payRemainingError}</span>
                 </div>
               )}
-              {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (payRemainingBooking.balanceAtPacking || 0) > MAX_UPI_AMOUNT_INR ? (
-                <div className="bg-rose-500/10 border-2 border-rose-500/40 rounded-xl p-3.5 space-y-2 text-xs">
-                  <div className="flex items-start gap-2 text-rose-500 font-extrabold">
-                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{L('UPI Limit Exceeded (Max ₹80,000)', 'UPI పరిమితి దాటింది (గరిష్టం ₹80,000)')}</span>
-                  </div>
-                  <p className="opacity-85 leading-relaxed">
-                    {L(
-                      `Remaining balance ₹${(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} is above the ₹80,000 UPI limit. Please use Bank Transfer (NEFT/RTGS) or Razorpay.`,
-                      `మిగిలిన బ్యాలెన్స్ ₹${(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} ₹80,000 UPI పరిమితి కంటే ఎక్కువ. Bank Transfer లేదా Razorpay వాడండి.`
+              {(() => {
+                const due = Math.max(0, Math.round(Number(payRemainingBooking.balanceAtPacking) || 0));
+                const isRemCapped = payRemainingForm.paymentMethod === 'DIRECT_UPI' && due > MAX_UPI_AMOUNT_INR;
+                const remPayNow = isRemCapped ? MAX_UPI_AMOUNT_INR : due;
+                const remLeftAtPacking = Math.max(0, due - remPayNow);
+                return (
+                  <>
+                    {isRemCapped && (
+                      <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-3 space-y-1 text-[11px]">
+                        <div className="font-extrabold text-amber-500 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{L('UPI Max ₹80,000 Cap Applied', 'UPI గరిష్ట పరిమితి ₹80,000')}</span>
+                        </div>
+                        <p className="opacity-90 leading-snug">
+                          {L(
+                            `Pay ₹80,000 via UPI now — pay remaining ₹${remLeftAtPacking.toLocaleString('en-IN')} at Packing / Hatchery (or choose Bank Transfer for full ₹${due.toLocaleString('en-IN')}).`,
+                            `ఇప్పుడు UPI ద్వారా ₹80,000 చెల్లించండి — మిగిలిన ₹${remLeftAtPacking.toLocaleString('en-IN')} ప్యాకింగ్ వద్ద చెల్లించండి (మొత్తానికి Bank Transfer వాడవచ్చు).`
+                          )}
+                        </p>
+                      </div>
                     )}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, paymentMethod: 'BANK_TO_BANK', utrReference: '' }); }}
-                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-xl text-xs cursor-pointer"
-                  >
-                    {L('Switch to Bank Transfer (NEFT / RTGS) →', 'Bank Transfer కు మారండి →')}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
-                        <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
-                        <span className="opacity-75">Max ₹80,000</span>
+                    {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                          <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
+                          <span>Pay Now: <b>₹{remPayNow.toLocaleString('en-IN')}</b></span>
+                        </div>
+                        <div className="flex flex-col items-center bg-white p-3 rounded-xl border text-slate-900 relative">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${remPayNow}&cu=INR&tn=Balance${payRemainingBooking.bookingId}`)}`}
+                            alt="Balance QR"
+                            className={`w-32 h-32 object-contain ${payRemainingForm.qrRevealed ? '' : 'blur-md select-none'}`}
+                          />
+                          {!payRemainingForm.qrRevealed && (
+                            <button type="button" onClick={() => setPayRemainingForm({ ...payRemainingForm, qrRevealed: true })} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
+                              Show QR
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-col items-center bg-white p-3 rounded-xl border text-slate-900 relative">
-                        <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${payRemainingBooking.balanceAtPacking || 0}&cu=INR&tn=Balance${payRemainingBooking.bookingId}`)}`}
-                          alt="Balance QR"
-                          className={`w-32 h-32 object-contain ${payRemainingForm.qrRevealed ? '' : 'blur-md select-none'}`}
-                        />
-                        {!payRemainingForm.qrRevealed && (
-                          <button type="button" onClick={() => setPayRemainingForm({ ...payRemainingForm, qrRevealed: true })} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
-                            Show QR
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {(payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && (
-                    <input
-                      required
-                      type="text"
-                      placeholder={payRemainingForm.paymentMethod === 'DIRECT_UPI' ? L('Enter 12-digit UPI UTR Reference', '12 అంకెల UPI UTR నంబర్ ఇవ్వండి') : L('Enter 12–22 char Bank NEFT/RTGS UTR', 'బ్యాంక్ NEFT/RTGS UTR నంబర్ ఇవ్వండి')}
-                      value={payRemainingForm.utrReference}
-                      onChange={(e) => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, utrReference: e.target.value }); }}
-                      className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                    />
-                  )}
-                  <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
-                    Confirm & Pay ₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} →
-                  </button>
-                </>
-              )}
+                    )}
+                    {(payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && (
+                      <input
+                        required
+                        type="text"
+                        placeholder={payRemainingForm.paymentMethod === 'DIRECT_UPI' ? L('Enter 12-digit UPI UTR Reference', '12 అంకెల UPI UTR నంబర్ ఇవ్వండి') : L('Enter 12–22 char Bank NEFT/RTGS UTR', 'బ్యాంక్ NEFT/RTGS UTR నంబర్ ఇవ్వండి')}
+                        value={payRemainingForm.utrReference}
+                        onChange={(e) => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, utrReference: e.target.value }); }}
+                        className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
+                      />
+                    )}
+                    <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
+                      Confirm & Pay ₹{remPayNow.toLocaleString('en-IN')} →
+                    </button>
+                  </>
+                );
+              })()}
             </form>
           </div>
         </div>
