@@ -1205,6 +1205,11 @@ function AquaMarkApp() {
   useEffect(() => { try { localStorage.setItem('aqm_v11_farmers', JSON.stringify(brokerFarmers)); } catch { } }, [brokerFarmers]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_live_videos', JSON.stringify(liveVideoRequests)); } catch { } }, [liveVideoRequests]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_user_emails', JSON.stringify(userEmails)); } catch { } }, [userEmails]);
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const id = setTimeout(() => setOtpCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [otpCooldown]);
 
   // Dynamic Browser Tab Title based on Login / Active User Role
   useEffect(() => {
@@ -1474,6 +1479,7 @@ function AquaMarkApp() {
   const [otpCodeInput, setOtpCodeInput] = useState('');
   const [otpSentToEmail, setOtpSentToEmail] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [emailOtpVerified, setEmailOtpVerified] = useState(false);
   const [forgotResolvedRoleKey, setForgotResolvedRoleKey] = useState('');
@@ -2015,7 +2021,14 @@ function AquaMarkApp() {
     });
 
     if (verifiedEmail) {
-      const nextEmails = { ...userEmails, [roleKey]: verifiedEmail };
+      let latestEmails = userEmails;
+      try {
+        const { data: freshEm } = await supabase.from('app_kv_store').select('value').eq('key', 'user_emails').maybeSingle();
+        if (freshEm?.value && typeof freshEm.value === 'object') {
+          latestEmails = { ...freshEm.value, ...userEmails };
+        }
+      } catch { }
+      const nextEmails = { ...latestEmails, [roleKey]: verifiedEmail };
       setUserEmails(nextEmails);
       await saveKvToSupabase('user_emails', nextEmails);
     }
@@ -2051,8 +2064,50 @@ function AquaMarkApp() {
     return `${u.slice(0, 2)}${'*'.repeat(Math.max(2, u.length - 2))}@${d}`;
   };
 
+  const findRoleKeyByEmail = (emailMap, targetEmail, role) => {
+    const clean = String(targetEmail || '').trim().toLowerCase();
+    if (!clean) return '';
+    return Object.keys(emailMap || {}).find(
+      (k) => (k.endsWith(`_${role}`) || k.startsWith(`${role}_`)) && String(emailMap[k] || '').trim().toLowerCase() === clean
+    ) || '';
+  };
+
+  const fetchLatestEmailsMap = async () => {
+    try {
+      const { data } = await supabase.from('app_kv_store').select('value').eq('key', 'user_emails').maybeSingle();
+      if (data?.value && typeof data.value === 'object') {
+        const merged = { ...data.value, ...userEmails };
+        setUserEmails(merged);
+        return merged;
+      }
+    } catch { }
+    return userEmails;
+  };
+
+  const checkOtpDeviceQuota = () => {
+    try {
+      const now = Date.now();
+      const raw = JSON.parse(localStorage.getItem('aqm_otp_rl') || '[]');
+      const recent = (Array.isArray(raw) ? raw : []).filter((ts) => now - ts < 3600000);
+      if (recent.length >= 4) return false;
+      localStorage.setItem('aqm_otp_rl', JSON.stringify([...recent, now]));
+      return true;
+    } catch {
+      return true;
+    }
+  };
+
+  const BLOCKED_EMAIL_DOMAINS = [
+    'gmial.com', 'gmal.com', 'gamil.com', 'gnail.com', 'yaho.com', 'hotmal.com',
+    'mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com', 'sharklasers.com'
+  ];
+
   const handleSendSignupEmailOtp = async () => {
     setAuthNotice('');
+    if (otpCooldown > 0) {
+      setAuthNotice(L(`Please wait ${otpCooldown}s before requesting another OTP.`, `కొత్త OTP కోసం ${otpCooldown} సెకన్లు వేచి ఉండండి.`));
+      return;
+    }
     const cleanName = (loginName || '').trim();
     const cleanEmail = (loginEmail || '').trim().toLowerCase();
     if (!cleanName) {
@@ -2063,16 +2118,27 @@ function AquaMarkApp() {
       showToast(L('Please enter a valid Email address.', 'దయచేసి సరైన Email చిరునామా ఇవ్వండి.'));
       return;
     }
-    const alreadyEmailKey = Object.keys(userEmails).find(
-      (k) => k.startsWith(`${loginRole}_`) && String(userEmails[k] || '').toLowerCase() === cleanEmail
-    );
-    if (alreadyEmailKey && registeredUsers[alreadyEmailKey]) {
-      setAuthNotice(L('This email is already registered for this portal. Please switch to Login.', 'ఈ Email ఇప్పటికే రిజిస్టర్ అయింది. దయచేసి Login చేయండి.'));
+    const emailDomain = cleanEmail.split('@')[1] || '';
+    if (BLOCKED_EMAIL_DOMAINS.includes(emailDomain)) {
+      setAuthNotice(L('Please check your email spelling or use a real Gmail/Email address (disposable emails not allowed).', 'దయచేసి సరైన Gmail / Email చిరునామా ఇవ్వండి (టైపో లేదా తాత్కాలిక ఈమెయిల్ అనుమతించబడదు).'));
       return;
     }
 
     setIsSendingOtp(true);
     try {
+      // ZERO-OTP-WASTE PRE-CHECK: Verify email is NOT already registered in Supabase before sending any OTP
+      const latestEmails = await fetchLatestEmailsMap();
+      const alreadyEmailKey = findRoleKeyByEmail(latestEmails, cleanEmail, loginRole);
+      if (alreadyEmailKey) {
+        setAuthNotice(L('Email already in use for this portal! Please switch to Login (or Forgot Password).', 'ఈ Email ఇప్పటికే వాడుకలో ఉంది (Email already in use). దయచేసి Login చేయండి.'));
+        return;
+      }
+
+      if (!checkOtpDeviceQuota()) {
+        setAuthNotice(L('Too many OTP requests from this device. Please wait 1 hour and try again.', 'ఈ డివైస్ నుండి ఎక్కువ OTP రిక్వెస్ట్‌లు వచ్చాయి. దయచేసి 1 గంట తర్వాత ప్రయత్నించండి.'));
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email: cleanEmail,
         options: { shouldCreateUser: true }
@@ -2083,6 +2149,7 @@ function AquaMarkApp() {
         setOtpSentToEmail(cleanEmail);
         setOtpCodeInput('');
         setEmailOtpVerified(false);
+        setOtpCooldown(60);
         showToast(L(`OTP sent to ${cleanEmail}! Check Inbox/Spam.`, `${cleanEmail} కు OTP పంపబడింది! Inbox/Spam చెక్ చేయండి.`));
       }
     } catch (err) {
@@ -2094,38 +2161,54 @@ function AquaMarkApp() {
 
   const handleSendForgotEmailOtp = async () => {
     setAuthNotice('');
+    if (otpCooldown > 0) {
+      setAuthNotice(L(`Please wait ${otpCooldown}s before requesting another OTP.`, `కొత్త OTP కోసం ${otpCooldown} సెకన్లు వేచి ఉండండి.`));
+      return;
+    }
     const rawId = (loginIdentifier || '').trim().toLowerCase();
     if (!rawId) {
       showToast(L('Enter your registered Email or 10-digit Mobile Number.', 'మీ రిజిస్టర్డ్ Email లేదా 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.'));
       return;
     }
 
-    let matchedKey = '';
-    if (rawId.includes('@')) {
-      matchedKey = Object.keys(userEmails).find(
-        (k) => k.startsWith(`${loginRole}_`) && String(userEmails[k] || '').toLowerCase() === rawId
-      ) || '';
-    } else {
-      const digits = rawId.replace(/\D/g, '').slice(-10);
-      if (digits.length === 10) {
-        const candidate = getUserKey(digits, loginRole);
-        if (registeredUsers[candidate]) matchedKey = candidate;
-      }
-    }
-
-    if (!matchedKey || !registeredUsers[matchedKey]) {
-      setAuthNotice(L('No account found for this portal with that Email / Mobile.', 'ఈ పోర్టల్‌లో ఆ Email / మొబైల్ నంబర్‌తో ఖాతా లేదు.'));
-      return;
-    }
-
-    const linkedEmail = (userEmails[matchedKey] || registeredUsers[matchedKey]?.email || '').trim().toLowerCase();
-    if (!linkedEmail) {
-      setAuthNotice(L('This older account has no verified email linked. Contact AquaMark Admin to reset.', 'ఈ పాత ఖాతాకు Email లింక్ లేదు. రీసెట్ కోసం AquaMark Admin ను సంప్రదించండి.'));
-      return;
-    }
-
     setIsSendingOtp(true);
     try {
+      const latestEmails = await fetchLatestEmailsMap();
+      let matchedKey = '';
+      if (rawId.includes('@')) {
+        matchedKey = findRoleKeyByEmail(latestEmails, rawId, loginRole);
+      } else {
+        const digits = rawId.replace(/\D/g, '').slice(-10);
+        if (digits.length === 10) {
+          const candidate = getUserKey(digits, loginRole);
+          if (registeredUsers[candidate]) {
+            matchedKey = candidate;
+          } else {
+            const { data: uRow } = await supabase.from('app_users').select('*').eq('phone', candidate).maybeSingle();
+            if (uRow) {
+              matchedKey = candidate;
+              setRegisteredUsers(prev => ({ ...prev, [candidate]: { ...uRow, phone: digits } }));
+            }
+          }
+        }
+      }
+
+      if (!matchedKey) {
+        setAuthNotice(L('No account found for this portal with that Email / Mobile.', 'ఈ పోర్టల్‌లో ఆ Email / మొబైల్ నంబర్‌తో ఖాతా లేదు.'));
+        return;
+      }
+
+      const linkedEmail = (latestEmails[matchedKey] || registeredUsers[matchedKey]?.email || '').trim().toLowerCase();
+      if (!linkedEmail) {
+        setAuthNotice(L('This older account has no verified email linked. Contact AquaMark Admin to reset.', 'ఈ పాత ఖాతాకు Email లింక్ లేదు. రీసెట్ కోసం AquaMark Admin ను సంప్రదించండి.'));
+        return;
+      }
+
+      if (!checkOtpDeviceQuota()) {
+        setAuthNotice(L('Too many OTP requests from this device. Please wait 1 hour and try again.', 'ఈ డివైస్ నుండి ఎక్కువ OTP రిక్వెస్ట్‌లు వచ్చాయి. దయచేసి 1 గంట తర్వాత ప్రయత్నించండి.'));
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email: linkedEmail,
         options: { shouldCreateUser: true }
@@ -2137,6 +2220,7 @@ function AquaMarkApp() {
         setOtpSentToEmail(linkedEmail);
         setOtpCodeInput('');
         setEmailOtpVerified(false);
+        setOtpCooldown(60);
         showToast(L(`Reset OTP sent to ${maskEmailAddr(linkedEmail)}!`, `${maskEmailAddr(linkedEmail)} కు OTP పంపబడింది!`));
       }
     } catch (err) {
@@ -2165,6 +2249,7 @@ function AquaMarkApp() {
       } else {
         supabase.auth.signOut().catch(() => { });
         setEmailOtpVerified(true);
+        setOtpCooldown(0);
         setAuthNotice('');
         showToast(L('Email verified! Now complete your details below.', 'Email వెరిఫై అయింది! ఇప్పుడు క్రింది వివరాలు పూర్తి చేయండి.'));
       }
@@ -2186,12 +2271,16 @@ function AquaMarkApp() {
 
     let roleKey = '';
     let cleanPhone = '';
+    let emailLookupMap = userEmails;
+
     if (rawId.includes('@')) {
-      roleKey = Object.keys(userEmails).find(
-        (k) => k.startsWith(`${loginRole}_`) && String(userEmails[k] || '').toLowerCase() === rawId
-      ) || '';
-      if (roleKey && registeredUsers[roleKey]) {
-        cleanPhone = String(registeredUsers[roleKey].phone || '').replace(/\D/g, '').slice(-10);
+      roleKey = findRoleKeyByEmail(emailLookupMap, rawId, loginRole);
+      if (!roleKey) {
+        emailLookupMap = await fetchLatestEmailsMap();
+        roleKey = findRoleKeyByEmail(emailLookupMap, rawId, loginRole);
+      }
+      if (roleKey) {
+        cleanPhone = String(roleKey.split('_')[0] || '').replace(/\D/g, '').slice(-10);
       }
     } else {
       cleanPhone = rawId.replace(/\D/g, '').slice(-10);
@@ -2202,7 +2291,16 @@ function AquaMarkApp() {
       roleKey = getUserKey(cleanPhone, loginRole);
     }
 
-    const found = roleKey ? registeredUsers[roleKey] : null;
+    let found = roleKey ? registeredUsers[roleKey] : null;
+    if (!found && roleKey) {
+      try {
+        const { data: uRow } = await supabase.from('app_users').select('*').eq('phone', roleKey).maybeSingle();
+        if (uRow) {
+          found = { ...uRow, phone: cleanPhone || String(uRow.phone || '').split('_')[0].replace(/\D/g, '').slice(-10) };
+          setRegisteredUsers(prev => ({ ...prev, [roleKey]: found }));
+        }
+      } catch { }
+    }
     if (!found) {
       showToast(t.toasts.notRegistered);
       return;
@@ -4586,11 +4684,11 @@ function AquaMarkApp() {
                     {!emailOtpVerified && (
                       <button
                         type="button"
-                        disabled={isSendingOtp}
+                        disabled={isSendingOtp || otpCooldown > 0}
                         onClick={handleSendSignupEmailOtp}
                         className="bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
                       >
-                        {isSendingOtp ? L('Sending...', 'పంపుతోంది...') : otpSentToEmail ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
+                        {isSendingOtp ? L('Sending...', 'పంపుతోంది...') : otpCooldown > 0 ? L(`Wait ${otpCooldown}s`, `${otpCooldown}సె`) : otpSentToEmail ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
                       </button>
                     )}
                   </div>
@@ -4767,11 +4865,11 @@ function AquaMarkApp() {
                     {!emailOtpVerified && (
                       <button
                         type="button"
-                        disabled={isSendingOtp}
+                        disabled={isSendingOtp || otpCooldown > 0}
                         onClick={handleSendForgotEmailOtp}
                         className="bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
                       >
-                        {isSendingOtp ? L('Sending...', 'పంపుతోంది...') : otpSentToEmail ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
+                        {isSendingOtp ? L('Sending...', 'పంపుతోంది...') : otpCooldown > 0 ? L(`Wait ${otpCooldown}s`, `${otpCooldown}సె`) : otpSentToEmail ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
                       </button>
                     )}
                   </div>
