@@ -1687,6 +1687,8 @@ function AquaMarkApp() {
     accountName: '', accountNo: '', ifsc: '', upiId: ''
   });
   const [isEditingSellerProfile, setIsEditingSellerProfile] = useState(false);
+  const [showSellerBankDetails, setShowSellerBankDetails] = useState(false);
+  const [showBrokerBankDetails, setShowBrokerBankDetails] = useState(false);
 
   const [buyerTab, setBuyerTab] = useState('marketplace');
   const [searchQuery, setSearchQuery] = useState('');
@@ -5162,8 +5164,8 @@ function AquaMarkApp() {
           </div>
 
           <div className="flex flex-nowrap items-center justify-between sm:justify-end gap-1 sm:gap-2 w-full sm:w-auto">
-            {/* EDIT PROFILE & CHANGE PASSWORD BUTTON IN HEADER (ALL PORTALS) */}
-            {(currentUser.role === 'buyer' || currentUser.role === 'mediator' || currentUser.role === 'seller') && (
+            {/* BUYER & BROKER EDIT PROFILE BUTTON IN HEADER (SELLER USES HATCHERY EDIT PROFILE BELOW) */}
+            {(currentUser.role === 'buyer' || currentUser.role === 'mediator') && (
               <button
                 type="button"
                 onClick={openBasicEditProfile}
@@ -5931,8 +5933,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                                ? 'bg-teal-600 text-white border-teal-600'
-                                : `${subCardBg} opacity-80 hover:opacity-100`
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -6855,6 +6857,7 @@ Please advise immediate treatment protocol.`;
                                 ifsc: myFixedHatchery.bankDetails?.ifsc || '',
                                 upiId: myFixedHatchery.bankDetails?.upiId || ''
                               });
+                              setPwdChangeForm({ oldPwd: '', newPwd: '', confirmPwd: '', showOld: false, showNew: false, saving: false, error: '', success: '' });
                               setIsEditingSellerProfile(true);
                             }}
                             className={`flex-1 sm:flex-none justify-center border text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${subCardBg}`}
@@ -6878,86 +6881,186 @@ Please advise immediate treatment protocol.`;
                   </div>
 
                   {isEditingSellerProfile ? (
-                    <form onSubmit={handleUpdateSellerProfileAndBank} className="space-y-4 pt-3 border-t border-slate-300/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.hatcheryNameLabel}</label>
-                          <input required type="text" placeholder="Enter Hatchery Name" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                    <>
+                      <form onSubmit={handleUpdateSellerProfileAndBank} className="space-y-4 pt-3 border-t border-slate-300/30">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.hatcheryNameLabel}</label>
+                            <input required type="text" placeholder="Enter Hatchery Name" value={unifiedSellerForm.realName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.zoneLabel}</label>
+                            <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
+                              {COASTAL_ZONES.map(z => <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Custom Zone' : z}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.addressLabel}</label>
+                            <input required type="text" placeholder="Enter Facility Address" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.zoneLabel}</label>
-                          <select value={unifiedSellerForm.zone} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, zone: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}>
-                            {COASTAL_ZONES.map(z => <option key={z} value={z}>{z === 'OTHER_CUSTOM' ? '+ Custom Zone' : z}</option>)}
-                          </select>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.mapsLinkLabel}</label>
+                            <input type="url" placeholder="https://maps.google.com/?q=..." value={unifiedSellerForm.googleMapsLink} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, googleMapsLink: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.descriptionLabel}</label>
+                            <input type="text" placeholder="Describe hatchery facilities, broodstock & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.addressLabel}</label>
-                          <input required type="text" placeholder="Enter Facility Address" value={unifiedSellerForm.realAddress} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, realAddress: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
+                            <input required type="text" placeholder="Account Holder Name" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
+                            <input required type="text" placeholder="Account Number" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
+                            <input required type="text" placeholder="IFSC Code" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
+                            <input required type="text" placeholder="UPI ID (name@bank)" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                          </div>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.mapsLinkLabel}</label>
-                          <input type="url" placeholder="https://maps.google.com/?q=..." value={unifiedSellerForm.googleMapsLink} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, googleMapsLink: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
+                            className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => setIsEditingSellerProfile(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
+                              Cancel
+                            </button>
+                            <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                              {t.saveBtn}
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.descriptionLabel}</label>
-                          <input type="text" placeholder="Describe hatchery facilities, broodstock & biosecurity..." value={unifiedSellerForm.description} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, description: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                      </form>
+                      <form onSubmit={handleChangeUserPassword} className={`mt-4 p-4 rounded-xl border space-y-3 text-xs ${subCardBg}`}>
+                        <div className="flex items-center gap-1.5">
+                          <KeyRound className="w-4 h-4 text-teal-600 shrink-0" />
+                          <h4 className="font-extrabold text-sm">{L('Change Password (Verify Old Password)', 'పాస్‌వర్డ్ మార్చండి (పాత పాస్‌వర్డ్ వెరిఫై)')}</h4>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
-                          <input required type="text" placeholder="Account Holder Name" value={unifiedSellerForm.accountName} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                        {pwdChangeForm.error && (
+                          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-xl p-2.5 text-xs font-bold">
+                            {pwdChangeForm.error}
+                          </div>
+                        )}
+                        {pwdChangeForm.success && (
+                          <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 rounded-xl p-2.5 text-xs font-bold">
+                            ✓ {pwdChangeForm.success}
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="font-bold opacity-75 block mb-1">{L('Current (Old) Password', 'పాత పాస్‌వర్డ్')}</label>
+                            <div className="relative flex items-center">
+                              <input
+                                required
+                                type={pwdChangeForm.showOld ? 'text' : 'password'}
+                                placeholder="Current password"
+                                value={pwdChangeForm.oldPwd}
+                                onChange={(e) => setPwdChangeForm(prev => ({ ...prev, oldPwd: e.target.value, error: '', success: '' }))}
+                                className={`w-full border rounded-xl pl-3 pr-9 py-2 text-xs font-bold select-text ${inputCls}`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setPwdChangeForm(prev => ({ ...prev, showOld: !prev.showOld }))}
+                                className="absolute right-2.5 opacity-60 hover:opacity-100 cursor-pointer"
+                              >
+                                {pwdChangeForm.showOld ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="font-bold opacity-75 block mb-1">{L('New Password', 'కొత్త పాస్‌వర్డ్')}</label>
+                            <div className="relative flex items-center">
+                              <input
+                                required
+                                minLength={6}
+                                type={pwdChangeForm.showNew ? 'text' : 'password'}
+                                placeholder="Min 6 chars"
+                                value={pwdChangeForm.newPwd}
+                                onChange={(e) => setPwdChangeForm(prev => ({ ...prev, newPwd: e.target.value, error: '', success: '' }))}
+                                className={`w-full border rounded-xl pl-3 pr-9 py-2 text-xs font-bold select-text ${inputCls}`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setPwdChangeForm(prev => ({ ...prev, showNew: !prev.showNew }))}
+                                className="absolute right-2.5 opacity-60 hover:opacity-100 cursor-pointer"
+                              >
+                                {pwdChangeForm.showNew ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="font-bold opacity-75 block mb-1">{L('Confirm New Password', 'కొత్త పాస్‌వర్డ్ నిర్ధారించండి')}</label>
+                            <input
+                              required
+                              minLength={6}
+                              type={pwdChangeForm.showNew ? 'text' : 'password'}
+                              placeholder="Re-enter new"
+                              value={pwdChangeForm.confirmPwd}
+                              onChange={(e) => setPwdChangeForm(prev => ({ ...prev, confirmPwd: e.target.value, error: '', success: '' }))}
+                              className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
-                          <input required type="text" placeholder="Account Number" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
-                          <input required type="text" placeholder="IFSC Code" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
-                          <input required type="text" placeholder="UPI ID (name@bank)" value={unifiedSellerForm.upiId} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
                         <button
-                          type="button"
-                          onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
-                          className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                          type="submit"
+                          disabled={pwdChangeForm.saving}
+                          className="w-full sm:w-auto bg-slate-900 dark:bg-teal-600 hover:opacity-90 disabled:opacity-50 text-white font-extrabold px-4 py-2 rounded-xl text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
+                          <Lock className="w-3.5 h-3.5" /> {pwdChangeForm.saving ? L('Updating...', 'అప్‌డేట్ అవుతోంది...') : L('Verify Old Password & Update', 'పాత పాస్‌వర్డ్ చెక్ చేసి మార్చండి')}
                         </button>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => setIsEditingSellerProfile(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
-                            Cancel
-                          </button>
-                          <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                            {t.saveBtn}
-                          </button>
-                        </div>
-                      </div>
-                    </form>
+                      </form>
+                    </>
                   ) : (
-                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
-                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedHatchery.bankDetails?.accountName}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.accountNo}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
-                      <div className="min-w-0">
-                        <span className="text-[10px] opacity-60 block">{t.upiLabel}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyText(myFixedHatchery.bankDetails?.upiId, L('UPI ID Copied', 'UPI ID కాపీ అయింది'))}
-                          title={L('Tap to copy UPI ID', 'UPI ID కాపీ చేయండి')}
-                          className="inline-flex items-center gap-1 font-mono font-bold text-teal-500 hover:underline cursor-pointer max-w-full"
-                        >
-                          <span className="truncate">{myFixedHatchery.bankDetails?.upiId}</span>
-                          <Copy className="w-3 h-3 shrink-0 opacity-75" />
-                        </button>
-                      </div>
+                    <div className={`rounded-xl border overflow-hidden ${subCardBg}`}>
+                      <button
+                        type="button"
+                        onClick={() => setShowSellerBankDetails(prev => !prev)}
+                        className="w-full px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs font-extrabold cursor-pointer"
+                      >
+                        <span className="inline-flex items-center gap-2 text-teal-600 min-w-0">
+                          <Landmark className="w-4 h-4 shrink-0" />
+                          <span className="truncate">{L('Bank & UPI Settlement Details', 'బ్యాంక్ & UPI వివరాలు')}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 shrink-0">
+                          <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {L('Verified', 'వెరిఫైడ్')}
+                          </span>
+                          <ChevronRight className={`w-4 h-4 transition-transform ${showSellerBankDetails ? 'rotate-90' : ''}`} />
+                        </span>
+                      </button>
+                      {showSellerBankDetails && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 pt-2.5 border-t border-slate-300/20 text-xs">
+                          <div className="min-w-0"><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b className="break-words">{myFixedHatchery.bankDetails?.accountName}</b></div>
+                          <div className="min-w-0"><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono break-all">{myFixedHatchery.bankDetails?.accountNo}</b></div>
+                          <div className="min-w-0"><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedHatchery.bankDetails?.ifsc}</b></div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] opacity-60 block">{t.upiLabel}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyText(myFixedHatchery.bankDetails?.upiId, L('UPI ID Copied', 'UPI ID కాపీ అయింది'))}
+                              title={L('Tap to copy UPI ID', 'UPI ID కాపీ చేయండి')}
+                              className="inline-flex items-center gap-1 font-mono font-bold text-teal-500 hover:underline cursor-pointer max-w-full"
+                            >
+                              <span className="truncate">{myFixedHatchery.bankDetails?.upiId}</span>
+                              <Copy className="w-3 h-3 shrink-0 opacity-75" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -7254,8 +7357,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : `${subCardBg} opacity-80 hover:opacity-100`
+                                    ? 'bg-teal-600 text-white border-teal-600'
+                                    : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -8016,76 +8119,103 @@ Please advise immediate treatment protocol.`;
               </div>
             ) : (
               <>
-                {/* Broker Bank Card */}
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Landmark className="w-4 h-4 text-teal-600" />
-                      <h3 className="font-bold text-sm">Settlement Bank & UPI Account</h3>
-                    </div>
-                    {!isEditingBrokerBank && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBrokerBankForm({
-                            accountName: myFixedBroker.bankDetails?.accountName || '',
-                            accountNo: myFixedBroker.bankDetails?.accountNo || '',
-                            ifsc: myFixedBroker.bankDetails?.ifsc || '',
-                            upiId: myFixedBroker.bankDetails?.upiId || ''
-                          });
-                          setIsEditingBrokerBank(true);
-                        }}
-                        className={`border text-xs font-bold px-3 py-1 rounded-xl inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBrokerProfileBtn}
-                      </button>
-                    )}
-                  </div>
+                {/* Broker Bank Card (Clean Collapsible Tab) */}
+                <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBrokerBankDetails(prev => !prev)}
+                    className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2 text-xs sm:text-sm font-extrabold cursor-pointer"
+                  >
+                    <span className="inline-flex items-center gap-2 text-teal-600 min-w-0">
+                      <Landmark className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{L('Settlement Bank & UPI Account', 'బ్యాంక్ & UPI సెటిల్మెంట్ వివరాలు')}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 shrink-0">
+                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {L('Verified', 'వెరిఫైడ్')}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 transition-transform ${(showBrokerBankDetails || isEditingBrokerBank) ? 'rotate-90' : ''}`} />
+                    </span>
+                  </button>
 
-                  {isEditingBrokerBank ? (
-                    <form onSubmit={handleCompleteBrokerReg} className="space-y-3 pt-2 border-t border-slate-300/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
-                          <input required type="text" placeholder="Account Holder Name" value={brokerBankForm.accountName} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
-                          <input required type="text" placeholder="Account Number" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
-                          <input required type="text" placeholder="IFSC Code" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
-                          <input required type="text" placeholder="UPI ID" value={brokerBankForm.upiId} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
-                          className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
-                        </button>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => setIsEditingBrokerBank(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
-                            Cancel
-                          </button>
-                          <button type="submit" className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                            {t.saveBtn}
+                  {(showBrokerBankDetails || isEditingBrokerBank) && (
+                    <div className="px-4 sm:px-5 pb-4 pt-2 border-t border-slate-300/20 space-y-3">
+                      {!isEditingBrokerBank && (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBrokerBankForm({
+                                accountName: myFixedBroker.bankDetails?.accountName || '',
+                                accountNo: myFixedBroker.bankDetails?.accountNo || '',
+                                ifsc: myFixedBroker.bankDetails?.ifsc || '',
+                                upiId: myFixedBroker.bankDetails?.upiId || ''
+                              });
+                              setIsEditingBrokerBank(true);
+                            }}
+                            className={`border text-xs font-bold px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBrokerProfileBtn}
                           </button>
                         </div>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
-                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedBroker.bankDetails?.accountName}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.accountNo}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.ifsc}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedBroker.bankDetails?.upiId}</b></div>
+                      )}
+
+                      {isEditingBrokerBank ? (
+                        <form onSubmit={handleCompleteBrokerReg} className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
+                              <input required type="text" placeholder="Account Holder Name" value={brokerBankForm.accountName} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
+                              <input required type="text" placeholder="Account Number" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
+                              <input required type="text" placeholder="IFSC Code" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
+                              <input required type="text" placeholder="UPI ID" value={brokerBankForm.upiId} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
+                              className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => setIsEditingBrokerBank(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
+                                Cancel
+                              </button>
+                              <button type="submit" className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                                {t.saveBtn}
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
+                          <div className="min-w-0"><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b className="break-words">{myFixedBroker.bankDetails?.accountName}</b></div>
+                          <div className="min-w-0"><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono break-all">{myFixedBroker.bankDetails?.accountNo}</b></div>
+                          <div className="min-w-0"><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.ifsc}</b></div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] opacity-60 block">{t.upiLabel}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyText(myFixedBroker.bankDetails?.upiId, L('UPI ID Copied', 'UPI ID కాపీ అయింది'))}
+                              className="inline-flex items-center gap-1 font-mono font-bold text-teal-500 hover:underline cursor-pointer max-w-full"
+                            >
+                              <span className="truncate">{myFixedBroker.bankDetails?.upiId}</span>
+                              <Copy className="w-3 h-3 shrink-0 opacity-75" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -9228,8 +9358,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                        ? 'bg-teal-600 text-white border-teal-600'
-                        : `${subCardBg} opacity-80 hover:opacity-100`
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -9279,8 +9409,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
