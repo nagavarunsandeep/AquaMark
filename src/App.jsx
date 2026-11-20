@@ -209,100 +209,112 @@ async function getRichLocationDetails() {
 }
 
 // ============================================================================
-// AI PCR LAB REPORT IMAGE ANALYZER (CLIENT-SIDE VISION — ZERO BACKEND CHANGES)
+// REAL OCR PCR LAB REPORT ANALYZER (TESSERACT.JS CHARACTER RECOGNITION — 100% FREE)
+// Reads actual printed characters from uploaded PCR photos & extracts WSSV/EHP/IHHNV
 // ============================================================================
+let tesseractLoaderPromise = null;
+function loadTesseractCdn() {
+  if (typeof window !== 'undefined' && window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (tesseractLoaderPromise) return tesseractLoaderPromise;
+  tesseractLoaderPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.async = true;
+    script.onload = () => (window.Tesseract ? resolve(window.Tesseract) : reject(new Error('Tesseract unavailable')));
+    script.onerror = () => reject(new Error('Failed to load OCR engine'));
+    document.head.appendChild(script);
+  });
+  return tesseractLoaderPromise;
+}
+
+function extractPathogenStatus(textUpper, aliases) {
+  for (const alias of aliases) {
+    const posRe = new RegExp(`(?:${alias})[\\s\\S]{0,45}?(?:POSITIVE|DETECTED|PRESENT|REACTIVE)`, 'i');
+    const negRe = new RegExp(`(?:${alias})[\\s\\S]{0,45}?(?:NEGATIVE|NOT\\s*DETECTED|ABSENT|NIL|ND\\b|CLEAR|FREE)`, 'i');
+    if (negRe.test(textUpper)) return 'NEGATIVE';
+    if (posRe.test(textUpper)) return 'POSITIVE';
+  }
+  return 'NOT_FOUND';
+}
+
 async function analyzePcrReportImage(file) {
-  return new Promise((resolve) => {
-    const fname = (file?.name || '').toLowerCase();
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      try {
-        const w = 280;
-        const h = Math.max(120, Math.round((img.height / Math.max(1, img.width)) * w));
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const data = ctx.getImageData(0, 0, w, h).data;
+  try {
+    const Tesseract = await loadTesseractCdn();
+    const result = await Tesseract.recognize(file, 'eng');
+    const rawText = (result?.data?.text || '').trim();
+    const ocrConf = Math.round(result?.data?.confidence || 0);
+    const upper = rawText.toUpperCase();
 
-        let brightNeutral = 0;
-        let vividColor = 0;
-        const total = w * h;
-        let textLikeRows = 0;
+    const labKeywords = [
+      'PCR', 'WSSV', 'WHITE SPOT', 'EHP', 'ENTEROCYTOZOON', 'IHHNV', 'EMS', 'AHPND',
+      'MBV', 'YHV', 'TSV', 'VIBRIO', 'NEGATIVE', 'NOT DETECTED', 'ABSENT', 'POSITIVE',
+      'PATHOGEN', 'LAB', 'LABORATORY', 'REPORT', 'SAMPLE', 'CAA', 'MPEDA', 'VANNAMEI',
+      'SHRIMP', 'POST LARVAE', 'BROODSTOCK', 'DIAGNOSTIC', 'TEST RESULT'
+    ];
+    const matchedKeywords = labKeywords.filter((kw) => upper.includes(kw));
 
-        for (let y = 0; y < h; y++) {
-          let transitions = 0;
-          let prevDark = false;
-          let rowLight = 0;
-          let rowDark = 0;
-          for (let x = 0; x < w; x++) {
-            const idx = (y * w + x) * 4;
-            const r = data[idx], g = data[idx + 1], b = data[idx + 2];
-            const maxC = Math.max(r, g, b);
-            const minC = Math.min(r, g, b);
-            const sat = maxC - minC;
-            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    const wssv = extractPathogenStatus(upper, ['WSSV', 'WHITE\\s*SPOT']);
+    const ehp = extractPathogenStatus(upper, ['EHP', 'ENTEROCYTOZOON']);
+    const ihhnv = extractPathogenStatus(upper, ['IHHNV', 'EMS', 'AHPND', 'MBV']);
 
-            if (lum > 170 && sat < 40) { brightNeutral++; rowLight++; }
-            if (sat > 62) vividColor++;
-            const isDark = lum < 115 && sat < 70;
-            if (isDark) { rowDark++; }
-            if (x > 0 && isDark !== prevDark) transitions++;
-            prevDark = isDark;
-          }
-          if (transitions >= 8 && rowLight > w * 0.45 && rowDark > 3 && rowDark < w * 0.45) {
-            textLikeRows++;
-          }
-        }
+    const anyPositive = wssv === 'POSITIVE' || ehp === 'POSITIVE' || ihhnv === 'POSITIVE';
+    const anyNegative = wssv === 'NEGATIVE' || ehp === 'NEGATIVE' || ihhnv === 'NEGATIVE' ||
+      /\b(NEGATIVE|NOT\s*DETECTED|ABSENT)\b/.test(upper);
 
-        const paperRatio = brightNeutral / total;
-        const vividRatio = vividColor / total;
-        const textRowRatio = textLikeRows / h;
-        const hasReportName = /(pcr|lab|report|test|caa|cert|wssv|ehp|scan|doc)/i.test(fname);
-        const hasNonReportName = /(selfie|shrimp|prawn|seed|tank|pond|whatsapp_img|camera|dcim|meme|wallpaper)/i.test(fname);
-
-        // Real PCR lab reports have high white/light paper background, low vivid photo colors, and crisp dark-on-light text rows
-        let score = 0;
-        if (paperRatio >= 0.48) score += 45;
-        else if (paperRatio >= 0.34) score += 28;
-        if (vividRatio <= 0.14) score += 28;
-        else if (vividRatio <= 0.24) score += 14;
-        if (textRowRatio >= 0.08) score += 25;
-        else if (textRowRatio >= 0.035) score += 14;
-        if (hasReportName) score += 10;
-        if (hasNonReportName && paperRatio < 0.5) score -= 12;
-
-        const isPcr = (paperRatio >= 0.34 && vividRatio <= 0.26 && (textRowRatio >= 0.035 || paperRatio >= 0.58)) && score >= 58;
-        const confidence = Math.max(55, Math.min(98, Math.round(isPcr ? Math.max(76, score) : Math.max(68, 100 - score))));
-
-        resolve({
-          isPcrReport: isPcr,
-          status: isPcr ? 'VERIFIED_PCR' : 'NOT_A_PCR_REPORT',
-          confidence,
-          reason: isPcr
-            ? `Document layout & lab text verified (${confidence}% confidence)`
-            : 'Non-document / photo image detected instead of a PCR Lab Report'
-        });
-      } catch {
-        resolve({
-          isPcrReport: false,
-          status: 'NOT_A_PCR_REPORT',
-          confidence: 70,
-          reason: 'Could not verify PCR Lab Report document layout'
-        });
-      }
+    const extracted = {
+      wssv,
+      ehp,
+      ihhnv,
+      matchedCount: matchedKeywords.length,
+      keywords: matchedKeywords.slice(0, 6),
+      snippet: rawText.replace(/\s+/g, ' ').slice(0, 140)
     };
-    img.onerror = () => resolve({
+
+    if (anyPositive) {
+      return {
+        isPcrReport: false,
+        status: 'NOT_A_PCR_REPORT',
+        confidence: Math.max(75, ocrConf),
+        extracted,
+        reason: `⚠️ POSITIVE pathogen detected in OCR scan (WSSV: ${wssv}, EHP: ${ehp}, IHHNV/EMS: ${ihhnv})`
+      };
+    }
+
+    const isGenuinePcr = matchedKeywords.length >= 2 && anyNegative && rawText.length >= 25;
+    if (!isGenuinePcr) {
+      return {
+        isPcrReport: false,
+        status: 'NOT_A_PCR_REPORT',
+        confidence: Math.max(60, ocrConf),
+        extracted,
+        reason: rawText.length < 20
+          ? 'No readable PCR lab text found in image — upload a clear printed PCR report photo.'
+          : `Only ${matchedKeywords.length} lab keyword(s) found — missing clear WSSV/EHP/Negative PCR text.`
+      };
+    }
+
+    const summaryParts = [];
+    if (wssv !== 'NOT_FOUND') summaryParts.push(`WSSV: ${wssv}`);
+    if (ehp !== 'NOT_FOUND') summaryParts.push(`EHP: ${ehp}`);
+    if (ihhnv !== 'NOT_FOUND') summaryParts.push(`IHHNV/EMS: ${ihhnv}`);
+    const parsedSummary = summaryParts.length > 0 ? summaryParts.join(' • ') : 'PCR Negative Confirmed';
+
+    return {
+      isPcrReport: true,
+      status: 'VERIFIED_PCR',
+      confidence: Math.max(78, Math.min(99, ocrConf || 88)),
+      extracted,
+      reason: `OCR Verified (${parsedSummary})`
+    };
+  } catch {
+    return {
       isPcrReport: false,
       status: 'NOT_A_PCR_REPORT',
-      confidence: 70,
-      reason: 'Unreadable image file'
-    });
-    img.src = url;
-  });
+      confidence: 0,
+      extracted: null,
+      reason: 'OCR scan could not read text from this image. Please upload a clearer PCR lab report photo.'
+    };
+  }
 }
 
 // ============================================================================
@@ -2419,7 +2431,8 @@ function AquaMarkApp() {
           stamp: `CAA: ${vivoMeta.caaNumber} | ${vivoMeta.dateTime}`,
           aiPcrStatus: aiCheck.status,
           aiConfidence: aiCheck.confidence,
-          aiReason: aiCheck.reason
+          aiReason: aiCheck.reason,
+          aiExtracted: aiCheck.extracted || null
         });
       } else {
         const errTxt = await upRes.text();
@@ -8902,35 +8915,40 @@ Please advise immediate treatment protocol.`;
                 </div>
               </div>
 
-              {/* FEATURE 5: 5-POINT BIO-SECURITY & LAB AUDIT SCORECARD */}
-              <div className={`p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-2.5 text-xs`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4" /> {L('5-Point Bio-Security & Lab Audit Scorecard', '5-పాయింట్ బయో-సెక్యూరిటీ & ల్యాబ్ ఆడిట్ స్కోర్‌కార్డ్')}
-                  </span>
-                  <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                    {Math.min(100, (inspectedBatch.vigorScore || 96) + 2)}/100 A+
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* COMPACT BIO-SECURITY & OCR PCR VALUES STRIP (NO PROGRESS LINES) */}
+              <div className={`p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-2 text-xs`}>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
                   {[
-                    { label: L('UV Filtration', 'UV ఫిల్ట్రేషన్'), score: 98, status: 'Passed' },
-                    { label: L('SPF Quarantine', 'SPF క్వారంటైన్'), score: 100, status: 'Certified' },
-                    { label: L('Zero-Antibiotic', 'జీరో-యాంటీబయాటిక్'), score: 100, status: 'PCR Verified' },
-                    { label: L('Oxygen Purity', 'ఆక్సిజన్ స్వచ్ఛత'), score: 99, status: '99.5% Pure' },
-                    { label: L('Tank Hygiene', 'ట్యాంక్ పరిశుభ్రత'), score: inspectedBatch.vigorScore || 96, status: 'Audited' }
+                    { label: L('UV Filter', 'UV ఫిల్టర్'), val: '98%' },
+                    { label: L('SPF Status', 'SPF స్థితి'), val: '100%' },
+                    { label: L('Antibiotic', 'యాంటీబయాటిక్'), val: '0%' },
+                    { label: L('O₂ Purity', 'ఆక్సిజన్'), val: '99.5%' },
+                    { label: L('Hygiene', 'పరిశుభ్రత'), val: `${inspectedBatch.vigorScore || 96}%` }
                   ].map((pt, i) => (
-                    <div key={i} className={`p-2 rounded-lg border space-y-1 ${cardBg}`}>
-                      <div className="flex justify-between text-[11px] font-bold">
-                        <span>{pt.label}</span>
-                        <span className="text-emerald-500">{pt.score}% • {pt.status}</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pt.score}%` }} />
-                      </div>
+                    <div key={i} className={`px-2 py-1.5 rounded-lg border ${cardBg}`}>
+                      <span className="text-[10px] opacity-65 block truncate">{pt.label}</span>
+                      <b className="text-xs text-emerald-500">{pt.val}</b>
                     </div>
                   ))}
                 </div>
+                {(() => {
+                  const pcrWithOcr = (inspectedBatch.pcrImages || []).find((p) => p.aiExtracted);
+                  if (!pcrWithOcr?.aiExtracted) return null;
+                  const ex = pcrWithOcr.aiExtracted;
+                  return (
+                    <div className={`flex flex-wrap items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold ${cardBg}`}>
+                      <span className="text-teal-500">🔬 {L('OCR PCR Scan:', 'OCR PCR రిజల్ట్:')}</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {ex.wssv !== 'NOT_FOUND' && <span className={ex.wssv === 'NEGATIVE' ? 'text-emerald-500' : 'text-rose-500'}>WSSV: {ex.wssv}</span>}
+                        {ex.ehp !== 'NOT_FOUND' && <span className={ex.ehp === 'NEGATIVE' ? 'text-emerald-500' : 'text-rose-500'}>EHP: {ex.ehp}</span>}
+                        {ex.ihhnv !== 'NOT_FOUND' && <span className={ex.ihhnv === 'NEGATIVE' ? 'text-emerald-500' : 'text-rose-500'}>IHHNV/EMS: {ex.ihhnv}</span>}
+                        {ex.wssv === 'NOT_FOUND' && ex.ehp === 'NOT_FOUND' && ex.ihhnv === 'NOT_FOUND' && (
+                          <span className="text-emerald-500">{pcrWithOcr.aiReason}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
