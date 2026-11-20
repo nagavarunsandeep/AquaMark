@@ -1202,6 +1202,127 @@ function AquaMarkApp() {
       document.title = 'AquaMark';
     }
   }, [currentUser]);
+
+  // Keep live navigation/modal state in ref for Android PWA Hardware Back Button
+  navStateRef.current = {
+    currentUser,
+    buyerTab,
+    showActiveBatches,
+    showPublishBatchForm,
+    showSellerDispatchTools,
+    isEditingSellerProfile,
+    showBrokerBookings,
+    showBrokerHatcheries,
+    showBrokerMarginCalc,
+    isEditingBrokerBank,
+    hasOpenModal: Boolean(
+      fullScreenMedia ||
+      showNotifPanel ||
+      selectedBatch ||
+      inspectedBatch ||
+      inspectedBuyerBooking ||
+      inspectedSellerOrder ||
+      payRemainingBooking ||
+      gatePassBooking ||
+      statusModalBooking ||
+      crateQrBatch ||
+      transitPredictorBatch ||
+      videoRequestTargetBatch ||
+      showSellerVideoModal ||
+      showCompareModal ||
+      showBulkCartModal ||
+      showBasicEditProfileModal ||
+      showDeleteAccountModal ||
+      sellerTxModal ||
+      brokerTxListModal ||
+      selectedBrokerTx ||
+      activeInvoice ||
+      razorpayModal ||
+      showSellerScanQrModal
+    ),
+    closeTopModal: () => {
+      if (fullScreenMedia) return setFullScreenMedia(null);
+      if (razorpayModal) return setRazorpayModal(null);
+      if (showNotifPanel) return setShowNotifPanel(false);
+      if (selectedBatch) return setSelectedBatch(null);
+      if (payRemainingBooking) return setPayRemainingBooking(null);
+      if (inspectedBatch) return setInspectedBatch(null);
+      if (inspectedBuyerBooking) return setInspectedBuyerBooking(null);
+      if (inspectedSellerOrder) return setInspectedSellerOrder(null);
+      if (gatePassBooking) return setGatePassBooking(null);
+      if (statusModalBooking) return setStatusModalBooking(null);
+      if (crateQrBatch) return setCrateQrBatch(null);
+      if (transitPredictorBatch) return setTransitPredictorBatch(null);
+      if (videoRequestTargetBatch) return setVideoRequestTargetBatch(null);
+      if (showSellerVideoModal) return setShowSellerVideoModal(false);
+      if (showCompareModal) return setShowCompareModal(false);
+      if (showBulkCartModal) return setShowBulkCartModal(false);
+      if (showBasicEditProfileModal) return setShowBasicEditProfileModal(false);
+      if (showDeleteAccountModal) return setShowDeleteAccountModal(false);
+      if (sellerTxModal) return setSellerTxModal(null);
+      if (brokerTxListModal) return setBrokerTxListModal(null);
+      if (selectedBrokerTx) return setSelectedBrokerTx(null);
+      if (activeInvoice) return setActiveInvoice(null);
+      if (showSellerScanQrModal) return setShowSellerScanQrModal(false);
+    }
+  };
+
+  useEffect(() => {
+    try {
+      if (!window.history.state || !window.history.state.aqmGuard) {
+        window.history.pushState({ aqmGuard: true }, '', window.location.href);
+      }
+    } catch { /* ignore */ }
+
+    const handlePopState = () => {
+      const s = navStateRef.current;
+
+      // 1. If any modal/overlay is open, close it first
+      if (s.hasOpenModal) {
+        s.closeTopModal();
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+
+      // 2. If user is inside an extra tab/section, return to Portal Home (NEVER log out!)
+      if (s.currentUser?.role === 'buyer' && s.buyerTab !== 'marketplace') {
+        setBuyerTab('marketplace');
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+      if (s.currentUser?.role === 'seller' && (s.showActiveBatches || s.showPublishBatchForm || s.showSellerDispatchTools || s.isEditingSellerProfile)) {
+        setShowActiveBatches(false);
+        setShowPublishBatchForm(false);
+        setShowSellerDispatchTools(false);
+        setIsEditingSellerProfile(false);
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+      if (s.currentUser?.role === 'mediator' && (s.showBrokerBookings || s.showBrokerHatcheries || s.showBrokerMarginCalc || s.isEditingBrokerBank)) {
+        setShowBrokerBookings(false);
+        setShowBrokerHatcheries(false);
+        setShowBrokerMarginCalc(false);
+        setIsEditingBrokerBank(false);
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+
+      // 3. Already on Portal Home (or Login) -> Double Back to exit PWA to phone Home Screen
+      const now = Date.now();
+      if (now - lastBackPressRef.current < 2200) {
+        lastBackPressRef.current = 0;
+        window.history.back();
+        return;
+      }
+      lastBackPressRef.current = now;
+      try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+      setToast(lang === 'te' ? 'బయటకు వెళ్ళడానికి మళ్ళీ Back నొక్కండి' : 'Press Back again to exit app');
+      setTimeout(() => setToast(prev => (prev === 'Press Back again to exit app' || prev === 'బయటకు వెళ్ళడానికి మళ్ళీ Back నొక్కండి' ? '' : prev)), 2200);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [lang]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
 
@@ -1404,17 +1525,23 @@ function AquaMarkApp() {
   };
 
   const saveBookingToSupabase = async (bkObj) => {
-    await supabase.from('bookings').upsert({
-      booking_id: bkObj.bookingId,
-      farmer_phone: bkObj.farmerPhone,
-      farmer_name: bkObj.farmerName,
-      hatchery_owner_phone: bkObj.hatcheryOwnerPhone,
-      quantity: bkObj.quantity,
-      total_seed_cost: bkObj.totalSeedCost,
-      packing_status: bkObj.packingStatus,
-      settlement: bkObj.settlement,
-      data: bkObj
-    });
+    try {
+      const { error } = await supabase.from('bookings').upsert({
+        booking_id: bkObj.bookingId,
+        farmer_phone: bkObj.farmerPhone,
+        farmer_name: bkObj.farmerName,
+        hatchery_owner_phone: bkObj.hatcheryOwnerPhone,
+        quantity: bkObj.quantity,
+        total_seed_cost: bkObj.totalSeedCost,
+        packing_status: bkObj.packingStatus,
+        settlement: bkObj.settlement,
+        data: bkObj
+      });
+      if (error) return { ok: false, error: error.message || 'Database write rejected' };
+      return { ok: true, error: null };
+    } catch (err) {
+      return { ok: false, error: err?.message || 'Network/Database error' };
+    }
   };
 
   const deleteStorageFilesByUrls = async (urls) => {
@@ -1446,6 +1573,78 @@ function AquaMarkApp() {
   const [bookingStatusFilter, setBookingStatusFilter] = useState('ALL');
   const [showPublishBatchForm, setShowPublishBatchForm] = useState(false);
   const [showActiveBatches, setShowActiveBatches] = useState(false);
+  const [showBuyerHatcheries, setShowBuyerHatcheries] = useState(true);
+  const [expandedBatchIds, setExpandedBatchIds] = useState({});
+  const [expandedBuyerBookingIds, setExpandedBuyerBookingIds] = useState({});
+  const [showBrokerBookings, setShowBrokerBookings] = useState(false);
+  const [showBrokerHatcheries, setShowBrokerHatcheries] = useState(false);
+  const [payRemainingError, setPayRemainingError] = useState('');
+  const lastBackPressRef = useRef(0);
+  const navStateRef = useRef({});
+
+  const MAX_UPI_AMOUNT_INR = 80000;
+  const PLATFORM_UPI_ID = '9959933166@ybl';
+
+  const cleanNum = (raw) => {
+    if (raw === '' || raw === null || raw === undefined) return '';
+    const str = String(raw).replace(/^0+(?=\d)/, '');
+    if (str === '' || str === '.') return '';
+    const n = Number(str);
+    return Number.isNaN(n) ? '' : n;
+  };
+
+  const toggleExpandBatch = (id) => {
+    setExpandedBatchIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleExpandBuyerBooking = (id) => {
+    setExpandedBuyerBookingIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const validateStrictPayment = ({ method, amountInr, utr }) => {
+    const amt = Math.round(Number(amountInr) || 0);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return { ok: false, error: L('Invalid payment amount. Please check quantity and try again.', 'చెల్లింపు మొత్తం సరిగ్గా లేదు. దయచేసి మళ్ళీ ప్రయత్నించండి.') };
+    }
+    if (method === 'DIRECT_UPI' && amt > MAX_UPI_AMOUNT_INR) {
+      return {
+        ok: false,
+        error: L(
+          `UPI payment limit is max ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')} per transaction. For ₹${amt.toLocaleString('en-IN')}, please use Bank Transfer (NEFT/RTGS/IMPS) or Razorpay.`,
+          `UPI ద్వారా గరిష్టంగా ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')} మాత్రమే చెల్లించవచ్చు. ₹${amt.toLocaleString('en-IN')} కోసం దయచేసి Bank Transfer (NEFT/RTGS) లేదా Razorpay వాడండి.`
+        )
+      };
+    }
+    if (method === 'DIRECT_UPI' || method === 'BANK_TO_BANK') {
+      const cleaned = String(utr || '').trim().toUpperCase().replace(/\s+/g, '');
+      if (!cleaned) {
+        return { ok: false, error: t.toasts.enterUtr };
+      }
+      if (method === 'DIRECT_UPI') {
+        if (!/^\d{12}$/.test(cleaned)) {
+          return { ok: false, error: L('Enter a valid 12-digit numeric UPI UTR / Reference number from your UPI app.', 'మీ UPI యాప్ నుండి సరైన 12 అంకెల UTR నంబర్ నమోదు చేయండి.') };
+        }
+        const dummyUtrs = new Set(['000000000000', '111111111111', '222222222222', '333333333333', '444444444444', '555555555555', '666666666666', '777777777777', '888888888888', '999999999999', '123456789012', '012345678901', '987654321098']);
+        if (dummyUtrs.has(cleaned) || /^(\d)\1{11}$/.test(cleaned)) {
+          return { ok: false, error: L('Invalid/test UTR detected. Please enter the genuine 12-digit UTR from your payment receipt.', 'నకిలీ UTR అనుమతించబడదు. మీ అసలు 12 అంకెల UTR నంబర్ ఇవ్వండి.') };
+        }
+      } else {
+        if (!/^[A-Z0-9]{12,22}$/.test(cleaned) || (cleaned.match(/\d/g) || []).length < 6 || /^([A-Z0-9])\1+$/.test(cleaned)) {
+          return { ok: false, error: L('Enter a valid 12–22 character Bank NEFT/RTGS/IMPS UTR reference number.', 'సరైన 12–22 అక్షరాల Bank NEFT/RTGS/IMPS UTR నంబర్ నమోదు చేయండి.') };
+        }
+      }
+      const isDuplicate = bookings.some((bk) => {
+        const p1 = String(bk.paymentId || '').toUpperCase();
+        const p2 = String(bk.finalPaymentId || '').toUpperCase();
+        return p1.endsWith(`_${cleaned}`) || p1 === cleaned || p2.endsWith(`_${cleaned}`) || p2 === cleaned;
+      });
+      if (isDuplicate) {
+        return { ok: false, error: L('This UTR / Transaction Reference is already used on another booking. Please enter your new payment UTR.', 'ఈ UTR నంబర్ ఇప్పటికే వేరే బుకింగ్‌లో ఉపయోగించబడింది. కొత్త పేమెంట్ UTR ఇవ్వండి.') };
+      }
+      return { ok: true, cleanedUtr: cleaned };
+    }
+    return { ok: true, cleanedUtr: '' };
+  };
   const [videoReqFilter, setVideoReqFilter] = useState('ALL');
   const [sellerBatchFilter, setSellerBatchFilter] = useState('ALL');
   const [sellerBatchSearch, setSellerBatchSearch] = useState('');
@@ -1778,7 +1977,12 @@ function AquaMarkApp() {
           },
           theme: { color: '#0d9488' },
           handler: function (response) {
-            onSuccess(response.razorpay_payment_id);
+            const pid = response?.razorpay_payment_id;
+            if (!pid || !/^pay_[A-Za-z0-9]+$/.test(pid)) {
+              if (onFailure) onFailure(L('Payment verification failed. No payment ID received from Razorpay.', 'పేమెంట్ ధృవీకరణ విఫలమైంది. Razorpay నుండి ID రాలేదు.'));
+              return;
+            }
+            onSuccess(pid);
           },
           modal: {
             ondismiss: function () {
@@ -2492,10 +2696,18 @@ function AquaMarkApp() {
       availableStock: Math.max(0, (selectedBatch.availableStock || 0) - qty)
     };
 
-    setBatches(prev => prev.map(b => (b.id === selectedBatch.id ? updatedBatch : b)));
-    setBookings([newBooking, ...bookings]);
+    const saveRes = await saveBookingToSupabase(newBooking);
+    if (!saveRes?.ok) {
+      setModalError(L(
+        `Payment recorded (Ref: ${paymentRef}) but cloud confirmation failed (${saveRes?.error || 'Network error'}). Please check internet and retry — do NOT pay twice.`,
+        `క్లౌడ్ సేవ్ విఫలమైంది (${saveRes?.error || 'నెట్‌వర్క్ లోపం'}). Ref: ${paymentRef} సేవ్ చేసుకోండి — మళ్ళీ డబ్బులు చెల్లించకండి.`
+      ));
+      showToast(L('Booking cloud sync failed! Please retry.', 'బుకింగ్ సేవ్ విఫలమైంది! మళ్ళీ ప్రయత్నించండి.'));
+      return;
+    }
 
-    await saveBookingToSupabase(newBooking);
+    setBatches(prev => prev.map(b => (b.id === selectedBatch.id ? updatedBatch : b)));
+    setBookings(prev => [newBooking, ...prev]);
     await saveBatchToSupabase(updatedBatch);
 
     await pushAppNotification(
@@ -2534,24 +2746,31 @@ function AquaMarkApp() {
     setModalError('');
     if (!selectedBatch) return;
 
+    // Re-read authoritative live batch to prevent stale/tampered prices or stock
+    const liveBatch = batches.find(b => b.id === selectedBatch.id);
+    if (!liveBatch || liveBatch.paused) {
+      setModalError(L('This batch is currently paused or unavailable. Please refresh marketplace.', 'ఈ బ్యాచ్ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి రిఫ్రెష్ చేయండి.'));
+      return;
+    }
+
     if ((bookingForm.farmerPhone || '').replace(/\D/g, '').length !== 10) {
       setModalError(t.toasts.invalidPhone);
       return;
     }
 
     const requestedQty = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
-    const minPackingQty = selectedBatch.minPacking || 100000;
-    if (requestedQty < minPackingQty) {
+    const minPackingQty = liveBatch.minPacking || 100000;
+    if (!Number.isFinite(requestedQty) || requestedQty < minPackingQty) {
       setModalError(`Minimum Packing required is ${(minPackingQty / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL (${minPackingQty.toLocaleString('en-IN')} PL).`);
       return;
     }
-    if (requestedQty > (selectedBatch.availableStock || 0)) {
-      setModalError(`Requested quantity (${requestedQty.toLocaleString('en-IN')} PL) exceeds available hatchery stock (${(selectedBatch.availableStock || 0).toLocaleString('en-IN')} PL).`);
+    if (requestedQty > (liveBatch.availableStock || 0)) {
+      setModalError(`Requested quantity (${requestedQty.toLocaleString('en-IN')} PL) exceeds available hatchery stock (${(liveBatch.availableStock || 0).toLocaleString('en-IN')} PL).`);
       return;
     }
 
     const marginPaiseNum = Math.min(99, Math.max(0, Number(bookingForm.brokerMarginPaise) || 0));
-    const hatcheryFixedCost = Math.round(requestedQty * (selectedBatch.pricePer1000 || 0.42));
+    const hatcheryFixedCost = Math.round(requestedQty * (Number(liveBatch.pricePer1000) || 0.42));
     const transportCost = bookingForm.includeTransport ? 1500 : 0;
     const brokerExtraMarginTotal = currentUser?.role === 'mediator' ? Math.round(requestedQty * (marginPaiseNum / 100)) : 0;
     const totalPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
@@ -2559,14 +2778,20 @@ function AquaMarkApp() {
     const isFullPayment = bookingForm.paymentOption === 'FULL';
     const chargeNow = isFullPayment ? totalPayable : advance5Pct;
 
+    const paymentCheck = validateStrictPayment({
+      method: bookingForm.paymentMethod,
+      amountInr: chargeNow,
+      utr: bookingForm.utrReference
+    });
+    if (!paymentCheck.ok) {
+      setModalError(paymentCheck.error);
+      return;
+    }
+
     if (bookingForm.paymentMethod === 'DIRECT_UPI' || bookingForm.paymentMethod === 'BANK_TO_BANK') {
-      if (!bookingForm.utrReference.trim()) {
-        setModalError(t.toasts.enterUtr);
-        return;
-      }
       const prefix = bookingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT';
       finalizeBookingRecord(
-        `${prefix}_${bookingForm.utrReference.trim().toUpperCase()}`,
+        `${prefix}_${paymentCheck.cleanedUtr}`,
         requestedQty,
         hatcheryFixedCost,
         marginPaiseNum,
@@ -2894,8 +3119,17 @@ function AquaMarkApp() {
       settlement: { ...bk.settlement, status: 'BALANCE_CLEARED' }
     };
 
+    const saveRes = await saveBookingToSupabase(updatedBk);
+    if (!saveRes?.ok) {
+      setPayRemainingError(L(
+        `Cloud confirmation failed (${saveRes?.error || 'Network error'}). Ref: ${ref}. Please retry — do NOT pay twice.`,
+        `క్లౌడ్ సేవ్ విఫలమైంది (${saveRes?.error || 'నెట్‌వర్క్ లోపం'}). Ref: ${ref}. మళ్ళీ ప్రయత్నించండి — రెండుసార్లు చెల్లించకండి.`
+      ));
+      showToast(L('Payment sync failed! Please retry.', 'పేమెంట్ సేవ్ విఫలమైంది!'));
+      return;
+    }
+    setPayRemainingError('');
     setBookings(prev => prev.map(item => (item.bookingId === bk.bookingId ? updatedBk : item)));
-    await saveBookingToSupabase(updatedBk);
 
     await pushAppNotification(
       bk.hatcheryOwnerPhone,
@@ -2930,26 +3164,40 @@ function AquaMarkApp() {
 
   const handleBuyerPayRemainingSubmit = async (e) => {
     e.preventDefault();
+    setPayRemainingError('');
     if (!payRemainingBooking) return;
-    const bk = payRemainingBooking;
-    if ((payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && !payRemainingForm.utrReference.trim()) {
-      showToast(t.toasts.enterUtr);
+    const liveBk = bookings.find(b => b.bookingId === payRemainingBooking.bookingId) || payRemainingBooking;
+    const dueAmt = Math.round(Number(liveBk.balanceAtPacking) || 0);
+    if (liveBk.settlement?.status === 'BALANCE_CLEARED' || dueAmt <= 0) {
+      setPayRemainingError(L('This booking balance is already cleared.', 'ఈ బుకింగ్ బ్యాలెన్స్ ఇప్పటికే పూర్తయింది.'));
       return;
     }
+
+    const paymentCheck = validateStrictPayment({
+      method: payRemainingForm.paymentMethod,
+      amountInr: dueAmt,
+      utr: payRemainingForm.utrReference
+    });
+    if (!paymentCheck.ok) {
+      setPayRemainingError(paymentCheck.error);
+      showToast(paymentCheck.error);
+      return;
+    }
+
     if (payRemainingForm.paymentMethod === 'RAZORPAY') {
       launchRazorpayPayment({
-        amountInr: bk.balanceAtPacking || 0,
-        description: L(`Remaining Balance Payment (${bk.bookingId})`, `మిగిలిన బ్యాలెన్స్ చెల్లింపు (${bk.bookingId})`),
-        prefillName: bk.farmerName,
-        prefillPhone: bk.farmerPhone,
-        onSuccess: (rzpId) => finalizeBuyerPayRemaining(bk, rzpId),
-        onFailure: (msg) => showToast(msg)
+        amountInr: dueAmt,
+        description: L(`Remaining Balance Payment (${liveBk.bookingId})`, `మిగిలిన బ్యాలెన్స్ చెల్లింపు (${liveBk.bookingId})`),
+        prefillName: liveBk.farmerName,
+        prefillPhone: liveBk.farmerPhone,
+        onSuccess: (rzpId) => finalizeBuyerPayRemaining(liveBk, rzpId),
+        onFailure: (msg) => { setPayRemainingError(msg); showToast(msg); }
       });
       return;
     }
     const prefix = payRemainingForm.paymentMethod === 'DIRECT_UPI' ? 'UPI' : 'NEFT';
-    const ref = `${prefix}_${payRemainingForm.utrReference.trim().toUpperCase()}`;
-    await finalizeBuyerPayRemaining(bk, ref);
+    const ref = `${prefix}_${paymentCheck.cleanedUtr}`;
+    await finalizeBuyerPayRemaining(liveBk, ref);
   };
 
   const openAnimatedStatusModal = (bk) => {
@@ -3443,15 +3691,6 @@ function AquaMarkApp() {
       <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
       </body></html>`);
     win.document.close();
-  };
-
-  // Feature 8: Farmer Loyalty Tier Badge
-  const getFarmerLoyaltyTier = () => {
-    const completed = bookings.filter(b => b.farmerPhone === currentUser?.phone && b.packingStatus !== 'CANCELLED').length;
-    if (completed >= 10) return { tier: 'Platinum', count: completed, cls: 'bg-indigo-500/20 text-indigo-400 border-indigo-400/40', next: null };
-    if (completed >= 5) return { tier: 'Gold', count: completed, cls: 'bg-amber-500/20 text-amber-500 border-amber-400/40', next: 10 - completed };
-    if (completed >= 2) return { tier: 'Silver', count: completed, cls: 'bg-slate-400/20 text-slate-400 border-slate-400/40', next: 5 - completed };
-    return { tier: 'Bronze', count: completed, cls: 'bg-orange-500/20 text-orange-500 border-orange-400/40', next: 2 - completed };
   };
 
   // Feature 10: Multi-Pond Seed Cart helpers
@@ -4287,18 +4526,7 @@ function AquaMarkApp() {
                 <span className="text-[10px] sm:text-[11px] bg-teal-500/15 text-teal-600 border border-teal-500/30 px-2 sm:px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">
                   {t.portalBadges[currentUser.role] || currentUser.role}
                 </span>
-                {/* FEATURE 8: FARMER LOYALTY TIER BADGE */}
-                {currentUser.role === 'buyer' && (() => {
-                  const lt = getFarmerLoyaltyTier();
-                  return (
-                    <span
-                      title={lt.next ? `${lt.count} orders completed • ${lt.next} more for next tier` : `${lt.count} orders completed • Top Platinum Tier`}
-                      className={`text-[10px] border px-2 py-0.5 rounded-full font-extrabold inline-flex items-center gap-1 whitespace-nowrap ${lt.cls}`}
-                    >
-                      <Award className="w-3 h-3 shrink-0" /> {lt.tier} Farmer
-                    </span>
-                  );
-                })()}
+
               </div>
               <p className="text-xs opacity-60 truncate">{currentUser.name} • +91 {currentUser.phone}</p>
             </div>
@@ -4529,7 +4757,7 @@ function AquaMarkApp() {
                           min="0.10"
                           max="2.00"
                           value={watchlistPrice}
-                          onChange={(e) => setWatchlistPrice(Number(e.target.value))}
+                          onChange={(e) => setWatchlistPrice(cleanNum(e.target.value))}
                           className={`w-20 border rounded-lg px-2 py-1 text-xs font-mono font-bold select-text ${inputCls}`}
                         />
                         <button
@@ -4572,15 +4800,15 @@ function AquaMarkApp() {
                       <div className="grid grid-cols-3 gap-2.5">
                         <div>
                           <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Pond PPT', 'చెరువు PPT')}</label>
-                          <input type="number" min="0" max="45" value={matchmaker.pondPpt} onChange={(e) => setMatchmaker(prev => ({ ...prev, pondPpt: Number(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                          <input type="number" min="0" max="45" value={matchmaker.pondPpt} onChange={(e) => setMatchmaker(prev => ({ ...prev, pondPpt: cleanNum(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                         </div>
                         <div>
                           <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Acres', 'ఎకరాలు')}</label>
-                          <input type="number" step="0.5" min="0.5" value={matchmaker.acres} onChange={(e) => setMatchmaker(prev => ({ ...prev, acres: Number(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                          <input type="number" step="0.5" min="0.5" value={matchmaker.acres} onChange={(e) => setMatchmaker(prev => ({ ...prev, acres: cleanNum(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                         </div>
                         <div>
                           <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Max ₹/Seed', 'గరిష్ట ₹/సీడ్')}</label>
-                          <input type="number" step="0.01" min="0.10" value={matchmaker.maxBudget} onChange={(e) => setMatchmaker(prev => ({ ...prev, maxBudget: Number(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                          <input type="number" step="0.01" min="0.10" value={matchmaker.maxBudget} onChange={(e) => setMatchmaker(prev => ({ ...prev, maxBudget: cleanNum(e.target.value), enabled: true }))} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                         </div>
                       </div>
                     </div>
@@ -4594,302 +4822,366 @@ function AquaMarkApp() {
                     <p className="text-xs opacity-60 max-w-md mx-auto">{t.emptyMarketSub}</p>
                   </div>
                 ) : (
-                  /* INTERNAL SCROLLABLE HATCHERIES CONTAINER */
-                  <div className="max-h-[72vh] overflow-y-auto pr-1.5 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {filteredAndSortedBatches.map((batch) => {
-                        const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
-                        const isComparing = compareIds.includes(batch.id);
-                        const isSaved = savedBatchIds.includes(batch.id);
-                        const isSoldOut = (batch.availableStock || 0) <= 0;
-                        const isPaused = Boolean(batch.paused);
-                        const selectedDens = cardDensityChoice[batch.id] || 40;
-                        const acresCovered = ((batch.availableStock || 0) / (selectedDens * 4046.86)).toFixed(1);
-                        const videoRequested = liveVideoRequests.some(r => r.batchId === batch.id && r.farmerPhone === currentUser.phone);
-                        const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
-                        const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
+                  /* COLLAPSIBLE VERIFIED HATCHERIES TAB (SIMPLE & EASY TO BROWSE MANY HATCHERIES) */
+                  <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
+                    <button
+                      type="button"
+                      onClick={() => setShowBuyerHatcheries(prev => !prev)}
+                      className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-teal-500/5 transition"
+                    >
+                      <span className="text-sm sm:text-base font-extrabold flex items-center gap-2 min-w-0">
+                        <Building2 className="w-5 h-5 text-teal-600 shrink-0" />
+                        <span className="truncate">{L('Verified Seed Hatcheries', 'వెరిఫైడ్ సీడ్ హేచరీలు')} ({filteredAndSortedBatches.length})</span>
+                      </span>
+                      <span className="inline-flex items-center gap-2 shrink-0">
+                        <span className="bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                          {showBuyerHatcheries ? L('Hide', 'మూసివేయి') : L('Show', 'చూడు')}
+                        </span>
+                        <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform ${showBuyerHatcheries ? 'rotate-90' : ''}`} />
+                      </span>
+                    </button>
+                    {showBuyerHatcheries && (
+                      <div className="p-3 sm:p-4 border-t border-slate-300/20 max-h-[72vh] overflow-y-auto space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {filteredAndSortedBatches.map((batch) => {
+                            const isCardExpanded = Boolean(expandedBatchIds[`buyer_${batch.id}`]);
+                            const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.farmerPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
+                            const isComparing = compareIds.includes(batch.id);
+                            const isSaved = savedBatchIds.includes(batch.id);
+                            const isSoldOut = (batch.availableStock || 0) <= 0;
+                            const isPaused = Boolean(batch.paused);
+                            const selectedDens = cardDensityChoice[batch.id] || 40;
+                            const acresCovered = ((batch.availableStock || 0) / (selectedDens * 4046.86)).toFixed(1);
+                            const videoRequested = liveVideoRequests.some(r => r.batchId === batch.id && r.farmerPhone === currentUser.phone);
+                            const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
+                            const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
 
-                        return (
-                          <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
-                            <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
-                              {/* TOP ROW: BATCH & CAA BADGES + ZONE/RATING (LEFT) | HEART & PRICE (RIGHT) */}
-                              <div className="space-y-2.5">
-                                <div className="flex items-start justify-between gap-2.5">
-                                  <div className="min-w-0 space-y-1.5">
+                            const compactRate = formatConvertedRate(batch.pricePer1000);
+                            return (
+                              <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
+                                {/* COMPACT COLLAPSIBLE HATCHERY HEADER */}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpandBatch(`buyer_${batch.id}`)}
+                                  className="w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-2.5 cursor-pointer hover:bg-teal-500/5 transition"
+                                >
+                                  <div className="min-w-0 flex-1 space-y-1">
                                     <div className="flex flex-wrap items-center gap-1.5">
-                                      <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded">
-                                        {batch.id}
+                                      <span className="font-mono text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded">{batch.id}</span>
+                                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                                        <ShieldCheck className="w-3 h-3 shrink-0" /> CAA
                                       </span>
-                                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> {t.caaVerified}
+                                      <span className="text-[11px] font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                        <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> {batch.rating || 5.0}
                                       </span>
-                                      {isSoldOut && (
-                                        <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
-                                      )}
-                                      {isPaused && !isSoldOut && (
-                                        <span className="bg-amber-500/20 text-amber-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.pausedBadge}</span>
-                                      )}
+                                      {isSoldOut && <span className="bg-rose-500/15 text-rose-500 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">{t.soldOutBadge}</span>}
+                                      {isPaused && !isSoldOut && <span className="bg-amber-500/20 text-amber-500 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">{t.pausedBadge}</span>}
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                                      <span className="font-semibold opacity-70">{batch.zone}</span>
-                                      <span className="font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
-                                      </span>
+                                    <div className="font-extrabold text-sm sm:text-base text-teal-600 dark:text-teal-400 truncate">
+                                      {isUnlocked ? batch.realName : (batch.hatcheryCode || 'Verified Hatchery')}
+                                    </div>
+                                    <div className="text-[11px] opacity-70 truncate">
+                                      {batch.zone} • {batch.plStage} • {((batch.availableStock || 0) / 100000).toFixed(1).replace(/\.0$/, '')}L PL
                                     </div>
                                   </div>
-
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
-                                      className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
-                                      title="Save Hatchery"
-                                    >
-                                      <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-60'}`} />
-                                    </button>
-                                    {(() => {
-                                      const conv = formatConvertedRate(batch.pricePer1000);
-                                      return (
-                                        <div className="text-right">
-                                          <div className="text-xl sm:text-2xl font-black leading-none">{conv.value}</div>
-                                          <div className="text-[11px] opacity-60 mt-0.5">{conv.unit}</div>
+                                    <div className="text-right">
+                                      <div className="text-base sm:text-lg font-black leading-none">{compactRate.value}</div>
+                                      <div className="text-[10px] opacity-60 mt-0.5">{compactRate.unit}</div>
+                                    </div>
+                                    <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform shrink-0 ${isCardExpanded ? 'rotate-90' : ''}`} />
+                                  </div>
+                                </button>
+                                {isCardExpanded && (
+                                  <>
+                                    <div onClick={() => setInspectedBatch(batch)} className="px-4 sm:px-5 pb-4 pt-2 border-t border-slate-300/20 space-y-4 cursor-pointer">
+                                      {/* TOP ROW: BATCH & CAA BADGES + ZONE/RATING (LEFT) | HEART & PRICE (RIGHT) */}
+                                      <div className="space-y-2.5">
+                                        <div className="flex items-start justify-between gap-2.5">
+                                          <div className="min-w-0 space-y-1.5">
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                              <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded">
+                                                {batch.id}
+                                              </span>
+                                              <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                                <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> {t.caaVerified}
+                                              </span>
+                                              {isSoldOut && (
+                                                <span className="bg-rose-500/15 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.soldOutBadge}</span>
+                                              )}
+                                              {isPaused && !isSoldOut && (
+                                                <span className="bg-amber-500/20 text-amber-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full">{t.pausedBadge}</span>
+                                              )}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                              <span className="font-semibold opacity-70">{batch.zone}</span>
+                                              <span className="font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); toggleSaveBatch(batch.id); }}
+                                              className={`p-2 rounded-xl border cursor-pointer ${subCardBg}`}
+                                              title="Save Hatchery"
+                                            >
+                                              <Heart className={`w-4 h-4 ${isSaved ? 'fill-rose-500 text-rose-500' : 'opacity-60'}`} />
+                                            </button>
+                                            {(() => {
+                                              const conv = formatConvertedRate(batch.pricePer1000);
+                                              return (
+                                                <div className="text-right">
+                                                  <div className="text-xl sm:text-2xl font-black leading-none">{conv.value}</div>
+                                                  <div className="text-[11px] opacity-60 mt-0.5">{conv.unit}</div>
+                                                </div>
+                                              );
+                                            })()}
+                                          </div>
                                         </div>
-                                      );
-                                    })()}
-                                  </div>
-                                </div>
 
-                                {/* FULL-WIDTH HATCHERY NAME ROW (NEATLY ALIGNED ON MOBILE LIKE SCREENSHOT) */}
-                                <div className="flex items-center justify-between gap-2 pt-0.5">
-                                  <h3 className="text-base sm:text-lg font-extrabold tracking-tight leading-snug min-w-0 flex-1 break-words">
-                                    {isUnlocked ? (
-                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
-                                        <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
-                                        <span className="truncate sm:whitespace-normal">{batch.realName}</span>
-                                      </span>
-                                    ) : (
-                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
-                                        <Lock className="w-4 h-4 opacity-70 shrink-0" />
-                                        <span className="truncate sm:whitespace-normal">{batch.hatcheryCode || 'Verified Hatchery'}</span>
-                                      </span>
-                                    )}
-                                  </h3>
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
-                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
-                                      title="Transit Route & Oxygen Risk Predictor"
-                                    >
-                                      <Navigation className="w-3.5 h-3.5 text-indigo-500" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
-                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
-                                      title="Share Batch Flyer on WhatsApp"
-                                    >
-                                      <Share2 className="w-3.5 h-3.5 text-teal-600" />
-                                    </button>
-                                  </div>
-                                </div>
+                                        {/* FULL-WIDTH HATCHERY NAME ROW (NEATLY ALIGNED ON MOBILE LIKE SCREENSHOT) */}
+                                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                                          <h3 className="text-base sm:text-lg font-extrabold tracking-tight leading-snug min-w-0 flex-1 break-words">
+                                            {isUnlocked ? (
+                                              <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                                <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                <span className="truncate sm:whitespace-normal">{batch.realName}</span>
+                                              </span>
+                                            ) : (
+                                              <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                                <Lock className="w-4 h-4 opacity-70 shrink-0" />
+                                                <span className="truncate sm:whitespace-normal">{batch.hatcheryCode || 'Verified Hatchery'}</span>
+                                              </span>
+                                            )}
+                                          </h3>
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
+                                              className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                              title="Transit Route & Oxygen Risk Predictor"
+                                            >
+                                              <Navigation className="w-3.5 h-3.5 text-indigo-500" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
+                                              className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                              title="Share Batch Flyer on WhatsApp"
+                                            >
+                                              <Share2 className="w-3.5 h-3.5 text-teal-600" />
+                                            </button>
+                                          </div>
+                                        </div>
 
-                                {/* SPECIES, ADDRESS & SECONDARY TRUST PILLS */}
-                                <div className="space-y-1.5">
-                                  <p className="text-xs opacity-75 font-medium leading-relaxed">
-                                    {batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span>
-                                  </p>
-                                  {isUnlocked ? (
-                                    <div className="space-y-1">
-                                      <p className="text-xs opacity-80 leading-relaxed">{batch.realAddress} • +91 {batch.realPhone}</p>
-                                      {mapsUrl && (
-                                        <a
-                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
-                                        >
-                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
-                                        </a>
+                                        {/* SPECIES, ADDRESS & SECONDARY TRUST PILLS */}
+                                        <div className="space-y-1.5">
+                                          <p className="text-xs opacity-75 font-medium leading-relaxed">
+                                            {batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span>
+                                          </p>
+                                          {isUnlocked ? (
+                                            <div className="space-y-1">
+                                              <p className="text-xs opacity-80 leading-relaxed">{batch.realAddress} • +91 {batch.realPhone}</p>
+                                              {mapsUrl && (
+                                                <a
+                                                  href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                                >
+                                                  <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <p className="text-[11px] opacity-55">{t.unlockHint}</p>
+                                          )}
+                                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                            <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                              <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
+                                            </span>
+                                            {(batch.pcrImages || []).length > 0 && (() => {
+                                              const hasInvalid = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'NOT_A_PCR_REPORT');
+                                              const hasVerified = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'VERIFIED_PCR');
+                                              if (hasInvalid) {
+                                                return (
+                                                  <span className="bg-rose-500/15 text-rose-500 border border-rose-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                                    <AlertTriangle className="w-3 h-3" /> {L('AI: Not a PCR Report', 'AI: PCR రిపోర్ట్ కాదు')}
+                                                  </span>
+                                                );
+                                              }
+                                              if (hasVerified) {
+                                                return (
+                                                  <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                                    <FileCheck2 className="w-3 h-3" /> {L('AI PCR Verified', 'AI PCR వెరిఫైడ్')}
+                                                  </span>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
+                                            {matchmaker.enabled && (() => {
+                                              const mScore = computeBatchMatchScore(batch);
+                                              return (
+                                                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${mScore >= 80 ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40' : mScore >= 60 ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' : 'bg-slate-500/15 text-slate-400 border-slate-500/30'}`}>
+                                                  <Sparkles className="w-3 h-3" /> Match {mScore}%
+                                                </span>
+                                              );
+                                            })()}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
+                                        <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
+                                        <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
+                                        <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
+                                        <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
+                                      </div>
+
+                                      {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
+                                      {ownerProfile.dispatchNotice && (
+                                        <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
+                                          <Megaphone className="w-3.5 h-3.5 shrink-0" />
+                                          <span>{ownerProfile.dispatchNotice}</span>
+                                        </div>
                                       )}
-                                    </div>
-                                  ) : (
-                                    <p className="text-[11px] opacity-55">{t.unlockHint}</p>
-                                  )}
-                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                    <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                      <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
-                                    </span>
-                                    {(batch.pcrImages || []).length > 0 && (() => {
-                                      const hasInvalid = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'NOT_A_PCR_REPORT');
-                                      const hasVerified = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'VERIFIED_PCR');
-                                      if (hasInvalid) {
+
+                                      {/* FEATURE 2: HATCHERY DAILY DISPATCH SLOTS METER */}
+                                      {(() => {
+                                        const slots = getDispatchSlotsInfo(batch);
                                         return (
-                                          <span className="bg-rose-500/15 text-rose-500 border border-rose-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                            <AlertTriangle className="w-3 h-3" /> {L('AI: Not a PCR Report', 'AI: PCR రిపోర్ట్ కాదు')}
-                                          </span>
+                                          <div className={`border rounded-xl px-3 py-2 space-y-1 text-[11px] ${subCardBg}`}>
+                                            <div className="flex items-center justify-between font-bold">
+                                              <span className="opacity-80">{L('Dispatch Slots Today', 'ఈ రోజు ప్యాకింగ్ స్లాట్లు')}</span>
+                                              <span className={slots.remaining >= 5 ? 'text-emerald-500' : slots.remaining >= 2 ? 'text-amber-500' : 'text-rose-500'}>
+                                                {slots.remaining} / {slots.dailyCapacity} {L('slots left', 'స్లాట్లు మిగిలాయి')}
+                                              </span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                                              <div
+                                                className={`h-full rounded-full ${slots.remaining >= 5 ? 'bg-emerald-500' : slots.remaining >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                                style={{ width: `${slots.pct}%` }}
+                                              />
+                                            </div>
+                                          </div>
                                         );
-                                      }
-                                      if (hasVerified) {
+                                      })()}
+
+                                      {/* POND COVERAGE QUICK-ESTIMATOR ON CARD */}
+                                      <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
+                                        <span className="font-bold opacity-80">{L('Pond Coverage Estimator:', 'చెరువు విస్తీర్ణం అంచనా:')}</span>
+                                        <div className="flex items-center gap-1.5">
+                                          {[30, 40, 50].map(d => (
+                                            <button
+                                              key={d}
+                                              type="button"
+                                              onClick={() => setCardDensityChoice(prev => ({ ...prev, [batch.id]: d }))}
+                                              className={`px-2 py-0.5 rounded font-bold border cursor-pointer ${selectedDens === d ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                                            >
+                                              {d}/m²
+                                            </button>
+                                          ))}
+                                          <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} Acres</span>
+                                          <span className="bg-teal-500/15 text-teal-600 font-extrabold px-2 py-0.5 rounded-lg">
+                                            ₹{Math.round(4046.86 * selectedDens * (batch.pricePer1000 || 0.43)).toLocaleString('en-IN')}/Acre
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* APP-EXCLUSIVE EFFECTIVE RATE SAVINGS BADGE */}
+                                      {(() => {
+                                        const baseRate = Number(batch.pricePer1000 || 0.43);
+                                        const appBonusTotal = (Number(batch.bonusPercent || 15) + 2);
+                                        const netEff = (baseRate / (1 + appBonusTotal / 100)).toFixed(2);
                                         return (
-                                          <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                            <FileCheck2 className="w-3 h-3" /> {L('AI PCR Verified', 'AI PCR వెరిఫైడ్')}
-                                          </span>
+                                          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-1.5 flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                            <span>✨ {L(`App Deal: +${batch.bonusPercent}% + 2% Free App Bonus`, `యాప్ ఆఫర్: +${batch.bonusPercent}% + 2% అదనపు ఫ్రీ బోనస్`)}</span>
+                                            <span>{L('Net', 'నెట్')}: ₹{netEff}/seed</span>
+                                          </div>
                                         );
-                                      }
-                                      return null;
-                                    })()}
-                                    {matchmaker.enabled && (() => {
-                                      const mScore = computeBatchMatchScore(batch);
-                                      return (
-                                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${mScore >= 80 ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40' : mScore >= 60 ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' : 'bg-slate-500/15 text-slate-400 border-slate-500/30'}`}>
-                                          <Sparkles className="w-3 h-3" /> Match {mScore}%
+                                      })()}
+
+                                      <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
+                                        <span className="font-semibold">
+                                          📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'}) • <span className="text-amber-500 font-bold">Min Packing: {((batch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL</span>
                                         </span>
-                                      );
-                                    })()}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
-                                <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
-                                <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
-                                <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
-                                <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
-                              </div>
-
-                              {/* FEATURE 17: HATCHERY HOLIDAY / DISPATCH NOTICE BAR */}
-                              {ownerProfile.dispatchNotice && (
-                                <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
-                                  <Megaphone className="w-3.5 h-3.5 shrink-0" />
-                                  <span>{ownerProfile.dispatchNotice}</span>
-                                </div>
-                              )}
-
-                              {/* FEATURE 2: HATCHERY DAILY DISPATCH SLOTS METER */}
-                              {(() => {
-                                const slots = getDispatchSlotsInfo(batch);
-                                return (
-                                  <div className={`border rounded-xl px-3 py-2 space-y-1 text-[11px] ${subCardBg}`}>
-                                    <div className="flex items-center justify-between font-bold">
-                                      <span className="opacity-80">{L('Dispatch Slots Today', 'ఈ రోజు ప్యాకింగ్ స్లాట్లు')}</span>
-                                      <span className={slots.remaining >= 5 ? 'text-emerald-500' : slots.remaining >= 2 ? 'text-amber-500' : 'text-rose-500'}>
-                                        {slots.remaining} / {slots.dailyCapacity} {L('slots left', 'స్లాట్లు మిగిలాయి')}
-                                      </span>
+                                        <span className="inline-flex items-center gap-1 font-bold text-teal-500">
+                                          <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
-                                      <div
-                                        className={`h-full rounded-full ${slots.remaining >= 5 ? 'bg-emerald-500' : slots.remaining >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                                        style={{ width: `${slots.pct}%` }}
-                                      />
+
+                                    <div className={`px-3.5 sm:px-5 py-3.5 border-t space-y-2.5 ${subCardBg}`}>
+                                      {/* ROW 1: REQUEST LIVE VIDEO + COMPARE + CART ON ONE SINGLE HORIZONTAL LINE */}
+                                      <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 w-full">
+                                        <button
+                                          type="button"
+                                          onClick={() => openVideoRequestModal(batch)}
+                                          className={`flex-1 justify-center px-2 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap min-w-0 ${videoRequested ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : cardBg}`}
+                                        >
+                                          <Video className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                          <span className="truncate">{videoRequested ? L('Sent ✓', 'పంపబడింది ✓') : L('Live Video', 'లైవ్ వీడియో')}</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleCompareBatch(batch.id)}
+                                          className={`flex-1 justify-center px-2 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${isComparing ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                                        >
+                                          {isComparing ? t.comparingBtn : t.compareBtn}
+                                        </button>
+                                        {/* FEATURE 10: MULTI-POND BULK CART BUTTON RIGHT BESIDE COMPARE */}
+                                        {!isSoldOut && !isPaused && (() => {
+                                          const inCart = bulkCart.some(c => c.batchId === batch.id);
+                                          return (
+                                            <button
+                                              type="button"
+                                              onClick={() => toggleBulkCartItem(batch)}
+                                              className={`flex-1 justify-center px-2 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${inCart ? 'bg-emerald-600 text-white border-emerald-600' : cardBg}`}
+                                            >
+                                              <ShoppingCart className="w-3.5 h-3.5 shrink-0" /> {inCart ? L('In Cart ✓', 'కార్ట్ ✓') : L('Cart', 'కార్ట్')}
+                                            </button>
+                                          );
+                                        })()}
+                                      </div>
+                                      {/* ROW 2: BOOK PACKING SLOT FULL-WIDTH BELOW */}
+                                      <button
+                                        type="button"
+                                        disabled={isSoldOut || isPaused}
+                                        onClick={() => {
+                                          setModalError('');
+                                          setBookingForm(prev => ({
+                                            ...prev,
+                                            farmerName: currentUser.name,
+                                            farmerPhone: currentUser.phone,
+                                            qtyAmount: '2',
+                                            qtyUnit: 'LAKHS',
+                                            pondSplitCount: '1',
+                                            packingDate: batch.availableDate || prev.packingDate,
+                                            packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                            brokerMarginPaise: '',
+                                            upiSubMode: 'QR',
+                                            qrRevealed: false,
+                                            utrReference: ''
+                                          }));
+                                          setSelectedBatch(batch);
+                                        }}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs"
+                                      >
+                                        {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.bookSlotBtn} {!isSoldOut && !isPaused && <ChevronRight className="w-4 h-4" />}
+                                      </button>
                                     </div>
-                                  </div>
-                                );
-                              })()}
-
-                              {/* POND COVERAGE QUICK-ESTIMATOR ON CARD */}
-                              <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
-                                <span className="font-bold opacity-80">{L('Pond Coverage Estimator:', 'చెరువు విస్తీర్ణం అంచనా:')}</span>
-                                <div className="flex items-center gap-1.5">
-                                  {[30, 40, 50].map(d => (
-                                    <button
-                                      key={d}
-                                      type="button"
-                                      onClick={() => setCardDensityChoice(prev => ({ ...prev, [batch.id]: d }))}
-                                      className={`px-2 py-0.5 rounded font-bold border cursor-pointer ${selectedDens === d ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
-                                    >
-                                      {d}/m²
-                                    </button>
-                                  ))}
-                                  <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} Acres</span>
-                                  <span className="bg-teal-500/15 text-teal-600 font-extrabold px-2 py-0.5 rounded-lg">
-                                    ₹{Math.round(4046.86 * selectedDens * (batch.pricePer1000 || 0.43)).toLocaleString('en-IN')}/Acre
-                                  </span>
-                                </div>
+                                  </>
+                                )}
                               </div>
-
-                              {/* APP-EXCLUSIVE EFFECTIVE RATE SAVINGS BADGE */}
-                              {(() => {
-                                const baseRate = Number(batch.pricePer1000 || 0.43);
-                                const appBonusTotal = (Number(batch.bonusPercent || 15) + 2);
-                                const netEff = (baseRate / (1 + appBonusTotal / 100)).toFixed(2);
-                                return (
-                                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-1.5 flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                    <span>✨ {L(`App Deal: +${batch.bonusPercent}% + 2% Free App Bonus`, `యాప్ ఆఫర్: +${batch.bonusPercent}% + 2% అదనపు ఫ్రీ బోనస్`)}</span>
-                                    <span>{L('Net', 'నెట్')}: ₹{netEff}/seed</span>
-                                  </div>
-                                );
-                              })()}
-
-                              <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
-                                <span className="font-semibold">
-                                  📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'}) • <span className="text-amber-500 font-bold">Min Packing: {((batch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 font-bold text-teal-500">
-                                  <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
-                              <button
-                                type="button"
-                                onClick={() => openVideoRequestModal(batch)}
-                                className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${videoRequested ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500' : cardBg}`}
-                              >
-                                <Video className="w-3.5 h-3.5 text-teal-600" /> {videoRequested ? t.liveVideoSentBadge : t.liveVideoBtn}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => toggleCompareBatch(batch.id)}
-                                className={`px-3 py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${isComparing ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
-                              >
-                                {isComparing ? t.comparingBtn : t.compareBtn}
-                              </button>
-                              {/* FEATURE 10: MULTI-POND BULK CART BUTTON */}
-                              {!isSoldOut && !isPaused && (() => {
-                                const inCart = bulkCart.some(c => c.batchId === batch.id);
-                                return (
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleBulkCartItem(batch)}
-                                    className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer ${inCart ? 'bg-emerald-600 text-white border-emerald-600' : cardBg}`}
-                                  >
-                                    <ShoppingCart className="w-3.5 h-3.5" /> {inCart ? L('In Cart ✓', 'కార్ట్‌లో ఉంది ✓') : L('+ Cart', '+ కార్ట్')}
-                                  </button>
-                                );
-                              })()}
-                              <button
-                                type="button"
-                                disabled={isSoldOut || isPaused}
-                                onClick={() => {
-                                  setModalError('');
-                                  setBookingForm(prev => ({
-                                    ...prev,
-                                    farmerName: currentUser.name,
-                                    farmerPhone: currentUser.phone,
-                                    qtyAmount: '2',
-                                    qtyUnit: 'LAKHS',
-                                    pondSplitCount: '1',
-                                    packingDate: batch.availableDate || prev.packingDate,
-                                    packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
-                                    brokerMarginPaise: '',
-                                    upiSubMode: 'QR',
-                                    qrRevealed: false,
-                                    utrReference: ''
-                                  }));
-                                  setSelectedBatch(batch);
-                                }}
-                                className="w-full sm:w-auto sm:flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
-                              >
-                                {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.bookSlotBtn} {!isSoldOut && !isPaused && <ChevronRight className="w-4 h-4" />}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -4942,8 +5234,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                                ? 'bg-teal-600 text-white border-teal-600'
-                                : `${subCardBg} opacity-80 hover:opacity-100`
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -4959,20 +5251,18 @@ function AquaMarkApp() {
                             const isFinalCleared = bk.settlement?.status === 'BALANCE_CLEARED';
                             const isCancelled = bk.packingStatus === 'CANCELLED' || bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
 
+                            const isBkExpanded = Boolean(expandedBuyerBookingIds[bk.bookingId]);
                             return (
                               <div
                                 key={bk.bookingId}
-                                onClick={() => setInspectedBuyerBooking(bk)}
-                                className={`border hover:border-teal-500 rounded-2xl p-3.5 sm:p-4 space-y-3 transition cursor-pointer overflow-hidden ${subCardBg}`}
+                                className={`border hover:border-teal-500 rounded-2xl transition overflow-hidden ${subCardBg}`}
                               >
-                                {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
-                                  <div className="bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold">
-                                    {t.packingReadyAlert}
-                                  </div>
-                                )}
-
-                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                                  <div className="space-y-1.5 min-w-0 flex-1">
+                                {/* COLLAPSIBLE BOOKING SUMMARY HEADER */}
+                                <div
+                                  onClick={() => toggleExpandBuyerBooking(bk.bookingId)}
+                                  className="p-3.5 sm:p-4 flex items-center justify-between gap-2.5 cursor-pointer hover:bg-teal-500/5 transition"
+                                >
+                                  <div className="space-y-1 min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-1.5">
                                       <button
                                         type="button"
@@ -4982,7 +5272,7 @@ function AquaMarkApp() {
                                       >
                                         {bk.bookingId} <Copy className="w-3 h-3 opacity-75" />
                                       </button>
-                                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isFinalCleared
+                                      <span className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full ${isFinalCleared
                                         ? 'bg-emerald-500/15 text-emerald-500'
                                         : isCancelled
                                           ? 'bg-rose-500/15 text-rose-500'
@@ -4995,115 +5285,144 @@ function AquaMarkApp() {
                                             : t.pendingSettlementBadge}
                                       </span>
                                     </div>
-                                    <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400 break-words leading-snug">
-                                      {bk.batch?.realName} • +91 {bk.batch?.realPhone}
+                                    <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400 truncate">
+                                      {bk.batch?.realName} • {(bk.quantity || 0).toLocaleString('en-IN')} PL
                                     </p>
-                                    <p className="text-xs opacity-80 leading-relaxed break-words">
-                                      Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
-                                    </p>
-                                    <p className="text-[11px] opacity-70 leading-relaxed break-words">
-                                      {isFinalCleared
-                                        ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
+                                    <p className="text-[11px] opacity-75 truncate">
+                                      {t.packingDateLabel}: <b>{bk.packingDate}</b> • {isFinalCleared
+                                        ? <span className="text-emerald-500 font-bold">100% Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')})</span>
                                         : isCancelled
-                                          ? <span className="text-rose-500 font-bold">Cancelled • Non-Refundable</span>
-                                          : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
-                                      {' '}• <span className="text-teal-500 underline font-semibold">Tap card for full details & receipts</span>
+                                          ? <span className="text-rose-500 font-bold">Cancelled</span>
+                                          : <span>Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
                                     </p>
                                   </div>
-
-                                  <div className="grid grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0" onClick={(e) => e.stopPropagation()}>
-                                    {/* STATUS ANIMATION BUTTON */}
-                                    {!isCancelled && (
-                                      <button
-                                        type="button"
-                                        onClick={() => openAnimatedStatusModal(bk)}
-                                        className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${cardBg}`}
-                                      >
-                                        <Activity className="w-3.5 h-3.5 shrink-0" /> Status
-                                      </button>
-                                    )}
-
-                                    {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
-                                    {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
-                                          setPayRemainingBooking(bk);
-                                        }}
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
-                                      >
-                                        <CreditCard className="w-3.5 h-3.5 shrink-0" /> Full Payment
-                                      </button>
-                                    )}
-
-                                    {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
-                                    {!isCancelled && (
-                                      bk.gatePassCleared ? (
-                                        <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap">
-                                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Gate-Pass Cleared
-                                        </span>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => setGatePassBooking(bk)}
-                                          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
-                                        >
-                                          <QrCode className="w-3.5 h-3.5 shrink-0" /> Gate-Pass QR
-                                        </button>
-                                      )
-                                    )}
-
-                                    {/* FEATURE 15: 1-CLICK QUICK REORDER */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleQuickReorder(bk)}
-                                      className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
-                                    >
-                                      <RefreshCw className="w-3.5 h-3.5 shrink-0" /> {L('Reorder', 'రీఆర్డర్')}
-                                    </button>
-                                  </div>
+                                  <ChevronRight className={`w-4 h-4 text-teal-600 shrink-0 transition-transform ${isBkExpanded ? 'rotate-90' : ''}`} />
                                 </div>
 
-                                {isFinalCleared && (
-                                  <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
-                                    {!bk.rated ? (
-                                      <div className={`flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
-                                        <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
-                                          <span className="text-xs font-bold">{t.rateSeedLabel}</span>
-                                          <div className="flex items-center gap-1">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                              <button
-                                                key={star}
-                                                type="button"
-                                                onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
-                                                className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
-                                              >
-                                                {star}★
-                                              </button>
-                                            ))}
-                                          </div>
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:flex-1">
-                                          <input
-                                            type="text"
-                                            placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
-                                            value={draft.comment}
-                                            onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
-                                            className={`w-full sm:flex-1 border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
-                                          />
+                                {isBkExpanded && (
+                                  <div
+                                    onClick={() => setInspectedBuyerBooking(bk)}
+                                    className="px-3.5 sm:px-4 pb-4 pt-2 border-t border-slate-300/20 space-y-3 cursor-pointer"
+                                  >
+                                    {bk.packingStatus === 'PACKING_DONE_BY_SELLER' && !isFinalCleared && !isCancelled && (
+                                      <div className="bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold">
+                                        {t.packingReadyAlert}
+                                      </div>
+                                    )}
+
+                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                                      <div className="space-y-1 min-w-0 flex-1">
+                                        <p className="text-xs font-bold opacity-85 break-words">
+                                          {bk.batch?.realName} • +91 {bk.batch?.realPhone}
+                                        </p>
+                                        <p className="text-xs opacity-80 leading-relaxed break-words">
+                                          Batch <b>{bk.batch?.id}</b> • {(bk.quantity || 0).toLocaleString('en-IN')} PL ({bk.batch?.plStage}) • {t.packingDateLabel}: <b>{bk.packingDate}</b>
+                                        </p>
+                                        <p className="text-[11px] opacity-70 leading-relaxed break-words">
+                                          {isFinalCleared
+                                            ? <span className="text-emerald-500 font-bold">100% Full Paid (₹{(bk.totalSeedCost || 0).toLocaleString('en-IN')}) ✓</span>
+                                            : isCancelled
+                                              ? <span className="text-rose-500 font-bold">Cancelled • Non-Refundable</span>
+                                              : <span>Paid: <b>₹{(bk.tokenAdvance || 0).toLocaleString('en-IN')}</b> • Balance: <b>₹{(bk.balanceAtPacking || 0).toLocaleString('en-IN')}</b></span>}
+                                          {' '}• <span className="text-teal-500 underline font-semibold">Tap here for full receipt & details</span>
+                                        </p>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        {/* STATUS ANIMATION BUTTON */}
+                                        {!isCancelled && (
                                           <button
                                             type="button"
-                                            onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
-                                            className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer whitespace-nowrap"
+                                            onClick={() => openAnimatedStatusModal(bk)}
+                                            className={`border border-teal-500/40 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${cardBg}`}
                                           >
-                                            {t.submitReviewBtn}
+                                            <Activity className="w-3.5 h-3.5 shrink-0" /> Status
                                           </button>
-                                        </div>
+                                        )}
+
+                                        {/* FULL PAYMENT BUTTON IF ADVANCE PAID */}
+                                        {!isFinalCleared && !isCancelled && (bk.balanceAtPacking || 0) > 0 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                                              setPayRemainingBooking(bk);
+                                            }}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                          >
+                                            <CreditCard className="w-3.5 h-3.5 shrink-0" /> Full Payment
+                                          </button>
+                                        )}
+
+                                        {/* GATE-PASS QR (CLEARED WHEN SCANNED BY HATCHERY) */}
+                                        {!isCancelled && (
+                                          bk.gatePassCleared ? (
+                                            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap">
+                                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Gate-Pass Cleared
+                                            </span>
+                                          ) : (
+                                            <button
+                                              type="button"
+                                              onClick={() => setGatePassBooking(bk)}
+                                              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                            >
+                                              <QrCode className="w-3.5 h-3.5 shrink-0" /> Gate-Pass QR
+                                            </button>
+                                          )
+                                        )}
+
+                                        {/* FEATURE 15: 1-CLICK QUICK REORDER */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleQuickReorder(bk)}
+                                          className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                                        >
+                                          <RefreshCw className="w-3.5 h-3.5 shrink-0" /> {L('Reorder', 'రీఆర్డర్')}
+                                        </button>
                                       </div>
-                                    ) : (
-                                      <div className="text-xs text-emerald-500 font-bold">
-                                        ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
+                                    </div>
+
+                                    {isFinalCleared && (
+                                      <div className="pt-3 border-t border-slate-300/30" onClick={(e) => e.stopPropagation()}>
+                                        {!bk.rated ? (
+                                          <div className={`flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 p-3 rounded-xl border ${cardBg}`}>
+                                            <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
+                                              <span className="text-xs font-bold">{t.rateSeedLabel}</span>
+                                              <div className="flex items-center gap-1">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                  <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, stars: star } })}
+                                                    className={`px-2 py-1 rounded-lg text-xs font-bold border cursor-pointer ${draft.stars >= star ? 'bg-amber-400 border-amber-500 text-slate-950' : subCardBg}`}
+                                                  >
+                                                    {star}★
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:flex-1">
+                                              <input
+                                                type="text"
+                                                placeholder={lang === 'te' ? 'హేచరీ గురించి మీ అభిప్రాయం రాయండి...' : 'Write feedback for Hatchery...'}
+                                                value={draft.comment}
+                                                onChange={(e) => setRatingDrafts({ ...ratingDrafts, [bk.bookingId]: { ...draft, comment: e.target.value } })}
+                                                className={`w-full sm:flex-1 border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`}
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() => handleSubmitRatingAndFeedback(bk.bookingId, bk.batch?.id)}
+                                                className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer whitespace-nowrap"
+                                              >
+                                                {t.submitReviewBtn}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="text-xs text-emerald-500 font-bold">
+                                            ✓ {t.ratedLabel}: {bk.userRating}★ {bk.userFeedback ? `— "${bk.userFeedback}"` : ''}
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -5134,13 +5453,13 @@ function AquaMarkApp() {
                     </div>
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Acres', 'ఎకరాలు')}</label>
-                      <input required type="number" step="0.5" value={newPondForm.acres} onChange={(e) => setNewPondForm({ ...newPondForm, acres: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      <input required type="number" step="0.5" value={newPondForm.acres} onChange={(e) => setNewPondForm({ ...newPondForm, acres: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
-                      <input required type="number" step="10000" value={newPondForm.stockedQty} onChange={(e) => setNewPondForm({ ...newPondForm, stockedQty: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      <input required type="number" step="10000" value={newPondForm.stockedQty} onChange={(e) => setNewPondForm({ ...newPondForm, stockedQty: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocking Date', 'సీడ్ వదిలిన తేదీ')}</label>
@@ -5150,7 +5469,7 @@ function AquaMarkApp() {
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Today Feed (kg)', 'నేటి ఫీడ్ (కేజీలు)')}</label>
-                      <input required type="number" step="0.5" value={newPondForm.dailyFeedKg} onChange={(e) => setNewPondForm({ ...newPondForm, dailyFeedKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      <input required type="number" step="0.5" value={newPondForm.dailyFeedKg} onChange={(e) => setNewPondForm({ ...newPondForm, dailyFeedKg: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Check-Tray Leftover', 'చెక్-ట్రే మిగులు')}</label>
@@ -5165,7 +5484,7 @@ function AquaMarkApp() {
                   <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-300/20">
                     <div>
                       <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Molting %', 'మోల్టింగ్ %')}</label>
-                      <input type="number" min="0" max="100" value={newPondForm.moltingPct ?? 12} onChange={(e) => setNewPondForm({ ...newPondForm, moltingPct: Number(e.target.value) })} className={`w-full border rounded-xl px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                      <input type="number" min="0" max="100" value={newPondForm.moltingPct ?? 12} onChange={(e) => setNewPondForm({ ...newPondForm, moltingPct: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-2 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold opacity-75 block mb-1">{L('Gut Status', 'గట్ స్థితి')}</label>
@@ -5243,15 +5562,15 @@ function AquaMarkApp() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Stocked Seed (PL)', 'వదిలిన సీడ్ (PL)')}</label>
-                      <input type="number" step="10000" value={biomassCalc.stockedPl} onChange={(e) => setBiomassCalc({ ...biomassCalc, stockedPl: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      <input type="number" step="10000" value={biomassCalc.stockedPl} onChange={(e) => setBiomassCalc({ ...biomassCalc, stockedPl: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Est. Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
-                      <input type="number" min="20" max="100" value={biomassCalc.survivalPct} onChange={(e) => setBiomassCalc({ ...biomassCalc, survivalPct: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      <input type="number" min="20" max="100" value={biomassCalc.survivalPct} onChange={(e) => setBiomassCalc({ ...biomassCalc, survivalPct: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Current Avg Body Weight (g)', 'ప్రస్తుత సగటు బరువు (గ్రాములు)')}</label>
-                      <input type="number" step="0.5" min="0.5" value={biomassCalc.abwGrams} onChange={(e) => setBiomassCalc({ ...biomassCalc, abwGrams: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                      <input type="number" step="0.5" min="0.5" value={biomassCalc.abwGrams} onChange={(e) => setBiomassCalc({ ...biomassCalc, abwGrams: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                     </div>
                   </div>
                   {(() => {
@@ -5296,7 +5615,7 @@ function AquaMarkApp() {
                         type="number"
                         step="50"
                         value={whatIfBagPrice}
-                        onChange={(e) => setWhatIfBagPrice(Math.max(500, Number(e.target.value) || 2200))}
+                        onChange={(e) => setWhatIfBagPrice(cleanNum(e.target.value))}
                         className={`w-24 border rounded-lg px-2 py-1 text-xs font-bold select-text ${inputCls}`}
                       />
                     </div>
@@ -5313,7 +5632,7 @@ function AquaMarkApp() {
                       <div className="space-y-3">
                         <div>
                           <div className="flex justify-between text-xs font-bold mb-1">
-                            <span>{L('Target FCR:', 'లక్ష్య FCR:')} <b className="text-teal-500 text-sm">{whatIfFcr.toFixed(2)}</b></span>
+                            <span>{L('Target FCR:', 'లక్ష్య FCR:')} <b className="text-teal-500 text-sm">{(Number(whatIfFcr) || 0).toFixed(2)}</b></span>
                             <span className="opacity-60">{L('Baseline Standard FCR: 1.50', 'సాధారణ బేస్‌లైన్ FCR: 1.50')}</span>
                           </div>
                           <input
@@ -5370,11 +5689,11 @@ function AquaMarkApp() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Number of Ponds', 'చెరువుల సంఖ్య')}</label>
-                    <input type="number" min="1" value={calcInputs.ponds} onChange={(e) => setCalcInputs({ ...calcInputs, ponds: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" min="1" value={calcInputs.ponds} onChange={(e) => setCalcInputs({ ...calcInputs, ponds: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Acres per Pond', 'ఒక్కో చెరువు విస్తీర్ణం (ఎకరాలు)')}</label>
-                    <input type="number" step="0.5" min="0.5" value={calcInputs.acresPerPond} onChange={(e) => setCalcInputs({ ...calcInputs, acresPerPond: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" step="0.5" min="0.5" value={calcInputs.acresPerPond} onChange={(e) => setCalcInputs({ ...calcInputs, acresPerPond: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Stocking Density (/m²)', 'స్టాకింగ్ సాంద్రత (/m²)')}</label>
@@ -5387,7 +5706,7 @@ function AquaMarkApp() {
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Expected Survival (%)', 'అంచనా సర్వైవల్ (%)')}</label>
-                    <input type="number" min="40" max="100" value={calcInputs.survival} onChange={(e) => setCalcInputs({ ...calcInputs, survival: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" min="40" max="100" value={calcInputs.survival} onChange={(e) => setCalcInputs({ ...calcInputs, survival: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Target Count (/kg)', 'లక్ష్య కౌంట్ (/kg)')}</label>
@@ -5400,19 +5719,19 @@ function AquaMarkApp() {
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('FCR (Feed Ratio)', 'FCR (ఫీడ్ నిష్పత్తి)')}</label>
-                    <input type="number" step="0.1" min="1.0" max="2.5" value={calcInputs.fcr} onChange={(e) => setCalcInputs({ ...calcInputs, fcr: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" step="0.1" min="1.0" max="2.5" value={calcInputs.fcr} onChange={(e) => setCalcInputs({ ...calcInputs, fcr: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Market Price (₹ / kg)', 'మార్కెట్ ధర (₹ / kg)')}</label>
-                    <input type="number" value={calcInputs.marketRatePerKg} onChange={(e) => setCalcInputs({ ...calcInputs, marketRatePerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" value={calcInputs.marketRatePerKg} onChange={(e) => setCalcInputs({ ...calcInputs, marketRatePerKg: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Feed Cost (₹ / kg)', 'ఫీడ్ ధర (₹ / kg)')}</label>
-                    <input type="number" value={calcInputs.feedCostPerKg} onChange={(e) => setCalcInputs({ ...calcInputs, feedCostPerKg: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" value={calcInputs.feedCostPerKg} onChange={(e) => setCalcInputs({ ...calcInputs, feedCostPerKg: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                   <div>
                     <label className="text-xs font-bold opacity-75 block mb-1">{L('Power & Probiotics (/Acre)', 'కరెంట్ & ప్రోబయోటిక్స్ (/ఎకరానికి)')}</label>
-                    <input type="number" value={calcInputs.powerProbioticCostPerAcre} onChange={(e) => setCalcInputs({ ...calcInputs, powerProbioticCostPerAcre: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                    <input type="number" value={calcInputs.powerProbioticCostPerAcre} onChange={(e) => setCalcInputs({ ...calcInputs, powerProbioticCostPerAcre: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                   </div>
                 </div>
 
@@ -5488,23 +5807,23 @@ function AquaMarkApp() {
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                     <div>
                       <label className="text-xs font-bold opacity-75 block mb-1">{L('Water pH (7.5 - 8.3)', 'నీటి pH (7.5 - 8.3)')}</label>
-                      <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                      <input type="number" step="0.1" value={waterTest.ph} onChange={(e) => setWaterTest({ ...waterTest, ph: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-xs font-bold opacity-75 block mb-1">{L('Dissolved Oxygen (ppm)', 'కరిగిన ఆక్సిజన్ / DO (ppm)')}</label>
-                      <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                      <input type="number" step="0.1" value={waterTest.doLevel} onChange={(e) => setWaterTest({ ...waterTest, doLevel: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-xs font-bold opacity-75 block mb-1">{L('Alkalinity (ppm)', 'ఆల్కలీనిటీ (ppm)')}</label>
-                      <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                      <input type="number" value={waterTest.alkalinity} onChange={(e) => setWaterTest({ ...waterTest, alkalinity: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-xs font-bold opacity-75 block mb-1">{L('Ammonia (ppm)', 'అమ్మోనియా (ppm)')}</label>
-                      <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                      <input type="number" step="0.01" value={waterTest.ammonia} onChange={(e) => setWaterTest({ ...waterTest, ammonia: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-xs font-bold opacity-75 block mb-1">{L('Pond Salinity (PPT)', 'చెరువు ఉప్పదనం (PPT)')}</label>
-                      <input type="number" value={waterTest.salinity} onChange={(e) => setWaterTest({ ...waterTest, salinity: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
+                      <input type="number" value={waterTest.salinity} onChange={(e) => setWaterTest({ ...waterTest, salinity: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`} />
                     </div>
                   </div>
                   {(() => {
@@ -5535,11 +5854,11 @@ function AquaMarkApp() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Hatchery PPT', 'హేచరీ PPT')}</label>
-                        <input type="number" value={acclimCalc.hatcheryPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, hatcheryPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                        <input type="number" value={acclimCalc.hatcheryPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, hatcheryPpt: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                       <div>
                         <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Pond PPT', 'చెరువు PPT')}</label>
-                        <input type="number" value={acclimCalc.pondPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, pondPpt: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                        <input type="number" value={acclimCalc.pondPpt} onChange={(e) => setAcclimCalc({ ...acclimCalc, pondPpt: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                     </div>
                     <div className={`p-3 rounded-xl border text-xs ${subCardBg}`}>
@@ -5595,11 +5914,11 @@ function AquaMarkApp() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Total Seed (PL)', 'మొత్తం సీడ్ (PL)')}</label>
-                        <input type="number" step="50000" value={oxygenCalc.seedCount} onChange={(e) => setOxygenCalc({ ...oxygenCalc, seedCount: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                        <input type="number" step="50000" value={oxygenCalc.seedCount} onChange={(e) => setOxygenCalc({ ...oxygenCalc, seedCount: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                       <div>
                         <label className="text-[11px] font-bold opacity-75 block mb-1">{L('Transit Hours', 'ప్రయాణ సమయం (గంటలు)')}</label>
-                        <input type="number" value={oxygenCalc.travelHours} onChange={(e) => setOxygenCalc({ ...oxygenCalc, travelHours: Number(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
+                        <input type="number" value={oxygenCalc.travelHours} onChange={(e) => setOxygenCalc({ ...oxygenCalc, travelHours: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-3 py-2 text-xs font-bold select-text ${inputCls}`} />
                       </div>
                     </div>
                     {(() => {
@@ -5625,19 +5944,19 @@ function AquaMarkApp() {
                       {L('Suspecting White Spot (WSSV), EHP, or sudden mortality? Call AP Fisheries SOS or send your current Water Lab report on WhatsApp in 1 click.', 'వైట్ స్పాట్ (WSSV), EHP లేదా ఆకస్మిక మరణాలు కనిపిస్తే వెంటనే AP ఫిషరీస్ SOS కు కాల్ చేయండి లేదా వాటర్ రిపోర్ట్ WhatsApp లో పంపండి.')}
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
                     <a
                       href="tel:18004251660"
-                      className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs"
+                      className="w-full sm:w-auto justify-center bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-xs text-center"
                     >
-                      <PhoneCall className="w-4 h-4" /> {L('AP Fisheries SOS (1800-425-1660)', 'AP ఫిషరీస్ SOS కాల్')}
+                      <PhoneCall className="w-4 h-4 shrink-0" /> {L('AP Fisheries SOS (1800-425-1660)', 'AP ఫిషరీస్ SOS కాల్')}
                     </a>
                     <button
                       type="button"
                       onClick={handlePrintStockingSop}
-                      className={`px-4 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
+                      className={`w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
                     >
-                      <Printer className="w-4 h-4 text-teal-600" /> {L('Print Stocking SOP', 'స్టాకింగ్ SOP ప్రింట్')}
+                      <Printer className="w-4 h-4 text-teal-600 shrink-0" /> {L('Print Stocking SOP', 'స్టాకింగ్ SOP ప్రింట్')}
                     </button>
                     <button
                       type="button"
@@ -5650,7 +5969,7 @@ function AquaMarkApp() {
 Please advise immediate treatment protocol.`;
                         openWhatsAppMessage(ADMIN_WHATSAPP_NUMBER, msg);
                       }}
-                      className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                      className="w-full sm:w-auto justify-center bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Send className="w-4 h-4" /> {L('WhatsApp Water Report to Lab', 'ల్యాబ్‌కు వాటర్ రిపోర్ట్ పంపండి')}
                     </button>
@@ -6238,8 +6557,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : `${subCardBg} opacity-80 hover:opacity-100`
+                                    ? 'bg-teal-600 text-white border-teal-600'
+                                    : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -7000,6 +7319,80 @@ Please advise immediate treatment protocol.`;
               </div>
             ) : (
               <>
+                {/* Broker Bank Card */}
+                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Landmark className="w-4 h-4 text-teal-600" />
+                      <h3 className="font-bold text-sm">Settlement Bank & UPI Account</h3>
+                    </div>
+                    {!isEditingBrokerBank && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBrokerBankForm({
+                            accountName: myFixedBroker.bankDetails?.accountName || '',
+                            accountNo: myFixedBroker.bankDetails?.accountNo || '',
+                            ifsc: myFixedBroker.bankDetails?.ifsc || '',
+                            upiId: myFixedBroker.bankDetails?.upiId || ''
+                          });
+                          setIsEditingBrokerBank(true);
+                        }}
+                        className={`border text-xs font-bold px-3 py-1 rounded-xl inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBrokerProfileBtn}
+                      </button>
+                    )}
+                  </div>
+
+                  {isEditingBrokerBank ? (
+                    <form onSubmit={handleCompleteBrokerReg} className="space-y-3 pt-2 border-t border-slate-300/30">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
+                          <input required type="text" placeholder="Account Holder Name" value={brokerBankForm.accountName} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
+                          <input required type="text" placeholder="Account Number" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
+                          <input required type="text" placeholder="IFSC Code" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
+                          <input required type="text" placeholder="UPI ID" value={brokerBankForm.upiId} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
+                          className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={() => setIsEditingBrokerBank(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
+                            Cancel
+                          </button>
+                          <button type="submit" className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                            {t.saveBtn}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
+                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedBroker.bankDetails?.accountName}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.accountNo}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.ifsc}</b></div>
+                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedBroker.bankDetails?.upiId}</b></div>
+                    </div>
+                  )}
+                </div>
+
                 {/* B2B BROKER ADVANTAGE & COMMISSION PROTECTION STRIP */}
                 <div className={`rounded-2xl p-3.5 border border-teal-500/30 bg-teal-500/5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs ${cardBg}`}>
                   <div className="flex items-center gap-2">
@@ -7122,177 +7515,120 @@ Please advise immediate treatment protocol.`;
                   );
                 })()}
 
-                {/* Broker Bank Card */}
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Landmark className="w-4 h-4 text-teal-600" />
-                      <h3 className="font-bold text-sm">Settlement Bank & UPI Account</h3>
-                    </div>
-                    {!isEditingBrokerBank && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBrokerBankForm({
-                            accountName: myFixedBroker.bankDetails?.accountName || '',
-                            accountNo: myFixedBroker.bankDetails?.accountNo || '',
-                            ifsc: myFixedBroker.bankDetails?.ifsc || '',
-                            upiId: myFixedBroker.bankDetails?.upiId || ''
-                          });
-                          setIsEditingBrokerBank(true);
-                        }}
-                        className={`border text-xs font-bold px-3 py-1 rounded-xl inline-flex items-center gap-1 cursor-pointer ${subCardBg}`}
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-teal-600" /> {t.editBrokerProfileBtn}
-                      </button>
-                    )}
-                  </div>
-
-                  {isEditingBrokerBank ? (
-                    <form onSubmit={handleCompleteBrokerReg} className="space-y-3 pt-2 border-t border-slate-300/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accHolderLabel}</label>
-                          <input required type="text" placeholder="Account Holder Name" value={brokerBankForm.accountName} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountName: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.accNoLabel}</label>
-                          <input required type="text" placeholder="Account Number" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.ifscLabel}</label>
-                          <input required type="text" placeholder="IFSC Code" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold opacity-75 block mb-1">{t.upiLabel}</label>
-                          <input required type="text" placeholder="UPI ID" value={brokerBankForm.upiId} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, upiId: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`} />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => { setDeleteConfirmPassword(''); setShowDeleteAccountModal(true); }}
-                          className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> {t.deleteAccountBtn}
-                        </button>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => setIsEditingBrokerBank(false)} className={`border text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer ${subCardBg}`}>
-                            Cancel
-                          </button>
-                          <button type="submit" className="bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
-                            {t.saveBtn}
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${subCardBg}`}>
-                      <div><span className="text-[10px] opacity-60 block">{t.accHolderLabel}</span><b>{myFixedBroker.bankDetails?.accountName}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.accNoLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.accountNo}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.ifscLabel}</span><b className="font-mono">{myFixedBroker.bankDetails?.ifsc}</b></div>
-                      <div><span className="text-[10px] opacity-60 block">{t.upiLabel}</span><b className="font-mono text-teal-500">{myFixedBroker.bankDetails?.upiId}</b></div>
-                    </div>
-                  )}
-                </div>
-
-                {/* BROKER BOOKINGS */}
-                <div className={`rounded-2xl p-6 border shadow-xs space-y-4 ${cardBg}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-bold text-base flex items-center gap-2">
-                      <Receipt className="w-5 h-5 text-teal-600" /> {t.brokerBookingsTitle}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* ROUND-3 FEATURE: 1-CLICK WHATSAPP TOP RATES BROADCAST */}
-                      <button
-                        type="button"
-                        onClick={handleBrokerBroadcastTopRates}
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Send className="w-3.5 h-3.5" /> {L('Broadcast Top Rates', 'టాప్ ధరలు షేర్')}
-                      </button>
-                      {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BROKER) */}
-                      <button
-                        type="button"
-                        onClick={() => handleExportCsvLedger(myBrokerBookings, 'Broker')}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
-                      >
-                        <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
-                      </button>
-                    </div>
-                  </div>
-                  {myBrokerBookings.length === 0 ? (
-                    <p className="text-xs opacity-60">{t.noBrokerBookings}</p>
-                  ) : (
-                    <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
-                      {myBrokerBookings.map((bk) => {
-                        const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
-                        const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
-                        const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
-                        return (
-                          <div
-                            key={bk.bookingId}
-                            onClick={() => setSelectedBrokerTx(bk)}
-                            className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 transition cursor-pointer ${subCardBg}`}
+                {/* BROKER BOOKINGS (COLLAPSIBLE TAB) */}
+                <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBrokerBookings(prev => !prev)}
+                    className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-teal-500/5 transition"
+                  >
+                    <span className="font-extrabold text-sm sm:text-base flex items-center gap-2 min-w-0">
+                      <Receipt className="w-5 h-5 text-teal-600 shrink-0" />
+                      <span className="truncate">{t.brokerBookingsTitle} ({myBrokerBookings.length})</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 shrink-0">
+                      <span className="bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                        {showBrokerBookings ? L('Close', 'మూసివేయి') : L('View', 'చూడు')}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform ${showBrokerBookings ? 'rotate-90' : ''}`} />
+                    </span>
+                  </button>
+                  {showBrokerBookings && (
+                    <div className="px-4 sm:px-6 pb-5 pt-3 border-t border-slate-300/20 space-y-4">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* ROUND-3 FEATURE: 1-CLICK WHATSAPP TOP RATES BROADCAST */}
+                          <button
+                            type="button"
+                            onClick={handleBrokerBroadcastTopRates}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                           >
-                            <div className="space-y-1 text-xs">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
-                                <span className="font-mono text-[11px] bg-slate-500/10 px-2 py-0.5 rounded">UTR: {bk.paymentId}</span>
-                                <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : isCancelled ? 'bg-rose-500/15 text-rose-500' : 'bg-amber-500/15 text-amber-500'}`}>
-                                  {isCancelled
-                                    ? t.cancelledRefundBadge
-                                    : isCleared
-                                      ? L(`2% Commission Credited: ₹${bk.settlement?.brokerBase2Pct || 0}`, `2% కమిషన్ జమ అయింది: ₹${bk.settlement?.brokerBase2Pct || 0}`)
-                                      : L(`2% Commission Hold: ₹${bk.settlement?.brokerBase2Pct || 0}`, `2% కమిషన్ హోల్డ్: ₹${bk.settlement?.brokerBase2Pct || 0}`)}
-                                </span>
-                                {bk.brokerExtraMarginTotal > 0 && (
-                                  <span className="bg-teal-500/15 text-teal-500 font-bold px-2.5 py-0.5 rounded-full">
-                                    + {L('Extra Margin', 'అదనపు మార్జిన్')}: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')} ({bk.brokerMarginPaise}p/seed)
-                                  </span>
-                                )}
-                              </div>
-                              <p className="font-extrabold text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-block">
-                                {bk.batch?.realName || bk.batch?.hatcheryCode} • +91 {bk.batch?.realPhone}
-                              </p>
-                              <p className="font-bold">
-                                {L('Farmer', 'రైతు')}: {bk.farmerName} (+91 {bk.farmerPhone}) • Batch {bk.batch?.id} ({bk.batch?.plStage})
-                              </p>
-                              <p className="opacity-70">
-                                {(bk.quantity || 0).toLocaleString('en-IN')} PL • {bk.batch?.realAddress} • {t.packingDateLabel}: {bk.packingDate}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                              {mapsUrl && !isCancelled && (
-                                <a
-                                  href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1"
-                                >
-                                  <MapPin className="w-3.5 h-3.5" /> Maps
-                                </a>
-                              )}
-                              {!isCleared && !isCancelled && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleBuyerCancelBooking(bk)}
-                                  className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" /> {t.cancelBookingBtn}
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadVerifiedPdf(bk, isCleared)}
-                                className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                            <Send className="w-3.5 h-3.5" /> {L('Broadcast Top Rates', 'టాప్ ధరలు షేర్')}
+                          </button>
+                          {/* FEATURE 18: 1-CLICK CSV LEDGER EXPORT (BROKER) */}
+                          <button
+                            type="button"
+                            onClick={() => handleExportCsvLedger(myBrokerBookings, 'Broker')}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+                          >
+                            <Download className="w-3.5 h-3.5 text-teal-600" /> {L('Export CSV', 'CSV డౌన్‌లోడ్')}
+                          </button>
+                        </div>
+                      </div>
+                      {myBrokerBookings.length === 0 ? (
+                        <p className="text-xs opacity-60">{t.noBrokerBookings}</p>
+                      ) : (
+                        <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
+                          {myBrokerBookings.map((bk) => {
+                            const isCleared = bk.settlement?.status === 'BALANCE_CLEARED';
+                            const isCancelled = bk.settlement?.status === 'CANCELLED_REFUNDED' || bk.settlement?.status === 'CANCELLED_NON_REFUNDABLE';
+                            const mapsUrl = bk.batch?.googleMapsLink || hatcheryProfiles[bk.hatcheryOwnerPhone]?.googleMapsLink;
+                            return (
+                              <div
+                                key={bk.bookingId}
+                                onClick={() => setSelectedBrokerTx(bk)}
+                                className={`border hover:border-teal-500 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 transition cursor-pointer ${subCardBg}`}
                               >
-                                <Printer className="w-3.5 h-3.5 text-emerald-400" /> {isCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                                <div className="space-y-1 text-xs">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-mono font-bold text-teal-500">{bk.bookingId}</span>
+                                    <span className="font-mono text-[11px] bg-slate-500/10 px-2 py-0.5 rounded">UTR: {bk.paymentId}</span>
+                                    <span className={`font-bold px-2.5 py-0.5 rounded-full ${isCleared ? 'bg-emerald-500/15 text-emerald-500' : isCancelled ? 'bg-rose-500/15 text-rose-500' : 'bg-amber-500/15 text-amber-500'}`}>
+                                      {isCancelled
+                                        ? t.cancelledRefundBadge
+                                        : isCleared
+                                          ? L(`2% Commission Credited: ₹${bk.settlement?.brokerBase2Pct || 0}`, `2% కమిషన్ జమ అయింది: ₹${bk.settlement?.brokerBase2Pct || 0}`)
+                                          : L(`2% Commission Hold: ₹${bk.settlement?.brokerBase2Pct || 0}`, `2% కమిషన్ హోల్డ్: ₹${bk.settlement?.brokerBase2Pct || 0}`)}
+                                    </span>
+                                    {bk.brokerExtraMarginTotal > 0 && (
+                                      <span className="bg-teal-500/15 text-teal-500 font-bold px-2.5 py-0.5 rounded-full">
+                                        + {L('Extra Margin', 'అదనపు మార్జిన్')}: ₹{bk.brokerExtraMarginTotal.toLocaleString('en-IN')} ({bk.brokerMarginPaise}p/seed)
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="font-extrabold text-white bg-slate-900 px-2.5 py-0.5 rounded-lg inline-block">
+                                    {bk.batch?.realName || bk.batch?.hatcheryCode} • +91 {bk.batch?.realPhone}
+                                  </p>
+                                  <p className="font-bold">
+                                    {L('Farmer', 'రైతు')}: {bk.farmerName} (+91 {bk.farmerPhone}) • Batch {bk.batch?.id} ({bk.batch?.plStage})
+                                  </p>
+                                  <p className="opacity-70">
+                                    {(bk.quantity || 0).toLocaleString('en-IN')} PL • {bk.batch?.realAddress} • {t.packingDateLabel}: {bk.packingDate}
+                                  </p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                  {mapsUrl && !isCancelled && (
+                                    <a
+                                      href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-600 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1"
+                                    >
+                                      <MapPin className="w-3.5 h-3.5" /> Maps
+                                    </a>
+                                  )}
+                                  {!isCleared && !isCancelled && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleBuyerCancelBooking(bk)}
+                                      className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <XCircle className="w-3.5 h-3.5" /> {t.cancelBookingBtn}
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadVerifiedPdf(bk, isCleared)}
+                                    className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <Printer className="w-3.5 h-3.5 text-emerald-400" /> {isCleared ? t.finalReceiptBtn : t.advanceReceiptBtn}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -7320,15 +7656,15 @@ Please advise immediate treatment protocol.`;
                         <div className="grid grid-cols-3 gap-2.5">
                           <div>
                             <label className="text-[10px] font-bold opacity-70 block mb-1">{L('Qty (Lakhs PL)', 'సీడ్ (లక్షలు)')}</label>
-                            <input type="number" min="1" max="100" value={brokerCalcInput.lakhs} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, lakhs: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                            <input type="number" min="1" max="100" value={brokerCalcInput.lakhs} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, lakhs: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold opacity-70 block mb-1">{L('Rate (₹/Seed)', 'ధర (₹/సీడ్)')}</label>
-                            <input type="number" step="0.01" value={brokerCalcInput.rate} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, rate: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                            <input type="number" step="0.01" value={brokerCalcInput.rate} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, rate: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold opacity-70 block mb-1">{L('Extra (Paise)', 'అదనపు పైసలు')}</label>
-                            <input type="number" min="0" max="99" value={brokerCalcInput.extraPaise} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, extraPaise: Number(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
+                            <input type="number" min="0" max="99" value={brokerCalcInput.extraPaise} onChange={(e) => setBrokerCalcInput({ ...brokerCalcInput, extraPaise: cleanNum(e.target.value) })} className={`w-full border rounded-xl px-2.5 py-1.5 text-xs font-bold select-text ${inputCls}`} />
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-center">
@@ -7350,239 +7686,291 @@ Please advise immediate treatment protocol.`;
                   })()}
                 </div>
 
-                {/* BROKER MARKETPLACE */}
-                <div className="space-y-4">
-                  <h2 className="text-base font-extrabold flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-teal-600" /> {t.brokerMarketplaceTitle}
-                  </h2>
+                {/* BROKER MARKETPLACE (COLLAPSIBLE HATCHERIES TAB) */}
+                <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBrokerHatcheries(prev => !prev)}
+                    className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-teal-500/5 transition"
+                  >
+                    <span className="text-sm sm:text-base font-extrabold flex items-center gap-2 min-w-0">
+                      <Building2 className="w-5 h-5 text-teal-600 shrink-0" />
+                      <span className="truncate">{t.brokerMarketplaceTitle} ({filteredAndSortedBatches.length})</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 shrink-0">
+                      <span className="bg-teal-500/15 text-teal-600 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                        {showBrokerHatcheries ? L('Close', 'మూసివేయి') : L('Browse Hatcheries', 'హేచరీలు చూడు')}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform ${showBrokerHatcheries ? 'rotate-90' : ''}`} />
+                    </span>
+                  </button>
+                  {showBrokerHatcheries && (
+                    <div className="p-3.5 sm:p-5 border-t border-slate-300/20 space-y-4">
+                      {renderFilterSortBar(false)}
 
-                  {renderFilterSortBar(false)}
-
-                  {filteredAndSortedBatches.length === 0 ? (
-                    <div className={`rounded-2xl border p-10 text-center space-y-2 ${cardBg}`}>
-                      <Building2 className="w-9 h-9 opacity-30 mx-auto" />
-                      <h3 className="text-sm font-extrabold">{t.emptyMarketTitle}</h3>
-                      <p className="text-xs opacity-60">{t.emptyMarketSub}</p>
-                    </div>
-                  ) : (
-                    <div className="max-h-[65vh] overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-5">
-                      {filteredAndSortedBatches.map((batch) => {
-                        const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.bookedByPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
-                        const isSoldOut = (batch.availableStock || 0) <= 0;
-                        const isPaused = Boolean(batch.paused);
-                        const selectedDens = cardDensityChoice[batch.id] || 40;
-                        const acresCovered = ((batch.availableStock || 0) / (selectedDens * 4046.86)).toFixed(1);
-                        const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
-                        const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
-                        return (
-                          <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
-                            <div onClick={() => setInspectedBatch(batch)} className="p-5 space-y-4 cursor-pointer">
-                              <div className="space-y-2.5">
-                                <div className="flex items-start justify-between gap-2.5">
-                                  <div className="min-w-0 space-y-1.5">
+                      {filteredAndSortedBatches.length === 0 ? (
+                        <div className={`rounded-2xl border p-10 text-center space-y-2 ${subCardBg}`}>
+                          <Building2 className="w-9 h-9 opacity-30 mx-auto" />
+                          <h3 className="text-sm font-extrabold">{t.emptyMarketTitle}</h3>
+                          <p className="text-xs opacity-60">{t.emptyMarketSub}</p>
+                        </div>
+                      ) : (
+                        <div className="max-h-[65vh] overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {filteredAndSortedBatches.map((batch) => {
+                            const isBrokerCardOpen = Boolean(expandedBatchIds[`broker_${batch.id}`]);
+                            const isUnlocked = bookings.some((bk) => bk.batch?.id === batch.id && bk.bookedByPhone === currentUser.phone && bk.packingStatus !== 'CANCELLED');
+                            const isSoldOut = (batch.availableStock || 0) <= 0;
+                            const isPaused = Boolean(batch.paused);
+                            const selectedDens = cardDensityChoice[batch.id] || 40;
+                            const acresCovered = ((batch.availableStock || 0) / (selectedDens * 4046.86)).toFixed(1);
+                            const ownerProfile = hatcheryProfiles[batch.ownerPhone] || {};
+                            const mapsUrl = batch.googleMapsLink || ownerProfile.googleMapsLink;
+                            const brokerRate = formatConvertedRate(batch.pricePer1000);
+                            return (
+                              <div key={batch.id} className={`rounded-2xl border shadow-xs overflow-hidden flex flex-col justify-between hover:border-teal-500 transition ${cardBg} ${isPaused ? 'opacity-75' : ''}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpandBatch(`broker_${batch.id}`)}
+                                  className="w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-2.5 cursor-pointer hover:bg-teal-500/5 transition"
+                                >
+                                  <div className="min-w-0 flex-1 space-y-1">
                                     <div className="flex flex-wrap items-center gap-1.5">
-                                      <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded">{batch.id}</span>
-                                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> {t.caaVerified}
+                                      <span className="font-mono text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded">{batch.id}</span>
+                                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                                        <ShieldCheck className="w-3 h-3 shrink-0" /> CAA
+                                      </span>
+                                      <span className="text-[11px] font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                        <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> {batch.rating || 5.0}
                                       </span>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                                      <span className="font-semibold opacity-70">{batch.zone}</span>
-                                      <span className="font-bold text-amber-500 inline-flex items-center gap-0.5">
-                                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
-                                      </span>
+                                    <div className="font-extrabold text-sm sm:text-base text-teal-600 dark:text-teal-400 truncate">
+                                      {isUnlocked ? batch.realName : (batch.hatcheryCode || 'Verified Hatchery')}
+                                    </div>
+                                    <div className="text-[11px] opacity-70 truncate">
+                                      {batch.zone} • {batch.plStage} • {((batch.availableStock || 0) / 100000).toFixed(1).replace(/\.0$/, '')}L PL
                                     </div>
                                   </div>
-                                  {(() => {
-                                    const conv = formatConvertedRate(batch.pricePer1000);
-                                    return (
-                                      <div className="text-right shrink-0">
-                                        <div className="text-xl sm:text-2xl font-black leading-none">{conv.value}</div>
-                                        <div className="text-[11px] opacity-60 mt-0.5">{conv.unit}</div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <div className="text-right">
+                                      <div className="text-base sm:text-lg font-black leading-none">{brokerRate.value}</div>
+                                      <div className="text-[10px] opacity-60 mt-0.5">{brokerRate.unit}</div>
+                                    </div>
+                                    <ChevronRight className={`w-4 h-4 text-teal-600 transition-transform shrink-0 ${isBrokerCardOpen ? 'rotate-90' : ''}`} />
+                                  </div>
+                                </button>
+                                {isBrokerCardOpen && (
+                                  <>
+                                    <div onClick={() => setInspectedBatch(batch)} className="px-4 sm:px-5 pb-4 pt-2 border-t border-slate-300/20 space-y-4 cursor-pointer">
+                                      <div className="space-y-2.5">
+                                        <div className="flex items-start justify-between gap-2.5">
+                                          <div className="min-w-0 space-y-1.5">
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                              <span className="font-mono text-[11px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded">{batch.id}</span>
+                                              <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                                <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> {t.caaVerified}
+                                              </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                              <span className="font-semibold opacity-70">{batch.zone}</span>
+                                              <span className="font-bold text-amber-500 inline-flex items-center gap-0.5">
+                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {batch.rating || 5.0} ({batch.reviewCount || 0})
+                                              </span>
+                                            </div>
+                                          </div>
+                                          {(() => {
+                                            const conv = formatConvertedRate(batch.pricePer1000);
+                                            return (
+                                              <div className="text-right shrink-0">
+                                                <div className="text-xl sm:text-2xl font-black leading-none">{conv.value}</div>
+                                                <div className="text-[11px] opacity-60 mt-0.5">{conv.unit}</div>
+                                              </div>
+                                            );
+                                          })()}
+                                        </div>
+
+                                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                                          <h3 className="text-base sm:text-lg font-extrabold tracking-tight leading-snug min-w-0 flex-1 break-words">
+                                            {isUnlocked ? (
+                                              <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                                <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                <span className="truncate sm:whitespace-normal">{batch.realName}</span>
+                                              </span>
+                                            ) : (
+                                              <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
+                                                <Lock className="w-4 h-4 opacity-70 shrink-0" />
+                                                <span className="truncate sm:whitespace-normal">{batch.hatcheryCode || 'Verified Hatchery'}</span>
+                                              </span>
+                                            )}
+                                          </h3>
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
+                                              className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                              title={L('Transit Route & Oxygen Risk Predictor', 'రవాణా & ఆక్సిజన్ రిస్క్ అంచనా')}
+                                            >
+                                              <Navigation className="w-3.5 h-3.5 text-indigo-500" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
+                                              className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
+                                              title={L('Share Batch Quote on WhatsApp', 'WhatsApp లో షేర్ చేయండి')}
+                                            >
+                                              <Share2 className="w-3.5 h-3.5 text-teal-600" />
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                          <p className="text-xs opacity-75 font-medium leading-relaxed">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
+                                          {isUnlocked ? (
+                                            <div className="space-y-1">
+                                              <p className="text-xs opacity-80 leading-relaxed">{batch.realAddress} • +91 {batch.realPhone}</p>
+                                              {mapsUrl && (
+                                                <a
+                                                  href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                                >
+                                                  <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <p className="text-[11px] opacity-55">{t.unlockHint}</p>
+                                          )}
+                                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                            <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                              <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
+                                            </span>
+                                            {(batch.pcrImages || []).length > 0 && (() => {
+                                              const hasInvalid = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'NOT_A_PCR_REPORT');
+                                              const hasVerified = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'VERIFIED_PCR');
+                                              if (hasInvalid) {
+                                                return (
+                                                  <span className="bg-rose-500/15 text-rose-500 border border-rose-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                                    <AlertTriangle className="w-3 h-3" /> {L('AI: Not a PCR Report', 'AI: PCR రిపోర్ట్ కాదు')}
+                                                  </span>
+                                                );
+                                              }
+                                              if (hasVerified) {
+                                                return (
+                                                  <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                                    <FileCheck2 className="w-3 h-3" /> {L('AI PCR Verified', 'AI PCR వెరిఫైడ్')}
+                                                  </span>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
+                                          </div>
+                                        </div>
                                       </div>
-                                    );
-                                  })()}
-                                </div>
 
-                                <div className="flex items-center justify-between gap-2 pt-0.5">
-                                  <h3 className="text-base sm:text-lg font-extrabold tracking-tight leading-snug min-w-0 flex-1 break-words">
-                                    {isUnlocked ? (
-                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
-                                        <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
-                                        <span className="truncate sm:whitespace-normal">{batch.realName}</span>
-                                      </span>
-                                    ) : (
-                                      <span className="text-teal-600 dark:text-teal-400 inline-flex items-center gap-1.5">
-                                        <Lock className="w-4 h-4 opacity-70 shrink-0" />
-                                        <span className="truncate sm:whitespace-normal">{batch.hatcheryCode || 'Verified Hatchery'}</span>
-                                      </span>
-                                    )}
-                                  </h3>
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); setTransitPredictorBatch(batch); }}
-                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
-                                      title={L('Transit Route & Oxygen Risk Predictor', 'రవాణా & ఆక్సిజన్ రిస్క్ అంచనా')}
-                                    >
-                                      <Navigation className="w-3.5 h-3.5 text-indigo-500" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); handleShareBatchFlyer(batch); }}
-                                      className={`p-1.5 rounded-lg border cursor-pointer ${subCardBg}`}
-                                      title={L('Share Batch Quote on WhatsApp', 'WhatsApp లో షేర్ చేయండి')}
-                                    >
-                                      <Share2 className="w-3.5 h-3.5 text-teal-600" />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                  <p className="text-xs opacity-75 font-medium leading-relaxed">{batch.species} • <span className="text-teal-500 font-semibold">{batch.broodstock || 'SPF Certified'}</span></p>
-                                  {isUnlocked ? (
-                                    <div className="space-y-1">
-                                      <p className="text-xs opacity-80 leading-relaxed">{batch.realAddress} • +91 {batch.realPhone}</p>
-                                      {mapsUrl && (
-                                        <a
-                                          href={mapsUrl.startsWith('http') ? mapsUrl : `https://${mapsUrl}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
-                                        >
-                                          <MapPin className="w-3.5 h-3.5" /> {L('Open Google Maps Location', 'Google Maps లొకేషన్ చూడండి')} <ExternalLink className="w-3 h-3" />
-                                        </a>
+                                      {ownerProfile.dispatchNotice && (
+                                        <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
+                                          <Megaphone className="w-3.5 h-3.5 shrink-0" />
+                                          <span>{ownerProfile.dispatchNotice}</span>
+                                        </div>
                                       )}
-                                    </div>
-                                  ) : (
-                                    <p className="text-[11px] opacity-55">{t.unlockHint}</p>
-                                  )}
-                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                    <span className="bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                      <Activity className="w-3 h-3" /> Vigor {batch.vigorScore || 96}%
-                                    </span>
-                                    {(batch.pcrImages || []).length > 0 && (() => {
-                                      const hasInvalid = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'NOT_A_PCR_REPORT');
-                                      const hasVerified = (batch.pcrImages || []).some(img => img.aiPcrStatus === 'VERIFIED_PCR');
-                                      if (hasInvalid) {
+
+                                      {(() => {
+                                        const slots = getDispatchSlotsInfo(batch);
                                         return (
-                                          <span className="bg-rose-500/15 text-rose-500 border border-rose-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                            <AlertTriangle className="w-3 h-3" /> {L('AI: Not a PCR Report', 'AI: PCR రిపోర్ట్ కాదు')}
-                                          </span>
+                                          <div className={`border rounded-xl px-3 py-2 space-y-1 text-[11px] ${subCardBg}`}>
+                                            <div className="flex items-center justify-between font-bold">
+                                              <span className="opacity-80">{L('Dispatch Slots Today', 'ఈ రోజు ప్యాకింగ్ స్లాట్లు')}</span>
+                                              <span className={slots.remaining >= 5 ? 'text-emerald-500' : slots.remaining >= 2 ? 'text-amber-500' : 'text-rose-500'}>
+                                                {slots.remaining} / {slots.dailyCapacity} {L('slots left', 'స్లాట్లు మిగిలాయి')}
+                                              </span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
+                                              <div className={`h-full rounded-full ${slots.remaining >= 5 ? 'bg-emerald-500' : slots.remaining >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${slots.pct}%` }} />
+                                            </div>
+                                          </div>
                                         );
-                                      }
-                                      if (hasVerified) {
-                                        return (
-                                          <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                            <FileCheck2 className="w-3 h-3" /> {L('AI PCR Verified', 'AI PCR వెరిఫైడ్')}
+                                      })()}
+
+                                      <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
+                                        <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
+                                        <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
+                                        <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
+                                        <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
+                                      </div>
+
+                                      <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
+                                        <span className="font-bold opacity-80">{L('Pond Coverage Estimator:', 'చెరువు విస్తీర్ణం అంచనా:')}</span>
+                                        <div className="flex items-center gap-1.5">
+                                          {[30, 40, 50].map(d => (
+                                            <button
+                                              key={d}
+                                              type="button"
+                                              onClick={() => setCardDensityChoice(prev => ({ ...prev, [batch.id]: d }))}
+                                              className={`px-2 py-0.5 rounded font-bold border cursor-pointer ${selectedDens === d ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                                            >
+                                              {d}/m²
+                                            </button>
+                                          ))}
+                                          <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} {L('Acres', 'ఎకరాలు')}</span>
+                                          <span className="bg-teal-500/15 text-teal-600 font-extrabold px-2 py-0.5 rounded-lg">
+                                            ₹{Math.round(4046.86 * selectedDens * (batch.pricePer1000 || 0.43)).toLocaleString('en-IN')}/{L('Acre', 'ఎకరం')}
                                           </span>
-                                        );
-                                      }
-                                      return null;
-                                    })()}
-                                  </div>
-                                </div>
-                              </div>
+                                        </div>
+                                      </div>
 
-                              {ownerProfile.dispatchNotice && (
-                                <div className="bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center gap-1.5">
-                                  <Megaphone className="w-3.5 h-3.5 shrink-0" />
-                                  <span>{ownerProfile.dispatchNotice}</span>
-                                </div>
-                              )}
-
-                              {(() => {
-                                const slots = getDispatchSlotsInfo(batch);
-                                return (
-                                  <div className={`border rounded-xl px-3 py-2 space-y-1 text-[11px] ${subCardBg}`}>
-                                    <div className="flex items-center justify-between font-bold">
-                                      <span className="opacity-80">{L('Dispatch Slots Today', 'ఈ రోజు ప్యాకింగ్ స్లాట్లు')}</span>
-                                      <span className={slots.remaining >= 5 ? 'text-emerald-500' : slots.remaining >= 2 ? 'text-amber-500' : 'text-rose-500'}>
-                                        {slots.remaining} / {slots.dailyCapacity} {L('slots left', 'స్లాట్లు మిగిలాయి')}
-                                      </span>
+                                      <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
+                                        <span className="font-semibold">
+                                          📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'}) • <span className="text-amber-500 font-bold">{L('Min Packing:', 'కనీస ప్యాకింగ్:')} {((batch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL</span>
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 font-bold text-teal-500">
+                                          <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="w-full h-1.5 bg-slate-300/30 rounded-full overflow-hidden">
-                                      <div className={`h-full rounded-full ${slots.remaining >= 5 ? 'bg-emerald-500' : slots.remaining >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${slots.pct}%` }} />
+
+                                    <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
+                                      <button
+                                        type="button"
+                                        onClick={() => openVideoRequestModal(batch)}
+                                        className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
+                                      >
+                                        <Video className="w-3.5 h-3.5 text-teal-600" /> {t.liveVideoBtn}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={isSoldOut || isPaused}
+                                        onClick={() => {
+                                          setModalError('');
+                                          setSelectedBatch(batch);
+                                          setBookingForm(prev => ({
+                                            ...prev,
+                                            farmerName: brokerFarmers[0]?.name || '',
+                                            farmerPhone: brokerFarmers[0]?.phone || '',
+                                            qtyAmount: '2',
+                                            qtyUnit: 'LAKHS',
+                                            pondSplitCount: '1',
+                                            packingDate: batch.availableDate || prev.packingDate,
+                                            packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
+                                            brokerMarginPaise: '2',
+                                            upiSubMode: 'QR',
+                                            qrRevealed: false,
+                                            utrReference: ''
+                                          }));
+                                        }}
+                                        className="w-full sm:w-auto sm:flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer whitespace-nowrap"
+                                      >
+                                        {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
+                                      </button>
                                     </div>
-                                  </div>
-                                );
-                              })()}
-
-                              <div className={`grid grid-cols-4 gap-2 p-3 rounded-xl border text-center ${subCardBg}`}>
-                                <div><span className="text-[11px] opacity-60 block">{t.stage}</span><span className="text-sm font-bold">{batch.plStage}</span></div>
-                                <div><span className="text-[11px] opacity-60 block">{t.salinity}</span><span className="text-sm font-bold text-teal-500">{batch.salinity} PPT</span></div>
-                                <div><span className="text-[11px] opacity-60 block">{t.bonus}</span><span className="text-sm font-bold text-emerald-500">+{batch.bonusPercent}%</span></div>
-                                <div><span className="text-[11px] opacity-60 block">{t.stock}</span><span className="text-sm font-bold">{(batch.availableStock || 0).toLocaleString('en-IN')}</span></div>
+                                  </>
+                                )}
                               </div>
-
-                              <div onClick={(e) => e.stopPropagation()} className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] ${subCardBg}`}>
-                                <span className="font-bold opacity-80">{L('Pond Coverage Estimator:', 'చెరువు విస్తీర్ణం అంచనా:')}</span>
-                                <div className="flex items-center gap-1.5">
-                                  {[30, 40, 50].map(d => (
-                                    <button
-                                      key={d}
-                                      type="button"
-                                      onClick={() => setCardDensityChoice(prev => ({ ...prev, [batch.id]: d }))}
-                                      className={`px-2 py-0.5 rounded font-bold border cursor-pointer ${selectedDens === d ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
-                                    >
-                                      {d}/m²
-                                    </button>
-                                  ))}
-                                  <span className="font-extrabold text-teal-500 pl-1">≈ {acresCovered} {L('Acres', 'ఎకరాలు')}</span>
-                                  <span className="bg-teal-500/15 text-teal-600 font-extrabold px-2 py-0.5 rounded-lg">
-                                    ₹{Math.round(4046.86 * selectedDens * (batch.pricePer1000 || 0.43)).toLocaleString('en-IN')}/{L('Acre', 'ఎకరం')}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className={`border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs ${subCardBg}`}>
-                                <span className="font-semibold">
-                                  📅 {t.availPackingLabel}: <b>{batch.availableDate || 'Flexible'}</b> ({batch.availableTimeSlot || 'All Day'}) • <span className="text-amber-500 font-bold">{L('Min Packing:', 'కనీస ప్యాకింగ్:')} {((batch.minPacking || 100000) / 100000).toFixed(1).replace(/\.0$/, '')} Lakh PL</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 font-bold text-teal-500">
-                                  <Eye className="w-3.5 h-3.5" /> {t.inspectBtn}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className={`px-5 py-3.5 border-t flex flex-wrap items-center gap-2 ${subCardBg}`}>
-                              <button
-                                type="button"
-                                onClick={() => openVideoRequestModal(batch)}
-                                className={`px-3 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer ${cardBg}`}
-                              >
-                                <Video className="w-3.5 h-3.5 text-teal-600" /> {t.liveVideoBtn}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={isSoldOut || isPaused}
-                                onClick={() => {
-                                  setModalError('');
-                                  setSelectedBatch(batch);
-                                  setBookingForm(prev => ({
-                                    ...prev,
-                                    farmerName: brokerFarmers[0]?.name || '',
-                                    farmerPhone: brokerFarmers[0]?.phone || '',
-                                    qtyAmount: '2',
-                                    qtyUnit: 'LAKHS',
-                                    pondSplitCount: '1',
-                                    packingDate: batch.availableDate || prev.packingDate,
-                                    packingTimeSlot: batch.availableTimeSlot || 'All Day (24 Hours Flexible)',
-                                    brokerMarginPaise: '2',
-                                    upiSubMode: 'QR',
-                                    qrRevealed: false,
-                                    utrReference: ''
-                                  }));
-                                }}
-                                className="w-full sm:w-auto sm:flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer whitespace-nowrap"
-                              >
-                                {isSoldOut ? t.soldOutBadge : isPaused ? t.pausedBadge : t.selectAndBookBtn}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -8096,8 +8484,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                        ? 'bg-teal-600 text-white border-teal-600'
-                        : `${subCardBg} opacity-80 hover:opacity-100`
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -8147,8 +8535,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -8873,11 +9261,43 @@ Please advise immediate treatment protocol.`;
 
                     // UPI PAYMENT: BLURRED QR UNTIL "Show QR" CLICKED + "Pay By App" (NO REQUEST BY VPA)
                     if (bookingForm.paymentMethod === 'DIRECT_UPI') {
-                      const upiUri = `upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${token}&cu=INR&tn=${bookingForm.paymentOption === 'FULL' ? 'SeedFullPayment' : 'SeedAdvance4Pct'}`;
+                      if (token > MAX_UPI_AMOUNT_INR) {
+                        return (
+                          <div className="bg-rose-500/10 border-2 border-rose-500/40 rounded-xl p-3.5 space-y-2.5 text-xs">
+                            <div className="flex items-start gap-2 text-rose-500 font-extrabold">
+                              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                              <span>
+                                {L(
+                                  `UPI Limit Exceeded (Max ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')})`,
+                                  `UPI పరిమితి దాటింది (గరిష్టం ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')})`
+                                )}
+                              </span>
+                            </div>
+                            <p className="opacity-85 leading-relaxed">
+                              {L(
+                                `Payable amount ₹${token.toLocaleString('en-IN')} exceeds the ₹80,000 safe UPI cap. To avoid bank transfer failures, please switch to Bank-to-Bank (NEFT/RTGS/IMPS) or Razorpay.`,
+                                `చెల్లించాల్సిన మొత్తం ₹${token.toLocaleString('en-IN')} ₹80,000 UPI పరిమితి కంటే ఎక్కువ. బ్యాంక్ ఫెయిల్యూర్స్ రాకుండా Bank-to-Bank (NEFT/RTGS) లేదా Razorpay ఎంచుకోండి.`
+                              )}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, paymentMethod: 'BANK_TO_BANK', utrReference: '' }); }}
+                              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-xl text-xs cursor-pointer"
+                            >
+                              {L('Switch to Bank-to-Bank (NEFT / RTGS) →', 'Bank-to-Bank (NEFT / RTGS) కు మారండి →')}
+                            </button>
+                          </div>
+                        );
+                      }
+                      const upiUri = `upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${token}&cu=INR&tn=${bookingForm.paymentOption === 'FULL' ? 'SeedFullPayment' : 'SeedAdvance5Pct'}`;
                       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
 
                       return (
                         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 space-y-3 text-xs">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                            <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
+                            <span className="opacity-75">Max ₹80,000</span>
+                          </div>
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
@@ -9252,7 +9672,7 @@ Please advise immediate treatment protocol.`;
               {addDepositMethod === 'DIRECT_UPI' && (
                 <div className="flex flex-col items-center bg-white p-2.5 rounded-xl border text-slate-900 relative">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=aquamark@sbi&pn=AquaMarkDeposit&am=${Number(addDepositAmount) || 5000}&cu=INR`)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=9959933166@ybl&pn=AquaMarkDeposit&am=${Number(addDepositAmount) || 5000}&cu=INR`)}`}
                     alt="Add Deposit QR"
                     className={`w-28 h-28 object-contain ${addDepositQrRevealed ? '' : 'blur-md select-none'}`}
                   />
@@ -9534,33 +9954,69 @@ Please advise immediate treatment protocol.`;
                   </button>
                 ))}
               </div>
-              {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (
-                <div className="flex flex-col items-center bg-white p-3 rounded-xl border text-slate-900 relative">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=aquamark@sbi&pn=AquaMark&am=${payRemainingBooking.balanceAtPacking || 0}&cu=INR&tn=Balance${payRemainingBooking.bookingId}`)}`}
-                    alt="Balance QR"
-                    className={`w-32 h-32 object-contain ${payRemainingForm.qrRevealed ? '' : 'blur-md select-none'}`}
-                  />
-                  {!payRemainingForm.qrRevealed && (
-                    <button type="button" onClick={() => setPayRemainingForm({ ...payRemainingForm, qrRevealed: true })} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
-                      Show QR
-                    </button>
-                  )}
+              {payRemainingError && (
+                <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 p-2.5 rounded-xl text-[11px] font-bold flex items-start gap-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{payRemainingError}</span>
                 </div>
               )}
-              {(payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && (
-                <input
-                  required
-                  type="text"
-                  placeholder={t.utrPlaceholder}
-                  value={payRemainingForm.utrReference}
-                  onChange={(e) => setPayRemainingForm({ ...payRemainingForm, utrReference: e.target.value })}
-                  className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                />
+              {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (payRemainingBooking.balanceAtPacking || 0) > MAX_UPI_AMOUNT_INR ? (
+                <div className="bg-rose-500/10 border-2 border-rose-500/40 rounded-xl p-3.5 space-y-2 text-xs">
+                  <div className="flex items-start gap-2 text-rose-500 font-extrabold">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{L('UPI Limit Exceeded (Max ₹80,000)', 'UPI పరిమితి దాటింది (గరిష్టం ₹80,000)')}</span>
+                  </div>
+                  <p className="opacity-85 leading-relaxed">
+                    {L(
+                      `Remaining balance ₹${(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} is above the ₹80,000 UPI limit. Please use Bank Transfer (NEFT/RTGS) or Razorpay.`,
+                      `మిగిలిన బ్యాలెన్స్ ₹${(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} ₹80,000 UPI పరిమితి కంటే ఎక్కువ. Bank Transfer లేదా Razorpay వాడండి.`
+                    )}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, paymentMethod: 'BANK_TO_BANK', utrReference: '' }); }}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-xl text-xs cursor-pointer"
+                  >
+                    {L('Switch to Bank Transfer (NEFT / RTGS) →', 'Bank Transfer కు మారండి →')}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                        <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
+                        <span className="opacity-75">Max ₹80,000</span>
+                      </div>
+                      <div className="flex flex-col items-center bg-white p-3 rounded-xl border text-slate-900 relative">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${payRemainingBooking.balanceAtPacking || 0}&cu=INR&tn=Balance${payRemainingBooking.bookingId}`)}`}
+                          alt="Balance QR"
+                          className={`w-32 h-32 object-contain ${payRemainingForm.qrRevealed ? '' : 'blur-md select-none'}`}
+                        />
+                        {!payRemainingForm.qrRevealed && (
+                          <button type="button" onClick={() => setPayRemainingForm({ ...payRemainingForm, qrRevealed: true })} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
+                            Show QR
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {(payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && (
+                    <input
+                      required
+                      type="text"
+                      placeholder={payRemainingForm.paymentMethod === 'DIRECT_UPI' ? L('Enter 12-digit UPI UTR Reference', '12 అంకెల UPI UTR నంబర్ ఇవ్వండి') : L('Enter 12–22 char Bank NEFT/RTGS UTR', 'బ్యాంక్ NEFT/RTGS UTR నంబర్ ఇవ్వండి')}
+                      value={payRemainingForm.utrReference}
+                      onChange={(e) => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, utrReference: e.target.value }); }}
+                      className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
+                    />
+                  )}
+                  <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
+                    Confirm & Pay ₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} →
+                  </button>
+                </>
               )}
-              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
-                Confirm & Pay ₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')} →
-              </button>
             </form>
           </div>
         </div>
