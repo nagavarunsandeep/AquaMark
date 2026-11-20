@@ -1464,6 +1464,34 @@ function AquaMarkApp() {
   const MAX_UPI_AMOUNT_INR = 80000;
   const PLATFORM_UPI_ID = '9959933166@ybl';
 
+  // Hatchery-friendly round-figure payment validator (multiples of ₹500: ₹1,000, ₹1,500, ₹12,500, etc.)
+  const validateRoundFigureAmount = ({ amountInr, minAmount, maxAmount, isUpi, exactFullDue }) => {
+    const amt = Math.round(Number(amountInr) || 0);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return { ok: false, error: L('Please enter a valid payment amount.', 'దయచేసి సరైన మొత్తం నమోదు చేయండి.') };
+    }
+    if (amt > maxAmount) {
+      return { ok: false, error: L(`Amount cannot exceed ₹${maxAmount.toLocaleString('en-IN')}.`, `మొత్తం ₹${maxAmount.toLocaleString('en-IN')} కంటే ఎక్కువ ఉండకూడదు.`) };
+    }
+    if (amt < minAmount) {
+      return { ok: false, error: L(`Minimum payable amount is ₹${minAmount.toLocaleString('en-IN')}.`, `కనీస చెల్లింపు మొత్తం ₹${minAmount.toLocaleString('en-IN')}.`) };
+    }
+    if (isUpi && amt > MAX_UPI_AMOUNT_INR) {
+      return { ok: false, error: L(`Max ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')} allowed per UPI payment. Remaining can be paid at Packing.`, `UPI ద్వారా గరిష్టంగా ₹${MAX_UPI_AMOUNT_INR.toLocaleString('en-IN')} మాత్రమే చెల్లించవచ్చు. మిగిలినది ప్యాకింగ్ వద్ద చెల్లించండి.`) };
+    }
+    const isExactClear = amt === Math.round(Number(exactFullDue) || 0);
+    if (!isExactClear && amt % 500 !== 0) {
+      return {
+        ok: false,
+        error: L(
+          'Please enter a round figure in multiples of ₹500 (e.g., ₹1,000, ₹1,500, ₹12,500, ₹14,500) — no loose change.',
+          'దయచేసి ₹500 గుణిజాలలో రౌండ్ ఫిగర్ మొత్తం ఇవ్వండి (ఉదా: ₹1,000, ₹1,500, ₹12,500, ₹14,500) — చిల్లర మొత్తం అనుమతించబడదు.'
+        )
+      };
+    }
+    return { ok: true, amount: amt };
+  };
+
   // Enterprise Web Crypto PBKDF2-SHA256 Password Hashing (100% Free, Browser-Native)
   const hashPasswordPbkdf2 = async (plainText) => {
     const clean = String(plainText || '').trim();
@@ -2851,10 +2879,29 @@ function AquaMarkApp() {
     const totalPayable = hatcheryFixedCost + brokerExtraMarginTotal + transportCost;
     const advance5Pct = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
     const isFullPayment = bookingForm.paymentOption === 'FULL';
-    const rawChargeNow = isFullPayment ? totalPayable : advance5Pct;
-    const chargeNow = (bookingForm.paymentMethod === 'DIRECT_UPI' && rawChargeNow > MAX_UPI_AMOUNT_INR)
-      ? MAX_UPI_AMOUNT_INR
-      : rawChargeNow;
+    const isUpiMode = bookingForm.paymentMethod === 'DIRECT_UPI';
+    const defaultFullCap = isUpiMode ? Math.min(totalPayable, MAX_UPI_AMOUNT_INR) : totalPayable;
+    const rawEnteredFull = (bookingForm.customFullAmount !== undefined && bookingForm.customFullAmount !== '')
+      ? Number(bookingForm.customFullAmount)
+      : defaultFullCap;
+
+    let chargeNow = advance5Pct;
+    if (isFullPayment) {
+      const roundCheck = validateRoundFigureAmount({
+        amountInr: rawEnteredFull,
+        minAmount: Math.max(1000, advance5Pct),
+        maxAmount: totalPayable,
+        isUpi: isUpiMode,
+        exactFullDue: totalPayable
+      });
+      if (!roundCheck.ok) {
+        setModalError(roundCheck.error);
+        return;
+      }
+      chargeNow = roundCheck.amount;
+    } else if (isUpiMode && chargeNow > MAX_UPI_AMOUNT_INR) {
+      chargeNow = MAX_UPI_AMOUNT_INR;
+    }
 
     const paymentCheck = validateStrictPayment({
       method: bookingForm.paymentMethod,
@@ -2875,7 +2922,7 @@ function AquaMarkApp() {
         marginPaiseNum,
         transportCost,
         advance5Pct,
-        isFullPayment,
+        chargeNow >= totalPayable,
         chargeNow
       );
       return;
@@ -2883,10 +2930,10 @@ function AquaMarkApp() {
 
     launchRazorpayPayment({
       amountInr: chargeNow,
-      description: `${selectedBatch.plStage} Seed ${isFullPayment ? '100% Full Payment' : '5% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
+      description: `${selectedBatch.plStage} Seed ${chargeNow >= totalPayable ? '100% Full Payment' : isFullPayment ? 'Custom Payment' : '5% Advance'} (${requestedQty.toLocaleString('en-IN')} PL)`,
       prefillName: bookingForm.farmerName || 'Farmer',
       prefillPhone: bookingForm.farmerPhone,
-      onSuccess: (rzpId) => finalizeBookingRecord(rzpId, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance5Pct, isFullPayment),
+      onSuccess: (rzpId) => finalizeBookingRecord(rzpId, requestedQty, hatcheryFixedCost, marginPaiseNum, transportCost, advance5Pct, chargeNow >= totalPayable, chargeNow),
       onFailure: (msg) => setModalError(msg)
     });
   };
@@ -3256,9 +3303,25 @@ function AquaMarkApp() {
       return;
     }
 
-    const payNow = (payRemainingForm.paymentMethod === 'DIRECT_UPI' && dueAmt > MAX_UPI_AMOUNT_INR)
-      ? MAX_UPI_AMOUNT_INR
-      : dueAmt;
+    const isUpiMode = payRemainingForm.paymentMethod === 'DIRECT_UPI';
+    const defaultRem = isUpiMode ? Math.min(dueAmt, MAX_UPI_AMOUNT_INR) : dueAmt;
+    const rawRemEntered = (payRemainingForm.customAmount !== undefined && payRemainingForm.customAmount !== '')
+      ? Number(payRemainingForm.customAmount)
+      : defaultRem;
+
+    const roundCheck = validateRoundFigureAmount({
+      amountInr: rawRemEntered,
+      minAmount: Math.min(1000, dueAmt),
+      maxAmount: dueAmt,
+      isUpi: isUpiMode,
+      exactFullDue: dueAmt
+    });
+    if (!roundCheck.ok) {
+      setPayRemainingError(roundCheck.error);
+      showToast(roundCheck.error);
+      return;
+    }
+    const payNow = roundCheck.amount;
 
     const paymentCheck = validateStrictPayment({
       method: payRemainingForm.paymentMethod,
@@ -3273,11 +3336,11 @@ function AquaMarkApp() {
 
     if (payRemainingForm.paymentMethod === 'RAZORPAY') {
       launchRazorpayPayment({
-        amountInr: dueAmt,
+        amountInr: payNow,
         description: L(`Remaining Balance Payment (${liveBk.bookingId})`, `మిగిలిన బ్యాలెన్స్ చెల్లింపు (${liveBk.bookingId})`),
         prefillName: liveBk.farmerName,
         prefillPhone: liveBk.farmerPhone,
-        onSuccess: (rzpId) => finalizeBuyerPayRemaining(liveBk, rzpId, dueAmt),
+        onSuccess: (rzpId) => finalizeBuyerPayRemaining(liveBk, rzpId, payNow),
         onFailure: (msg) => { setPayRemainingError(msg); showToast(msg); }
       });
       return;
@@ -9306,12 +9369,73 @@ Please advise immediate treatment protocol.`;
                     </button>
                     <button
                       type="button"
-                      onClick={() => setBookingForm({ ...bookingForm, paymentOption: 'FULL', qrRevealed: false })}
+                      onClick={() => setBookingForm({ ...bookingForm, paymentOption: 'FULL', customFullAmount: '', qrRevealed: false })}
                       className={`p-2.5 rounded-xl border text-xs font-bold cursor-pointer ${bookingForm.paymentOption === 'FULL' ? 'border-emerald-600 bg-emerald-500/15 text-emerald-600' : subCardBg}`}
                     >
-                      100% Full Payment
+                      {L('Full / Custom Amount', 'పూర్తి / మీ ఇష్ట మొత్తం')}
                     </button>
                   </div>
+                  {bookingForm.paymentOption === 'FULL' && (() => {
+                    const qtyTmp = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
+                    const hatchTmp = Math.round(qtyTmp * (selectedBatch.pricePer1000 || 0.42));
+                    const brkTmp = currentUser.role === 'mediator' ? Math.round(qtyTmp * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
+                    const maxFull = hatchTmp + brkTmp + (bookingForm.includeTransport ? 1500 : 0);
+                    const minAdv = Math.max(1000, Math.round(hatchTmp * 0.05));
+                    const isUpi = bookingForm.paymentMethod === 'DIRECT_UPI';
+                    const capMax = isUpi ? Math.min(maxFull, MAX_UPI_AMOUNT_INR) : maxFull;
+                    const curVal = bookingForm.customFullAmount !== undefined && bookingForm.customFullAmount !== '' ? Number(bookingForm.customFullAmount) : capMax;
+                    const isBadRound = curVal > 0 && curVal !== maxFull && curVal % 500 !== 0;
+                    const presets = [10000, 25000, 50000, 80000].filter(v => v >= minAdv && v < maxFull && (!isUpi || v <= MAX_UPI_AMOUNT_INR));
+                    return (
+                      <div className={`border rounded-xl p-3 space-y-2 text-xs ${subCardBg}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="font-bold opacity-80">{L('Amount to Pay Now (₹500 multiples)', 'ఇప్పుడు చెల్లించే మొత్తం (₹500 గుణిజాలు)')}</label>
+                          <span className="text-[11px] font-bold text-teal-500">Total: ₹{maxFull.toLocaleString('en-IN')}</span>
+                        </div>
+                        <input
+                          type="number"
+                          step="500"
+                          min={minAdv}
+                          max={capMax}
+                          placeholder={`e.g., 12500, 15000, ${capMax}`}
+                          value={bookingForm.customFullAmount ?? ''}
+                          onChange={(e) => {
+                            setModalError('');
+                            setBookingForm({ ...bookingForm, customFullAmount: cleanNum(e.target.value), qrRevealed: false });
+                          }}
+                          className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
+                        />
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {presets.map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, customFullAmount: p, qrRevealed: false }); }}
+                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${Number(bookingForm.customFullAmount) === p ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                            >
+                              ₹{(p / 1000).toFixed(0)}k
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, customFullAmount: capMax, qrRevealed: false }); }}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${Number(bookingForm.customFullAmount) === capMax ? 'bg-emerald-600 text-white border-emerald-600' : cardBg}`}
+                          >
+                            {isUpi && maxFull > MAX_UPI_AMOUNT_INR ? 'Max ₹80k UPI' : `Full ₹${maxFull.toLocaleString('en-IN')}`}
+                          </button>
+                        </div>
+                        {isBadRound && (
+                          <p className="text-[11px] text-rose-500 font-bold">
+                            {L('Only ₹500 round multiples allowed (e.g., ₹12,500, ₹13,000, ₹14,500) — no loose change.', '₹500 గుణిజాలు మాత్రమే (ఉదా: ₹12,500, ₹13,000, ₹14,500) — చిల్లర మొత్తం అనుమతించబడదు.')}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-300/20">
+                          <span>{L('Pay Now:', 'ఇప్పుడు:')} <b className="text-emerald-500">₹{Math.min(capMax, Math.max(0, curVal || 0)).toLocaleString('en-IN')}</b></span>
+                          <span>{L('Balance at Packing:', 'ప్యాకింగ్ వద్ద:')} <b className="text-amber-500">₹{Math.max(0, maxFull - Math.min(capMax, Math.max(0, curVal || 0))).toLocaleString('en-IN')}</b></span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-2 pt-1">
@@ -9344,7 +9468,10 @@ Please advise immediate treatment protocol.`;
                     const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
                     const fullTotal = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
                     const advToken = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
-                    const token = bookingForm.paymentOption === 'FULL' ? fullTotal : advToken;
+                    const customEntered = (bookingForm.customFullAmount !== undefined && bookingForm.customFullAmount !== '')
+                      ? Math.min(fullTotal, Math.max(0, Number(bookingForm.customFullAmount) || 0))
+                      : fullTotal;
+                    const token = bookingForm.paymentOption === 'FULL' ? (customEntered || fullTotal) : advToken;
 
                     // UPI PAYMENT: BLURRED QR UNTIL "Show QR" CLICKED + "Pay By App" (NO REQUEST BY VPA)
                     if (bookingForm.paymentMethod === 'DIRECT_UPI') {
@@ -10038,11 +10165,65 @@ Please advise immediate treatment protocol.`;
               )}
               {(() => {
                 const due = Math.max(0, Math.round(Number(payRemainingBooking.balanceAtPacking) || 0));
-                const isRemCapped = payRemainingForm.paymentMethod === 'DIRECT_UPI' && due > MAX_UPI_AMOUNT_INR;
-                const remPayNow = isRemCapped ? MAX_UPI_AMOUNT_INR : due;
+                const isUpi = payRemainingForm.paymentMethod === 'DIRECT_UPI';
+                const capDue = isUpi ? Math.min(due, MAX_UPI_AMOUNT_INR) : due;
+                const enteredRem = (payRemainingForm.customAmount !== undefined && payRemainingForm.customAmount !== '')
+                  ? Math.max(0, Number(payRemainingForm.customAmount) || 0)
+                  : capDue;
+                const isRemCapped = isUpi && (due > MAX_UPI_AMOUNT_INR || enteredRem > MAX_UPI_AMOUNT_INR);
+                const remPayNow = Math.min(capDue, enteredRem || capDue);
                 const remLeftAtPacking = Math.max(0, due - remPayNow);
+                const isRemBadRound = enteredRem > 0 && enteredRem !== due && enteredRem % 500 !== 0;
+                const remPresets = [5000, 10000, 25000, 50000, 80000].filter(v => v < due && (!isUpi || v <= MAX_UPI_AMOUNT_INR));
                 return (
                   <>
+                    <div className={`border rounded-xl p-3 space-y-2 text-xs ${subCardBg}`}>
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold opacity-80">{L('Enter Amount to Pay Now (₹500 multiples)', 'ఇప్పుడు చెల్లించే మొత్తం (₹500 గుణిజాలు)')}</label>
+                        <span className="text-[11px] font-bold text-teal-500">Due: ₹{due.toLocaleString('en-IN')}</span>
+                      </div>
+                      <input
+                        type="number"
+                        step="500"
+                        min={Math.min(1000, due)}
+                        max={capDue}
+                        placeholder={`e.g., 12500, 15000, ${capDue}`}
+                        value={payRemainingForm.customAmount ?? ''}
+                        onChange={(e) => {
+                          setPayRemainingError('');
+                          setPayRemainingForm({ ...payRemainingForm, customAmount: cleanNum(e.target.value), qrRevealed: false });
+                        }}
+                        className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
+                      />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {remPresets.map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, customAmount: p, qrRevealed: false }); }}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${Number(payRemainingForm.customAmount) === p ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
+                          >
+                            ₹{(p / 1000).toFixed(0)}k
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, customAmount: capDue, qrRevealed: false }); }}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${Number(payRemainingForm.customAmount) === capDue ? 'bg-emerald-600 text-white border-emerald-600' : cardBg}`}
+                        >
+                          {isUpi && due > MAX_UPI_AMOUNT_INR ? 'Max ₹80k UPI' : `Full ₹${due.toLocaleString('en-IN')}`}
+                        </button>
+                      </div>
+                      {isRemBadRound && (
+                        <p className="text-[11px] text-rose-500 font-bold">
+                          {L('Only ₹500 round multiples allowed (e.g., ₹12,500, ₹13,000, ₹14,500) — no loose change.', '₹500 గుణిజాలు మాత్రమే (ఉదా: ₹12,500, ₹13,000, ₹14,500) — చిల్లర మొత్తం అనుమతించబడదు.')}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-300/20">
+                        <span>{L('Paying Now:', 'ఇప్పుడు:')} <b className="text-emerald-500">₹{remPayNow.toLocaleString('en-IN')}</b></span>
+                        <span>{L('Remaining at Packing:', 'ప్యాకింగ్ వద్ద:')} <b className="text-amber-500">₹{remLeftAtPacking.toLocaleString('en-IN')}</b></span>
+                      </div>
+                    </div>
                     {isRemCapped && (
                       <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-3 space-y-1 text-[11px]">
                         <div className="font-extrabold text-amber-500 flex items-center gap-1.5">
