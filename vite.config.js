@@ -12,7 +12,7 @@ export default defineConfig({
       includeAssets: ['icon-192.png', 'icon-512.png'],
       manifest: {
         id: '/',
-        name: 'Aqua Mark - Prawn Seed Brokerage',
+        name: 'Aqua Mark - Aquaculture Seed Exchange',
         short_name: 'Aqua Mark',
         description: 'Aquaculture Prawn Seed Booking & Escrow Platform',
         start_url: '/',
