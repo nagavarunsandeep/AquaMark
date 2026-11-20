@@ -111,6 +111,22 @@ export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
 
+        // 0. ప్రైవేట్ Super Admin Password Verification (POST /api/admin-auth)
+        if (url.pathname === "/api/admin-auth" && request.method === "POST") {
+            try {
+                if (!env.ADMIN_SECRET) {
+                    return Response.json({ ok: false, error: "ADMIN_SECRET not configured" }, { status: 503 });
+                }
+                const { password } = await request.json();
+                if (typeof password === "string" && password === env.ADMIN_SECRET) {
+                    return Response.json({ ok: true });
+                }
+                return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+            } catch {
+                return Response.json({ ok: false, error: "Invalid request" }, { status: 400 });
+            }
+        }
+
         // 1. ఫైల్ అప్‌లోడ్ API (POST /api/upload)
         if (url.pathname === "/api/upload" && request.method === "POST") {
             try {
