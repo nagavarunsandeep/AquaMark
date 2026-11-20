@@ -1202,127 +1202,6 @@ function AquaMarkApp() {
       document.title = 'AquaMark';
     }
   }, [currentUser]);
-
-  // Keep live navigation/modal state in ref for Android PWA Hardware Back Button
-  navStateRef.current = {
-    currentUser,
-    buyerTab,
-    showActiveBatches,
-    showPublishBatchForm,
-    showSellerDispatchTools,
-    isEditingSellerProfile,
-    showBrokerBookings,
-    showBrokerHatcheries,
-    showBrokerMarginCalc,
-    isEditingBrokerBank,
-    hasOpenModal: Boolean(
-      fullScreenMedia ||
-      showNotifPanel ||
-      selectedBatch ||
-      inspectedBatch ||
-      inspectedBuyerBooking ||
-      inspectedSellerOrder ||
-      payRemainingBooking ||
-      gatePassBooking ||
-      statusModalBooking ||
-      crateQrBatch ||
-      transitPredictorBatch ||
-      videoRequestTargetBatch ||
-      showSellerVideoModal ||
-      showCompareModal ||
-      showBulkCartModal ||
-      showBasicEditProfileModal ||
-      showDeleteAccountModal ||
-      sellerTxModal ||
-      brokerTxListModal ||
-      selectedBrokerTx ||
-      activeInvoice ||
-      razorpayModal ||
-      showSellerScanQrModal
-    ),
-    closeTopModal: () => {
-      if (fullScreenMedia) return setFullScreenMedia(null);
-      if (razorpayModal) return setRazorpayModal(null);
-      if (showNotifPanel) return setShowNotifPanel(false);
-      if (selectedBatch) return setSelectedBatch(null);
-      if (payRemainingBooking) return setPayRemainingBooking(null);
-      if (inspectedBatch) return setInspectedBatch(null);
-      if (inspectedBuyerBooking) return setInspectedBuyerBooking(null);
-      if (inspectedSellerOrder) return setInspectedSellerOrder(null);
-      if (gatePassBooking) return setGatePassBooking(null);
-      if (statusModalBooking) return setStatusModalBooking(null);
-      if (crateQrBatch) return setCrateQrBatch(null);
-      if (transitPredictorBatch) return setTransitPredictorBatch(null);
-      if (videoRequestTargetBatch) return setVideoRequestTargetBatch(null);
-      if (showSellerVideoModal) return setShowSellerVideoModal(false);
-      if (showCompareModal) return setShowCompareModal(false);
-      if (showBulkCartModal) return setShowBulkCartModal(false);
-      if (showBasicEditProfileModal) return setShowBasicEditProfileModal(false);
-      if (showDeleteAccountModal) return setShowDeleteAccountModal(false);
-      if (sellerTxModal) return setSellerTxModal(null);
-      if (brokerTxListModal) return setBrokerTxListModal(null);
-      if (selectedBrokerTx) return setSelectedBrokerTx(null);
-      if (activeInvoice) return setActiveInvoice(null);
-      if (showSellerScanQrModal) return setShowSellerScanQrModal(false);
-    }
-  };
-
-  useEffect(() => {
-    try {
-      if (!window.history.state || !window.history.state.aqmGuard) {
-        window.history.pushState({ aqmGuard: true }, '', window.location.href);
-      }
-    } catch { /* ignore */ }
-
-    const handlePopState = () => {
-      const s = navStateRef.current;
-
-      // 1. If any modal/overlay is open, close it first
-      if (s.hasOpenModal) {
-        s.closeTopModal();
-        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
-        return;
-      }
-
-      // 2. If user is inside an extra tab/section, return to Portal Home (NEVER log out!)
-      if (s.currentUser?.role === 'buyer' && s.buyerTab !== 'marketplace') {
-        setBuyerTab('marketplace');
-        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
-        return;
-      }
-      if (s.currentUser?.role === 'seller' && (s.showActiveBatches || s.showPublishBatchForm || s.showSellerDispatchTools || s.isEditingSellerProfile)) {
-        setShowActiveBatches(false);
-        setShowPublishBatchForm(false);
-        setShowSellerDispatchTools(false);
-        setIsEditingSellerProfile(false);
-        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
-        return;
-      }
-      if (s.currentUser?.role === 'mediator' && (s.showBrokerBookings || s.showBrokerHatcheries || s.showBrokerMarginCalc || s.isEditingBrokerBank)) {
-        setShowBrokerBookings(false);
-        setShowBrokerHatcheries(false);
-        setShowBrokerMarginCalc(false);
-        setIsEditingBrokerBank(false);
-        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
-        return;
-      }
-
-      // 3. Already on Portal Home (or Login) -> Double Back to exit PWA to phone Home Screen
-      const now = Date.now();
-      if (now - lastBackPressRef.current < 2200) {
-        lastBackPressRef.current = 0;
-        window.history.back();
-        return;
-      }
-      lastBackPressRef.current = now;
-      try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
-      setToast(lang === 'te' ? 'బయటకు వెళ్ళడానికి మళ్ళీ Back నొక్కండి' : 'Press Back again to exit app');
-      setTimeout(() => setToast(prev => (prev === 'Press Back again to exit app' || prev === 'బయటకు వెళ్ళడానికి మళ్ళీ Back నొక్కండి' ? '' : prev)), 2200);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [lang]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
 
@@ -1800,6 +1679,127 @@ function AquaMarkApp() {
   const [seedImages, setSeedImages] = useState([]);
   const [tankVideos, setTankVideos] = useState([]);
   const [gpsLocation, setGpsLocation] = useState('');
+
+  // Keep live navigation/modal state in ref for Android PWA Hardware Back Button
+  navStateRef.current = {
+    currentUser,
+    buyerTab,
+    showActiveBatches,
+    showPublishBatchForm,
+    showSellerDispatchTools,
+    isEditingSellerProfile,
+    showBrokerBookings,
+    showBrokerHatcheries,
+    showBrokerMarginCalc,
+    isEditingBrokerBank,
+    hasOpenModal: Boolean(
+      fullScreenMedia ||
+      showNotifPanel ||
+      selectedBatch ||
+      inspectedBatch ||
+      inspectedBuyerBooking ||
+      inspectedSellerOrder ||
+      payRemainingBooking ||
+      gatePassBooking ||
+      statusModalBooking ||
+      crateQrBatch ||
+      transitPredictorBatch ||
+      videoRequestTargetBatch ||
+      showSellerVideoModal ||
+      showCompareModal ||
+      showBulkCartModal ||
+      showBasicEditProfileModal ||
+      showDeleteAccountModal ||
+      sellerTxModal ||
+      brokerTxListModal ||
+      selectedBrokerTx ||
+      activeInvoice ||
+      razorpayModal ||
+      showSellerScanQrModal
+    ),
+    closeTopModal: () => {
+      if (fullScreenMedia) return setFullScreenMedia(null);
+      if (razorpayModal) return setRazorpayModal(null);
+      if (showNotifPanel) return setShowNotifPanel(false);
+      if (selectedBatch) return setSelectedBatch(null);
+      if (payRemainingBooking) return setPayRemainingBooking(null);
+      if (inspectedBatch) return setInspectedBatch(null);
+      if (inspectedBuyerBooking) return setInspectedBuyerBooking(null);
+      if (inspectedSellerOrder) return setInspectedSellerOrder(null);
+      if (gatePassBooking) return setGatePassBooking(null);
+      if (statusModalBooking) return setStatusModalBooking(null);
+      if (crateQrBatch) return setCrateQrBatch(null);
+      if (transitPredictorBatch) return setTransitPredictorBatch(null);
+      if (videoRequestTargetBatch) return setVideoRequestTargetBatch(null);
+      if (showSellerVideoModal) return setShowSellerVideoModal(false);
+      if (showCompareModal) return setShowCompareModal(false);
+      if (showBulkCartModal) return setShowBulkCartModal(false);
+      if (showBasicEditProfileModal) return setShowBasicEditProfileModal(false);
+      if (showDeleteAccountModal) return setShowDeleteAccountModal(false);
+      if (sellerTxModal) return setSellerTxModal(null);
+      if (brokerTxListModal) return setBrokerTxListModal(null);
+      if (selectedBrokerTx) return setSelectedBrokerTx(null);
+      if (activeInvoice) return setActiveInvoice(null);
+      if (showSellerScanQrModal) return setShowSellerScanQrModal(false);
+    }
+  };
+
+  useEffect(() => {
+    try {
+      if (!window.history.state || !window.history.state.aqmGuard) {
+        window.history.pushState({ aqmGuard: true }, '', window.location.href);
+      }
+    } catch { /* ignore */ }
+
+    const handlePopState = () => {
+      const s = navStateRef.current;
+
+      // 1. If any modal/overlay is open, close it first
+      if (s.hasOpenModal) {
+        s.closeTopModal();
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+
+      // 2. If user is inside an extra tab/section, return to Portal Home (NEVER log out!)
+      if (s.currentUser?.role === 'buyer' && s.buyerTab !== 'marketplace') {
+        setBuyerTab('marketplace');
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+      if (s.currentUser?.role === 'seller' && (s.showActiveBatches || s.showPublishBatchForm || s.showSellerDispatchTools || s.isEditingSellerProfile)) {
+        setShowActiveBatches(false);
+        setShowPublishBatchForm(false);
+        setShowSellerDispatchTools(false);
+        setIsEditingSellerProfile(false);
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+      if (s.currentUser?.role === 'mediator' && (s.showBrokerBookings || s.showBrokerHatcheries || s.showBrokerMarginCalc || s.isEditingBrokerBank)) {
+        setShowBrokerBookings(false);
+        setShowBrokerHatcheries(false);
+        setShowBrokerMarginCalc(false);
+        setIsEditingBrokerBank(false);
+        try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+        return;
+      }
+
+      // 3. Already on Portal Home (or Login) -> Double Back to exit PWA to phone Home Screen
+      const now = Date.now();
+      if (now - lastBackPressRef.current < 2200) {
+        lastBackPressRef.current = 0;
+        window.history.back();
+        return;
+      }
+      lastBackPressRef.current = now;
+      try { window.history.pushState({ aqmGuard: true }, '', window.location.href); } catch { /* ignore */ }
+      setToast(lang === 'te' ? 'బయటకు వెళ్ళడానికి మళ్ళీ Back నొక్కండి' : 'Press Back again to exit app');
+      setTimeout(() => setToast(prev => (prev === 'Press Back again to exit app' || prev === 'బయటకు వెళ్ళడానికి మళ్ళీ Back నొక్కండి' ? '' : prev)), 2200);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [lang]);
 
   const showToast = (msg) => {
     setToast(msg);
