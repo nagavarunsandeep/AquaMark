@@ -5347,8 +5347,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                                ? 'bg-teal-600 text-white border-teal-600'
-                                : `${subCardBg} opacity-80 hover:opacity-100`
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -6670,8 +6670,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : `${subCardBg} opacity-80 hover:opacity-100`
+                                    ? 'bg-teal-600 text-white border-teal-600'
+                                    : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -8560,8 +8560,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                        ? 'bg-teal-600 text-white border-teal-600'
-                        : `${subCardBg} opacity-80 hover:opacity-100`
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -8611,8 +8611,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
