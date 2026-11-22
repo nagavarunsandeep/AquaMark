@@ -1954,42 +1954,6 @@ function AquaMarkApp() {
   // =========================================================================
   const getUserKey = (phone, role) => `${phone}_${role}`;
 
-  const handleTriggerInstantWhatsAppVerify = () => {
-    const cleanPhone = (loginPhone || '').replace(/\D/g, '').slice(-10);
-    if (cleanPhone.length !== 10) {
-      showToast(t.toasts.invalidPhone);
-      return;
-    }
-
-    const roleKey = getUserKey(cleanPhone, loginRole);
-    if (authMode === 'signup' && registeredUsers[roleKey]) {
-      showToast(t.toasts.alreadyRegistered);
-      setAuthMode('login');
-      return;
-    }
-
-    if (authMode === 'forgot' && !registeredUsers[roleKey]) {
-      showToast(t.toasts.notRegistered);
-      setAuthMode('signup');
-      return;
-    }
-
-    // Open WhatsApp with pre-filled verification message and automatically return focus to portal
-    setIsVerifyingWa(true);
-    const verifyToken = `AQM-${loginRole.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
-    const waText = `Aqua Mark Verified ${loginRole.toUpperCase()}\nMobile: +91 ${cleanPhone}\nToken: ${verifyToken}`;
-    const waUrl = `https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`;
-    const popup = window.open(waUrl, '_blank', 'noopener,noreferrer');
-
-    setTimeout(() => {
-      try { if (popup && !popup.closed) popup.close(); } catch { }
-      window.focus();
-      setIsVerifyingWa(false);
-      setWaVerifiedDone(true);
-      showToast(t.toasts.waVerified);
-    }, 1800);
-  };
-
   const handleCompleteSignUpOrReset = async (e) => {
     e.preventDefault();
     if (!emailOtpVerified) {
