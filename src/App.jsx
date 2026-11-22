@@ -4772,19 +4772,69 @@ function AquaMarkApp() {
         if (Array.isArray(freshKv?.value)) existing = freshKv.value;
       } catch { }
       const updated = [newTicket, ...existing].slice(0, 300);
-      await saveKvStore('support_tickets', updated);
+      const { error: kvErr } = await supabase.from('app_kv_store').upsert({
+        key: 'support_tickets',
+        value: updated,
+        updated_at: new Date().toISOString()
+      });
+      if (kvErr) throw kvErr;
       setSupportTickets(updated);
       setSupportForm({ category: 'Booking / Payment Issue', bookingId: '', message: '' });
+      pushAppNotification(
+        currentUser.phone,
+        currentUser.role,
+        L(`📩 Support Ticket Raised (${ticketId})`, `📩 సపోర్ట్ టికెట్ రైజ్ అయింది (${ticketId})`),
+        L(
+          `${newTicket.category}${newTicket.bookingId ? ` • Booking ${newTicket.bookingId}` : ''} — "${cleanMsg}". Email ${SUPPORT_EMAIL} with ID ${ticketId}. Direct phone support unlocks automatically after 3 days if unresolved.`,
+          `${newTicket.category}${newTicket.bookingId ? ` • బుకింగ్ ${newTicket.bookingId}` : ''} — "${cleanMsg}". ${SUPPORT_EMAIL} కు మెయిల్ చేయండి. 3 రోజుల్లో పరిష్కారం కాకపోతే డైరెక్ట్ ఫోన్ సపోర్ట్ అన్‌లాక్ అవుతుంది.`
+        ),
+        {
+          ticketId,
+          category: newTicket.category,
+          bookingId: newTicket.bookingId || 'N/A',
+          status: 'OPEN',
+          supportEmail: SUPPORT_EMAIL
+        }
+      );
       showToast(
         L(
-          `Ticket ${ticketId} created! Email ${SUPPORT_EMAIL} with this ID. If unresolved after 3 days, direct phone support unlocks automatically.`,
-          `టికెట్ ${ticketId} క్రియేట్ అయింది! ${SUPPORT_EMAIL} కు మెయిల్ చేయండి. 3 రోజుల్లో పరిష్కారం కాకపోతే డైరెక్ట్ ఫోన్ సపోర్ట్ అన్‌లాక్ అవుతుంది.`
+          `Ticket ${ticketId} submitted! Sent to AquaMark Support Desk & added to your notifications.`,
+          `టికెట్ ${ticketId} సబ్మిట్ అయింది! సపోర్ట్ డెస్క్‌కు పంపబడింది & నోటిఫికేషన్ వచ్చింది.`
         )
       );
-    } catch {
-      showToast(L('Could not submit ticket. Please email support directly.', 'టికెట్ సబ్మిట్ కాలేదు. దయచేసి నేరుగా మెయిల్ చేయండి.'), 'error');
+    } catch (err) {
+      showToast(
+        L(
+          `Could not submit ticket (${err?.message || 'network error'}). Please email ${SUPPORT_EMAIL} directly.`,
+          `టికెట్ సబ్మిట్ కాలేదు. దయచేసి ${SUPPORT_EMAIL} కు నేరుగా మెయిల్ చేయండి.`
+        ),
+        'error'
+      );
     } finally {
       setSubmittingSupport(false);
+    }
+  };
+
+  const handleDeleteMySupportTicket = async (ticketId) => {
+    if (!currentUser) return;
+    if (!window.confirm(L(`Delete support ticket ${ticketId}?`, `సపోర్ట్ టికెట్ ${ticketId} డిలీట్ చేయాలా?`))) return;
+    try {
+      let existing = Array.isArray(supportTickets) ? [...supportTickets] : [];
+      try {
+        const { data: freshKv } = await supabase.from('app_kv_store').select('value').eq('key', 'support_tickets').maybeSingle();
+        if (Array.isArray(freshKv?.value)) existing = freshKv.value;
+      } catch { }
+      const filtered = existing.filter((t) => !(t.id === ticketId && t.userPhone === currentUser.phone && t.userRole === currentUser.role));
+      const { error: kvErr } = await supabase.from('app_kv_store').upsert({
+        key: 'support_tickets',
+        value: filtered,
+        updated_at: new Date().toISOString()
+      });
+      if (kvErr) throw kvErr;
+      setSupportTickets(filtered);
+      showToast(L(`Ticket ${ticketId} deleted.`, `టికెట్ ${ticketId} డిలీట్ చేయబడింది.`));
+    } catch {
+      showToast(L('Could not delete ticket. Please try again.', 'టికెట్ డిలీట్ కాలేదు. మళ్ళీ ప్రయత్నించండి.'), 'error');
     }
   };
 
@@ -5055,16 +5105,26 @@ function AquaMarkApp() {
                                     <span className="font-mono font-extrabold text-xs text-teal-600">{tk.id}</span>
                                     <span className="text-[11px] font-bold opacity-75">{tk.category}</span>
                                   </div>
-                                  <span
-                                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isResolved
-                                      ? 'bg-emerald-500/15 text-emerald-600'
-                                      : phoneUnlocked
-                                        ? 'bg-rose-500/15 text-rose-600'
-                                        : 'bg-amber-500/15 text-amber-600'
-                                      }`}
-                                  >
-                                    {isResolved ? 'RESOLVED' : phoneUnlocked ? 'ESCALATED • PHONE UNLOCKED' : 'OPEN • EMAIL SUPPORT'}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span
+                                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isResolved
+                                        ? 'bg-emerald-500/15 text-emerald-600'
+                                        : phoneUnlocked
+                                          ? 'bg-rose-500/15 text-rose-600'
+                                          : 'bg-amber-500/15 text-amber-600'
+                                        }`}
+                                    >
+                                      {isResolved ? 'RESOLVED' : phoneUnlocked ? 'ESCALATED • PHONE UNLOCKED' : 'OPEN • EMAIL SUPPORT'}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteMySupportTicket(tk.id)}
+                                      className="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 cursor-pointer"
+                                      title={L('Delete ticket', 'టికెట్ డిలీట్ చేయండి')}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
                                 <p className="text-xs opacity-85 whitespace-pre-line">{tk.message}</p>
                                 <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] opacity-65">

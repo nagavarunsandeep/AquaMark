@@ -760,6 +760,7 @@ export default function SuperAdmin() {
                     ? { ...t, status: nextStatus, resolvedAt: nextStatus === 'RESOLVED' ? new Date().toISOString() : null }
                     : t
             );
+            const targetTicket = existing.find((t) => t.id === ticketId);
             const { error } = await supabase.from('app_kv_store').upsert({
                 key: 'support_tickets',
                 value: updated,
@@ -767,7 +768,47 @@ export default function SuperAdmin() {
             });
             if (error) return notify(`Update failed: ${error.message}`);
             setKvStore((prev) => ({ ...prev, support_tickets: updated }));
-            notify(nextStatus === 'RESOLVED' ? `Ticket ${ticketId} marked RESOLVED (phone escalation locked).` : `Ticket ${ticketId} reopened.`);
+
+            // Send in-app notification to the user when ticket is resolved or reopened
+            if (targetTicket?.userPhone) {
+                try {
+                    const { data: freshNotifKv } = await supabase.from('app_kv_store').select('value').eq('key', 'notifications').maybeSingle();
+                    const existingNotifs = Array.isArray(freshNotifKv?.value)
+                        ? freshNotifKv.value
+                        : (Array.isArray(kvStore.notifications) ? kvStore.notifications : []);
+                    const now = new Date();
+                    const nowStr = `${now.toLocaleDateString('en-IN')} • ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+                    const notifEntry = {
+                        id: `TKT-NTF-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                        targetPhone: String(targetTicket.userPhone).replace(/\D/g, '').slice(-10),
+                        targetRole: targetTicket.userRole || null,
+                        title: nextStatus === 'RESOLVED'
+                            ? `✅ Support Ticket Resolved (${ticketId})`
+                            : `🔄 Support Ticket Reopened (${ticketId})`,
+                        message: nextStatus === 'RESOLVED'
+                            ? `Your support issue (${targetTicket.category}${targetTicket.bookingId ? ` • Booking ${targetTicket.bookingId}` : ''}) has been marked resolved by AquaMark Support.`
+                            : `Your support ticket (${targetTicket.category}) has been reopened for review by AquaMark Support.`,
+                        details: {
+                            ticketId,
+                            category: targetTicket.category || 'Support',
+                            bookingId: targetTicket.bookingId || 'N/A',
+                            status: nextStatus,
+                            source: 'AquaMark Support Desk',
+                        },
+                        read: false,
+                        createdAt: nowStr,
+                    };
+                    const mergedNotifs = [notifEntry, ...existingNotifs].slice(0, 600);
+                    await supabase.from('app_kv_store').upsert({
+                        key: 'notifications',
+                        value: mergedNotifs,
+                        updated_at: new Date().toISOString(),
+                    });
+                    setKvStore((prev) => ({ ...prev, notifications: mergedNotifs }));
+                } catch { }
+            }
+
+            notify(nextStatus === 'RESOLVED' ? `Ticket ${ticketId} marked RESOLVED & user notified!` : `Ticket ${ticketId} reopened & user notified.`);
         } finally {
             setUpdatingSupport(false);
         }
@@ -1919,10 +1960,10 @@ export default function SuperAdmin() {
                                 {kvStore.admin_broadcast?.active ? (
                                     <div className="space-y-3">
                                         <div className={`rounded-xl p-3.5 border text-xs space-y-1 ${kvStore.admin_broadcast.priority === 'urgent'
-                                            ? 'bg-rose-500/10 border-rose-500/40'
-                                            : kvStore.admin_broadcast.priority === 'warning'
-                                                ? 'bg-amber-500/10 border-amber-500/40'
-                                                : 'bg-teal-500/10 border-teal-500/40'
+                                                ? 'bg-rose-500/10 border-rose-500/40'
+                                                : kvStore.admin_broadcast.priority === 'warning'
+                                                    ? 'bg-amber-500/10 border-amber-500/40'
+                                                    : 'bg-teal-500/10 border-teal-500/40'
                                             }`}>
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="font-extrabold">{kvStore.admin_broadcast.title}</span>
@@ -2077,8 +2118,8 @@ export default function SuperAdmin() {
                                     disabled={updatingSupport}
                                     onClick={handleTogglePublicPhoneKycMode}
                                     className={`px-3.5 py-2 rounded-xl text-xs font-bold border cursor-pointer inline-flex items-center gap-1.5 ${kycModeOn
-                                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-600'
-                                        : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600'
+                                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-600'
+                                            : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600'
                                         }`}
                                 >
                                     {kycModeOn ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -2124,10 +2165,10 @@ export default function SuperAdmin() {
                                                             <span className="text-xs font-bold">{tk.category}</span>
                                                             <span
                                                                 className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isResolved
-                                                                    ? 'bg-emerald-500/15 text-emerald-500'
-                                                                    : isEscalated
-                                                                        ? 'bg-rose-500/15 text-rose-500'
-                                                                        : 'bg-amber-500/15 text-amber-500'
+                                                                        ? 'bg-emerald-500/15 text-emerald-500'
+                                                                        : isEscalated
+                                                                            ? 'bg-rose-500/15 text-rose-500'
+                                                                            : 'bg-amber-500/15 text-amber-500'
                                                                     }`}
                                                             >
                                                                 {isResolved ? 'RESOLVED' : isEscalated ? `ESCALATED (${Math.floor(ageHrs / 24)}d)` : `OPEN (${ageHrs}h ago)`}
