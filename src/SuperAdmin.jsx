@@ -747,6 +747,70 @@ export default function SuperAdmin() {
         }
     };
 
+    const [supportFilter, setSupportFilter] = useState('ALL');
+    const [updatingSupport, setUpdatingSupport] = useState(false);
+
+    const handleToggleTicketStatus = async (ticketId, nextStatus) => {
+        setUpdatingSupport(true);
+        try {
+            const { data: freshKv } = await supabase.from('app_kv_store').select('value').eq('key', 'support_tickets').maybeSingle();
+            const existing = Array.isArray(freshKv?.value) ? freshKv.value : (Array.isArray(kvStore.support_tickets) ? kvStore.support_tickets : []);
+            const updated = existing.map((t) =>
+                t.id === ticketId
+                    ? { ...t, status: nextStatus, resolvedAt: nextStatus === 'RESOLVED' ? new Date().toISOString() : null }
+                    : t
+            );
+            const { error } = await supabase.from('app_kv_store').upsert({
+                key: 'support_tickets',
+                value: updated,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) return notify(`Update failed: ${error.message}`);
+            setKvStore((prev) => ({ ...prev, support_tickets: updated }));
+            notify(nextStatus === 'RESOLVED' ? `Ticket ${ticketId} marked RESOLVED (phone escalation locked).` : `Ticket ${ticketId} reopened.`);
+        } finally {
+            setUpdatingSupport(false);
+        }
+    };
+
+    const handleDeleteSupportTicket = async (ticketId) => {
+        if (!window.confirm(`Delete support ticket ${ticketId}?`)) return;
+        setUpdatingSupport(true);
+        try {
+            const { data: freshKv } = await supabase.from('app_kv_store').select('value').eq('key', 'support_tickets').maybeSingle();
+            const existing = Array.isArray(freshKv?.value) ? freshKv.value : (Array.isArray(kvStore.support_tickets) ? kvStore.support_tickets : []);
+            const filtered = existing.filter((t) => t.id !== ticketId);
+            const { error } = await supabase.from('app_kv_store').upsert({
+                key: 'support_tickets',
+                value: filtered,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) return notify(`Delete failed: ${error.message}`);
+            setKvStore((prev) => ({ ...prev, support_tickets: filtered }));
+            notify(`Ticket ${ticketId} deleted.`);
+        } finally {
+            setUpdatingSupport(false);
+        }
+    };
+
+    const handleTogglePublicPhoneKycMode = async () => {
+        setUpdatingSupport(true);
+        try {
+            const current = Boolean(kvStore.support_config?.publicPhoneKycMode);
+            const nextCfg = { ...(kvStore.support_config || {}), publicPhoneKycMode: !current, updatedAt: new Date().toISOString() };
+            const { error } = await supabase.from('app_kv_store').upsert({
+                key: 'support_config',
+                value: nextCfg,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) return notify(`Toggle failed: ${error.message}`);
+            setKvStore((prev) => ({ ...prev, support_config: nextCfg }));
+            notify(!current ? 'Public Phone (KYC Mode) enabled on Contact Us.' : 'Public Phone hidden — 3-day escalation rule active.');
+        } finally {
+            setUpdatingSupport(false);
+        }
+    };
+
     const exportCsv = (filename, headers, rows) => {
         const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
         const csv = [headers.map(escape).join(','), ...rows.map((r) => r.map(escape).join(','))].join('\n');
@@ -1165,6 +1229,7 @@ export default function SuperAdmin() {
                         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
                         { id: 'security', label: `Security (${securityAlerts.length})`, icon: ShieldAlert },
                         { id: 'broadcast', label: 'Broadcast', icon: Megaphone },
+                        { id: 'support', label: `Support (${(Array.isArray(kvStore.support_tickets) ? kvStore.support_tickets : []).filter((t) => t.status !== 'RESOLVED').length})`, icon: PhoneCall },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         return (
@@ -1751,7 +1816,7 @@ export default function SuperAdmin() {
                                             maxLength={10}
                                             value={broadcastTargetPhone}
                                             onChange={(e) => setBroadcastTargetPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                            placeholder="e.g., 9959933166"
+                                            placeholder="Enter 10-digit mobile"
                                             className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono ${inputCls}`}
                                         />
                                     </div>
@@ -1854,10 +1919,10 @@ export default function SuperAdmin() {
                                 {kvStore.admin_broadcast?.active ? (
                                     <div className="space-y-3">
                                         <div className={`rounded-xl p-3.5 border text-xs space-y-1 ${kvStore.admin_broadcast.priority === 'urgent'
-                                                ? 'bg-rose-500/10 border-rose-500/40'
-                                                : kvStore.admin_broadcast.priority === 'warning'
-                                                    ? 'bg-amber-500/10 border-amber-500/40'
-                                                    : 'bg-teal-500/10 border-teal-500/40'
+                                            ? 'bg-rose-500/10 border-rose-500/40'
+                                            : kvStore.admin_broadcast.priority === 'warning'
+                                                ? 'bg-amber-500/10 border-amber-500/40'
+                                                : 'bg-teal-500/10 border-teal-500/40'
                                             }`}>
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="font-extrabold">{kvStore.admin_broadcast.title}</span>
@@ -1976,6 +2041,155 @@ export default function SuperAdmin() {
                         </div>
                     </div>
                 )}
+
+                {/* ================================================================
+            TAB 9: 2-TIER SUPPORT TICKETS & 3-DAY PHONE ESCALATION CONTROL
+           ================================================================ */}
+                {activeTab === 'support' && (() => {
+                    const ESC_MS = 3 * 24 * 60 * 60 * 1000;
+                    const allTickets = Array.isArray(kvStore.support_tickets) ? kvStore.support_tickets : [];
+                    const escalatedTickets = allTickets.filter((t) => t.status !== 'RESOLVED' && (Date.now() - Number(t.createdAt || 0)) >= ESC_MS);
+                    const openTickets = allTickets.filter((t) => t.status !== 'RESOLVED');
+                    const resolvedTickets = allTickets.filter((t) => t.status === 'RESOLVED');
+                    const visibleTickets =
+                        supportFilter === 'ESCALATED'
+                            ? escalatedTickets
+                            : supportFilter === 'OPEN'
+                                ? openTickets
+                                : supportFilter === 'RESOLVED'
+                                    ? resolvedTickets
+                                    : allTickets;
+                    const kycModeOn = Boolean(kvStore.support_config?.publicPhoneKycMode);
+
+                    return (
+                        <div className="space-y-4">
+                            <div className={`rounded-2xl p-4 sm:p-5 border flex flex-wrap items-center justify-between gap-3 ${cardBg}`}>
+                                <div>
+                                    <h2 className="text-sm sm:text-base font-extrabold flex items-center gap-2">
+                                        <PhoneCall className="w-4 h-4 text-teal-500" /> Support Desk &amp; 3-Day Phone Escalation
+                                    </h2>
+                                    <p className="text-xs opacity-70 mt-0.5">
+                                        Official Email: <strong className="font-mono">aquamark.support@gmail.com</strong> • Escalation Phone (unlocks after 72h if unresolved): <strong className="font-mono">+91 9491529224</strong>
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    disabled={updatingSupport}
+                                    onClick={handleTogglePublicPhoneKycMode}
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border cursor-pointer inline-flex items-center gap-1.5 ${kycModeOn
+                                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-600'
+                                        : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600'
+                                        }`}
+                                >
+                                    {kycModeOn ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                    {kycModeOn ? 'Public Phone (KYC Mode): ON' : 'Public Phone: HIDDEN (3-Day Rule Active)'}
+                                </button>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { id: 'ALL', label: `All (${allTickets.length})` },
+                                    { id: 'ESCALATED', label: `Escalated >3d (${escalatedTickets.length})` },
+                                    { id: 'OPEN', label: `Open (${openTickets.length})` },
+                                    { id: 'RESOLVED', label: `Resolved (${resolvedTickets.length})` },
+                                ].map((f) => (
+                                    <button
+                                        key={f.id}
+                                        type="button"
+                                        onClick={() => setSupportFilter(f.id)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${supportFilter === f.id ? 'bg-teal-600 text-white border-teal-600' : `${cardBg} opacity-80 hover:opacity-100`
+                                            }`}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {visibleTickets.length === 0 ? (
+                                <div className={`rounded-2xl p-8 border text-center text-xs opacity-70 ${cardBg}`}>
+                                    No support tickets in this view.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                    {visibleTickets.map((tk) => {
+                                        const isResolved = tk.status === 'RESOLVED';
+                                        const ageHrs = Math.floor((Date.now() - Number(tk.createdAt || 0)) / (60 * 60 * 1000));
+                                        const isEscalated = !isResolved && ageHrs >= 72;
+                                        return (
+                                            <div key={tk.id} className={`rounded-2xl p-4 border space-y-2.5 ${cardBg}`}>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-mono font-extrabold text-xs text-teal-600">{tk.id}</span>
+                                                            <span className="text-xs font-bold">{tk.category}</span>
+                                                            <span
+                                                                className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isResolved
+                                                                    ? 'bg-emerald-500/15 text-emerald-500'
+                                                                    : isEscalated
+                                                                        ? 'bg-rose-500/15 text-rose-500'
+                                                                        : 'bg-amber-500/15 text-amber-500'
+                                                                    }`}
+                                                            >
+                                                                {isResolved ? 'RESOLVED' : isEscalated ? `ESCALATED (${Math.floor(ageHrs / 24)}d)` : `OPEN (${ageHrs}h ago)`}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] opacity-75 mt-1">
+                                                            {tk.userName} ({tk.userRole}) • +91 {tk.userPhone}{tk.userEmail ? ` • ${tk.userEmail}` : ''}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        disabled={updatingSupport}
+                                                        onClick={() => handleDeleteSupportTicket(tk.id)}
+                                                        className="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 cursor-pointer"
+                                                        title="Delete ticket"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+
+                                                {tk.bookingId && (
+                                                    <div className="text-[11px] font-mono opacity-80">Booking ID: <strong>{tk.bookingId}</strong></div>
+                                                )}
+                                                <p className="text-xs opacity-90 whitespace-pre-line">{tk.message}</p>
+
+                                                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-500/15">
+                                                    {!isResolved ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled={updatingSupport}
+                                                            onClick={() => handleToggleTicketStatus(tk.id, 'RESOLVED')}
+                                                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                                                        >
+                                                            <CheckCircle2 className="w-3.5 h-3.5" /> Mark Resolved
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            disabled={updatingSupport}
+                                                            onClick={() => handleToggleTicketStatus(tk.id, 'OPEN')}
+                                                            className="px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-600 border border-amber-500/30 text-xs font-bold cursor-pointer"
+                                                        >
+                                                            Reopen Ticket
+                                                        </button>
+                                                    )}
+                                                    {tk.userEmail && (
+                                                        <a
+                                                            href={`mailto:${tk.userEmail}?subject=${encodeURIComponent(`Re: AquaMark Support [${tk.id}]`)}`}
+                                                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 ${subBg}`}
+                                                        >
+                                                            <Send className="w-3.5 h-3.5 text-teal-600" /> Email User
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
             </main>
 
             {/* ================================================================

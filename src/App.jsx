@@ -14,7 +14,7 @@ import {
   Award, Bell, Phone, ScanLine, ShoppingCart,
   Download, Volume2, VolumeX, Zap, RotateCcw, Target,
   Timer, PhoneCall, Megaphone, CloudSun, Sliders, ArrowUp,
-  WifiOff, StickyNote, Plus, Minus, Copy
+  WifiOff, StickyNote, Plus, Minus, Copy, Mail
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -54,7 +54,9 @@ class ErrorBoundary extends React.Component {
 // ============================================================================
 // DOMAIN CONSTANTS
 // ============================================================================
-const ADMIN_WHATSAPP_NUMBER = '919959933166';
+const SUPPORT_EMAIL = 'aquamark.support@gmail.com';
+const ESCALATION_SUPPORT_PHONE = '9491529224';
+const SUPPORT_ESCALATION_MS = 3 * 24 * 60 * 60 * 1000; // 72 hours (3 days)
 
 const SHRIMP_SPECIES_OPTIONS = [
   'Vannamei (SyAqua Line)',
@@ -1065,6 +1067,10 @@ function AquaMarkApp() {
   const [farmerPonds, setFarmerPonds] = useState(() => safeLoadStorage('aqm_v11_ponds', []));
   const [notifications, setNotifications] = useState(() => safeLoadStorage('aqm_v11_notifications', []));
   const [adminBroadcast, setAdminBroadcast] = useState(() => safeLoadStorage('aqm_v11_admin_broadcast', null));
+  const [supportTickets, setSupportTickets] = useState(() => safeLoadStorage('aqm_v11_support_tickets', []));
+  const [supportConfig, setSupportConfig] = useState(() => safeLoadStorage('aqm_v11_support_config', { publicPhoneKycMode: false }));
+  const [supportForm, setSupportForm] = useState({ category: 'Booking / Payment Issue', bookingId: '', message: '' });
+  const [submittingSupport, setSubmittingSupport] = useState(false);
   const [dismissedBroadcastId, setDismissedBroadcastId] = useState(() => {
     try { return localStorage.getItem('aqm_v11_dismissed_bcast') || ''; } catch { return ''; }
   });
@@ -1225,6 +1231,8 @@ function AquaMarkApp() {
   useEffect(() => { try { localStorage.setItem('aqm_v11_ponds', JSON.stringify(farmerPonds)); } catch { } }, [farmerPonds]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_notifications', JSON.stringify(notifications)); } catch { } }, [notifications]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_admin_broadcast', JSON.stringify(adminBroadcast)); } catch { } }, [adminBroadcast]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_support_tickets', JSON.stringify(supportTickets)); } catch { } }, [supportTickets]);
+  useEffect(() => { try { localStorage.setItem('aqm_v11_support_config', JSON.stringify(supportConfig)); } catch { } }, [supportConfig]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_admin_user_alerts', JSON.stringify(adminUserAlerts)); } catch { } }, [adminUserAlerts]);
   useEffect(() => { try { localStorage.setItem('aqm_v11_dismissed_ualerts', JSON.stringify(dismissedUserAlertIds)); } catch { } }, [dismissedUserAlertIds]);
 
@@ -1346,6 +1354,8 @@ function AquaMarkApp() {
           if (item.key === 'admin_broadcast') setAdminBroadcast(item.value || null);
           if (item.key === 'admin_user_alerts') setAdminUserAlerts(Array.isArray(item.value) ? item.value : []);
           if (item.key === 'user_emails') setUserEmails(item.value || {});
+          if (item.key === 'support_tickets') setSupportTickets(Array.isArray(item.value) ? item.value : []);
+          if (item.key === 'support_config') setSupportConfig(item.value && typeof item.value === 'object' ? item.value : { publicPhoneKycMode: false });
         });
       }
 
@@ -1503,7 +1513,6 @@ function AquaMarkApp() {
   const navStateRef = useRef({});
 
   const MAX_UPI_AMOUNT_INR = 80000;
-  const PLATFORM_UPI_ID = '9959933166@ybl';
 
   // Hatchery-friendly round-figure payment validator (multiples of ₹500: ₹1,000, ₹1,500, ₹12,500, etc.)
   const validateRoundFigureAmount = ({ amountInr, minAmount, maxAmount, isUpi, exactFullDue }) => {
@@ -4727,6 +4736,67 @@ function AquaMarkApp() {
   // =========================================================================
   // SCREEN 1: ROLE-ISOLATED SIGN UP & LOGIN PORTAL
   // =========================================================================
+  const handleSubmitSupportTicket = async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      showToast(L('Please log in to raise a tracked support ticket.', 'ట్రాక్డ్ సపోర్ట్ టికెట్ కోసం దయచేసి లాగిన్ అవ్వండి.'), 'error');
+      return;
+    }
+    const cleanMsg = (supportForm.message || '').trim();
+    if (cleanMsg.length < 10) {
+      showToast(L('Please describe your issue in at least 10 characters.', 'మీ సమస్యను కనీసం 10 అక్షరాలలో వివరించండి.'), 'error');
+      return;
+    }
+    setSubmittingSupport(true);
+    try {
+      const ticketId = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
+      const nowMs = Date.now();
+      const userKey = `${currentUser.phone}_${currentUser.role}`;
+      const newTicket = {
+        id: ticketId,
+        userPhone: currentUser.phone,
+        userName: currentUser.name || currentUser.phone,
+        userRole: currentUser.role,
+        userEmail: userEmails[userKey] || currentUser.email || '',
+        category: supportForm.category || 'General Support',
+        bookingId: (supportForm.bookingId || '').trim(),
+        message: cleanMsg,
+        createdAt: nowMs,
+        createdAtIso: new Date(nowMs).toISOString(),
+        status: 'OPEN',
+        resolvedAt: null
+      };
+      let existing = Array.isArray(supportTickets) ? [...supportTickets] : [];
+      try {
+        const { data: freshKv } = await supabase.from('app_kv_store').select('value').eq('key', 'support_tickets').maybeSingle();
+        if (Array.isArray(freshKv?.value)) existing = freshKv.value;
+      } catch { }
+      const updated = [newTicket, ...existing].slice(0, 300);
+      await saveKvStore('support_tickets', updated);
+      setSupportTickets(updated);
+      setSupportForm({ category: 'Booking / Payment Issue', bookingId: '', message: '' });
+      showToast(
+        L(
+          `Ticket ${ticketId} created! Email ${SUPPORT_EMAIL} with this ID. If unresolved after 3 days, direct phone support unlocks automatically.`,
+          `టికెట్ ${ticketId} క్రియేట్ అయింది! ${SUPPORT_EMAIL} కు మెయిల్ చేయండి. 3 రోజుల్లో పరిష్కారం కాకపోతే డైరెక్ట్ ఫోన్ సపోర్ట్ అన్‌లాక్ అవుతుంది.`
+        )
+      );
+    } catch {
+      showToast(L('Could not submit ticket. Please email support directly.', 'టికెట్ సబ్మిట్ కాలేదు. దయచేసి నేరుగా మెయిల్ చేయండి.'), 'error');
+    } finally {
+      setSubmittingSupport(false);
+    }
+  };
+
+  const formatEscalationCountdown = (createdAtMs) => {
+    const remaining = Math.max(0, SUPPORT_ESCALATION_MS - (Date.now() - Number(createdAtMs || 0)));
+    const hrsTotal = Math.ceil(remaining / (60 * 60 * 1000));
+    const days = Math.floor(hrsTotal / 24);
+    const hrs = hrsTotal % 24;
+    if (days > 0) return `${days}d ${hrs}h`;
+    return `${Math.max(1, hrs)}h`;
+  };
+
   const POLICY_TABS = [
     { id: 'about', label: 'About Us' },
     { id: 'pricing', label: 'Pricing' },
@@ -4755,7 +4825,7 @@ function AquaMarkApp() {
         AquaMark is an independent digital booking mediator connecting Shrimp Farmers (Buyers), Hatcheries (Sellers), and Brokers. AquaMark does not breed, inspect, or guarantee biological seed quality — seed quality &amp; delivery are solely the responsibility of the respective Hatchery.
       </p>
       <p className="text-[10px] sm:text-[11px] opacity-55">
-        AquaMark © 2026 • Online Digital Service Platform • Support: +91 9959933166 • nagavarunsandeep@gmail.com • Andhra Pradesh, India
+        AquaMark © 2026 • Online Digital Service Platform • Andhra Pradesh, India
       </p>
     </footer>
   );
@@ -4844,7 +4914,7 @@ function AquaMarkApp() {
                   <li><strong>Information We Collect:</strong> Full name, email address (for OTP verification), 10-digit mobile number, portal role (Buyer/Seller/Broker), booking details, and (for Sellers/Brokers) bank account / UPI ID strictly for settlement payouts.</li>
                   <li><strong>How We Use Data:</strong> Solely to authenticate accounts, connect Buyers with Hatcheries for confirmed bookings, generate digital receipts/QR passes, send booking/dispatch notifications, and prevent payment fraud. We never sell user data to third-party advertisers.</li>
                   <li><strong>Payment Security:</strong> Online payments processed via Razorpay are handled directly on Razorpay&apos;s PCI-DSS compliant servers. AquaMark never stores debit/credit card numbers, CVV, or UPI PINs.</li>
-                  <li><strong>Your Rights:</strong> You can edit your profile, change your password, or permanently delete your account and personal records anytime from the <strong>Edit Profile</strong> menu inside AquaMark, or by emailing <code>nagavarunsandeep@gmail.com</code>.</li>
+                  <li><strong>Your Rights:</strong> You can edit your profile, change your password, or permanently delete your account and personal records anytime from the <strong>Edit Profile</strong> menu inside AquaMark, or by emailing <code>aquamark.support@gmail.com</code>.</li>
                 </ul>
               </>
             )}
@@ -4875,25 +4945,196 @@ function AquaMarkApp() {
               </>
             )}
 
-            {activePolicyPage === 'contact' && (
-              <>
-                <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Contact Us &amp; Grievance Support</h4>
-                <p>
-                  AquaMark operates as an individual online digital booking &amp; mediation service platform. For booking assistance, payment/refund queries, or grievance redressal, please reach out through our official support channels:
-                </p>
-                <div className={`rounded-xl border p-4 space-y-2 ${subCardBg}`}>
-                  <div><span className="opacity-65">Platform Name:</span> <strong>AquaMark (Online Aquaculture Mediation Service)</strong></div>
-                  <div><span className="opacity-65">Service Type:</span> <strong>Individual Digital Service Provider (Online Only — No Physical Storefront)</strong></div>
-                  <div><span className="opacity-65">Operating Region:</span> <strong>Kakinada, Andhra Pradesh, India</strong></div>
-                  <div><span className="opacity-65">Support Phone / WhatsApp:</span> <strong className="font-mono">+91 9959933166</strong></div>
-                  <div><span className="opacity-65">Official Email &amp; Grievance Contact:</span> <strong className="font-mono">nagavarunsandeep@gmail.com</strong></div>
-                  <div><span className="opacity-65">Support Hours:</span> <strong>Monday – Saturday, 09:00 AM – 07:00 PM IST</strong></div>
-                </div>
-                <p className="text-[11px] opacity-75">
-                  We acknowledge all payment, refund, and grievance emails within 24–48 business hours.
-                </p>
-              </>
-            )}
+            {activePolicyPage === 'contact' && (() => {
+              const myTickets = currentUser
+                ? (Array.isArray(supportTickets) ? supportTickets : []).filter(
+                  (tk) => tk.userPhone === currentUser.phone && tk.userRole === currentUser.role
+                )
+                : [];
+              return (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Contact Us &amp; 2-Tier Grievance Support</h4>
+                  <p>
+                    AquaMark operates as an individual online digital booking &amp; mediation service platform. To ensure fast, documented resolution for every user, all support requests start via our <strong>official email &amp; ticket desk</strong>. If an open ticket remains unresolved after <strong>3 days (72 hours)</strong>, direct escalation phone support unlocks automatically inside your ticket.
+                  </p>
+
+                  <div className={`rounded-xl border p-4 space-y-2.5 ${subCardBg}`}>
+                    <div><span className="opacity-65">Platform Name:</span> <strong>AquaMark (Online Aquaculture Mediation Service)</strong></div>
+                    <div><span className="opacity-65">Service Type:</span> <strong>Individual Digital Service Provider (Online Only — No Physical Storefront)</strong></div>
+                    <div><span className="opacity-65">Operating Region:</span> <strong>Kakinada, Andhra Pradesh, India</strong></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-500/15">
+                      <div>
+                        <span className="opacity-65">Official Support Email:</span>{' '}
+                        <strong className="font-mono text-teal-600 dark:text-teal-400">{SUPPORT_EMAIL}</strong>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(SUPPORT_EMAIL, L('Support email copied!', 'సపోర్ట్ మెయిల్ కాపీ అయింది!'))}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer ${cardBg}`}
+                        >
+                          <Copy className="w-3 h-3 text-teal-600" /> Copy
+                        </button>
+                        <a
+                          href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('AquaMark Support Request')}`}
+                          className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold inline-flex items-center gap-1"
+                        >
+                          <Mail className="w-3 h-3" /> Send Email
+                        </a>
+                      </div>
+                    </div>
+                    {supportConfig?.publicPhoneKycMode && (
+                      <div className="pt-1 border-t border-slate-500/15">
+                        <span className="opacity-65">Escalation Phone / WhatsApp:</span>{' '}
+                        <strong className="font-mono">+91 {ESCALATION_SUPPORT_PHONE}</strong>
+                      </div>
+                    )}
+                    <div><span className="opacity-65">Support Hours:</span> <strong>Monday – Saturday, 09:00 AM – 07:00 PM IST</strong></div>
+                    <div className="text-[11px] opacity-75">
+                      <strong>Escalation Rule:</strong> Tier 1 Email response within 24–48 business hours. Tier 2 Direct Phone Support unlocks automatically after <strong>72 hours (3 days)</strong> if your logged-in ticket is still unresolved.
+                    </div>
+                  </div>
+
+                  {currentUser ? (
+                    <div className="space-y-3 pt-1">
+                      <form onSubmit={handleSubmitSupportTicket} className={`rounded-xl border p-4 space-y-2.5 ${subCardBg}`}>
+                        <div className="font-extrabold text-xs text-teal-600 flex items-center gap-1.5">
+                          <Mail className="w-4 h-4" /> {L('Raise a Tracked Support Ticket (Email First)', 'సపోర్ట్ టికెట్ రైజ్ చేయండి (ముందు మెయిల్)')}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <select
+                            value={supportForm.category}
+                            onChange={(e) => setSupportForm((p) => ({ ...p, category: e.target.value }))}
+                            className={`w-full border rounded-xl px-3 py-2 text-xs font-bold ${inputCls}`}
+                          >
+                            <option value="Booking / Payment Issue">Booking / Payment Issue</option>
+                            <option value="Refund / Hatchery Cancellation">Refund / Hatchery Cancellation</option>
+                            <option value="Account / Login / OTP">Account / Login / OTP</option>
+                            <option value="Other Support Query">Other Support Query</option>
+                          </select>
+                          <input
+                            type="text"
+                            value={supportForm.bookingId}
+                            onChange={(e) => setSupportForm((p) => ({ ...p, bookingId: e.target.value }))}
+                            placeholder={L('Booking ID (optional, e.g. AQM-...)', 'బుకింగ్ ID (ఆప్షనల్)')}
+                            className={`w-full border rounded-xl px-3 py-2 text-xs ${inputCls}`}
+                          />
+                        </div>
+                        <textarea
+                          required
+                          rows={3}
+                          value={supportForm.message}
+                          onChange={(e) => setSupportForm((p) => ({ ...p, message: e.target.value }))}
+                          placeholder={L('Describe your issue clearly (min 10 characters)...', 'మీ సమస్యను వివరంగా రాయండి (కనీసం 10 అక్షరాలు)...')}
+                          className={`w-full border rounded-xl px-3 py-2 text-xs ${inputCls}`}
+                        />
+                        <button
+                          type="submit"
+                          disabled={submittingSupport}
+                          className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Send className="w-3.5 h-3.5" /> {submittingSupport ? L('Submitting...', 'సబ్మిట్ అవుతోంది...') : L('Submit Support Ticket', 'సపోర్ట్ టికెట్ సబ్మిట్ చేయండి')}
+                        </button>
+                      </form>
+
+                      {myTickets.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="font-extrabold text-xs opacity-80">
+                            {L(`Your Support Tickets (${myTickets.length})`, `మీ సపోర్ట్ టికెట్లు (${myTickets.length})`)}
+                          </div>
+                          {myTickets.map((tk) => {
+                            const isResolved = tk.status === 'RESOLVED';
+                            const elapsedMs = Date.now() - Number(tk.createdAt || 0);
+                            const phoneUnlocked = !isResolved && elapsedMs >= SUPPORT_ESCALATION_MS;
+                            const mailSubj = `AquaMark Support [${tk.id}] - ${tk.category}`;
+                            const mailBody = `Ticket ID: ${tk.id}\nRole: ${tk.userRole}\nName: ${tk.userName}\nBooking ID: ${tk.bookingId || 'N/A'}\n\nIssue:\n${tk.message}`;
+                            return (
+                              <div key={tk.id} className={`rounded-xl border p-3.5 space-y-2 ${subCardBg}`}>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-extrabold text-xs text-teal-600">{tk.id}</span>
+                                    <span className="text-[11px] font-bold opacity-75">{tk.category}</span>
+                                  </div>
+                                  <span
+                                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isResolved
+                                      ? 'bg-emerald-500/15 text-emerald-600'
+                                      : phoneUnlocked
+                                        ? 'bg-rose-500/15 text-rose-600'
+                                        : 'bg-amber-500/15 text-amber-600'
+                                      }`}
+                                  >
+                                    {isResolved ? 'RESOLVED' : phoneUnlocked ? 'ESCALATED • PHONE UNLOCKED' : 'OPEN • EMAIL SUPPORT'}
+                                  </span>
+                                </div>
+                                <p className="text-xs opacity-85 whitespace-pre-line">{tk.message}</p>
+                                <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] opacity-65">
+                                  <span>Raised: {new Date(tk.createdAt).toLocaleString('en-IN')}</span>
+                                  {tk.bookingId && <span>Booking: {tk.bookingId}</span>}
+                                </div>
+
+                                {!isResolved && !phoneUnlocked && (
+                                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/25 p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                                    <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400">
+                                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                                      Email support active • Direct phone unlocks in <strong>{formatEscalationCountdown(tk.createdAt)}</strong> if unresolved.
+                                    </span>
+                                    <a
+                                      href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(mailSubj)}&body=${encodeURIComponent(mailBody)}`}
+                                      className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold inline-flex items-center gap-1"
+                                    >
+                                      <Mail className="w-3 h-3" /> Email Follow-up
+                                    </a>
+                                  </div>
+                                )}
+
+                                {phoneUnlocked && (
+                                  <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3 space-y-2">
+                                    <div className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                      3+ Days Unresolved — Direct Escalation Phone Support Unlocked
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <span className="font-mono font-extrabold text-xs">+91 {ESCALATION_SUPPORT_PHONE}</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <a
+                                          href={`tel:+91${ESCALATION_SUPPORT_PHONE}`}
+                                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold inline-flex items-center gap-1"
+                                        >
+                                          <PhoneCall className="w-3.5 h-3.5" /> Call Support
+                                        </a>
+                                        <a
+                                          href={`https://wa.me/91${ESCALATION_SUPPORT_PHONE}?text=${encodeURIComponent(`AquaMark Escalated Ticket ${tk.id} (3+ days open): ${tk.category} - ${tk.message}`)}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold inline-flex items-center gap-1"
+                                        >
+                                          <Send className="w-3.5 h-3.5" /> WhatsApp
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {isResolved && (
+                                  <div className="text-[11px] text-emerald-600 font-bold inline-flex items-center gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Ticket marked resolved by AquaMark Support.
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={`rounded-xl border p-3.5 text-xs ${subCardBg}`}>
+                      <strong>Need to raise a tracked ticket?</strong> Email{' '}
+                      <strong className="font-mono text-teal-600">{SUPPORT_EMAIL}</strong> anytime, or log in to your Buyer / Seller / Broker account and open <strong>Contact Us</strong> to submit a tracked ticket (automatic phone escalation unlocks after 3 days if unresolved).
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           <div className="px-5 py-3 border-t border-slate-300/20 flex items-center justify-between gap-2 shrink-0">
@@ -6944,11 +7185,11 @@ function AquaMarkApp() {
 • Alkalinity: ${waterTest.alkalinity} ppm | Ammonia: ${waterTest.ammonia} ppm
 • Salinity: ${waterTest.salinity} PPT
 Please advise immediate treatment protocol.`;
-                        openWhatsAppMessage(ADMIN_WHATSAPP_NUMBER, msg);
+                        window.open(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('AquaMark Emergency Water Lab Report')}&body=${encodeURIComponent(msg)}`, '_blank');
                       }}
-                      className="w-full sm:w-auto justify-center bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="w-full sm:w-auto justify-center bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
-                      <Send className="w-4 h-4" /> {L('WhatsApp Water Report to Lab', 'ల్యాబ్‌కు వాటర్ రిపోర్ట్ పంపండి')}
+                      <Mail className="w-4 h-4" /> {L('Email Water Report to Support', 'సపోర్ట్‌కు వాటర్ రిపోర్ట్ మెయిల్ చేయండి')}
                     </button>
                   </div>
                 </div>
