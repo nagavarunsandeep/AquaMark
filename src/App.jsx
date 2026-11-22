@@ -54,7 +54,7 @@ class ErrorBoundary extends React.Component {
 // ============================================================================
 // DOMAIN CONSTANTS
 // ============================================================================
-const ADMIN_WHATSAPP_NUMBER = '919876543210';
+const ADMIN_WHATSAPP_NUMBER = '919959933166';
 
 const SHRIMP_SPECIES_OPTIONS = [
   'Vannamei (SyAqua Line)',
@@ -1089,7 +1089,7 @@ function AquaMarkApp() {
   const [showSellerDepositModal, setShowSellerDepositModal] = useState(false);
   const [addDepositAmount, setAddDepositAmount] = useState('5000');
   const [addDepositUtr, setAddDepositUtr] = useState('');
-  const [addDepositMethod, setAddDepositMethod] = useState('DIRECT_UPI');
+  const [addDepositMethod, setAddDepositMethod] = useState('RAZORPAY');
   const [addDepositQrRevealed, setAddDepositQrRevealed] = useState(false);
   const [isWithdrawingOnDelete, setIsWithdrawingOnDelete] = useState(false);
   const [showSellerScanQrModal, setShowSellerScanQrModal] = useState(false);
@@ -1098,7 +1098,7 @@ function AquaMarkApp() {
   const [statusModalBooking, setStatusModalBooking] = useState(null);
   const [statusAnimStep, setStatusAnimStep] = useState(0);
   const [payRemainingBooking, setPayRemainingBooking] = useState(null);
-  const [payRemainingForm, setPayRemainingForm] = useState({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+  const [payRemainingForm, setPayRemainingForm] = useState({ paymentMethod: 'RAZORPAY', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
 
   // =========================================================================
   // NEW PRODUCTION FEATURES STATE (FRONTEND ONLY — ZERO BACKEND CHANGES)
@@ -1692,7 +1692,7 @@ function AquaMarkApp() {
   const [activePolicyPage, setActivePolicyPage] = useState(() => {
     try {
       const p = new URLSearchParams(window.location.search).get('policy');
-      return ['about', 'pricing', 'terms', 'privacy', 'refund', 'contact'].includes(p) ? p : '';
+      return ['about', 'pricing', 'terms', 'privacy', 'refund', 'delivery', 'contact'].includes(p) ? p : '';
     } catch { return ''; }
   });
   const openPolicyPage = (policyKey) => {
@@ -3824,7 +3824,7 @@ function AquaMarkApp() {
     }
 
     setPayRemainingBooking(null);
-    setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+    setPayRemainingForm({ paymentMethod: 'RAZORPAY', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
     setActiveInvoice({ booking: updatedBk, receiptType: 'FINAL' });
     showToast(L('Remaining balance paid! Final Cleared Receipt generated.', 'మిగిలిన బ్యాలెన్స్ చెల్లించబడింది! ఫైనల్ రసీదు సిద్ధమైంది.'));
   };
@@ -4766,6 +4766,7 @@ function AquaMarkApp() {
     { id: 'terms', label: 'Terms & Conditions' },
     { id: 'privacy', label: 'Privacy Policy' },
     { id: 'refund', label: 'Cancellation & Refund' },
+    { id: 'delivery', label: 'Service Delivery' },
     { id: 'contact', label: 'Contact Us' }
   ];
 
@@ -4844,7 +4845,7 @@ function AquaMarkApp() {
                   <li><strong>Hatchery Seed Rates:</strong> Seed prices (typically ₹0.25 to ₹0.75 per Post-Larvae / PL seed depending on stage, broodstock, and season) are set directly by each independent Hatchery (Seller) and displayed transparently before booking.</li>
                   <li><strong>5% Booking Advance:</strong> To reserve a confirmed packing slot and prevent no-shows, Buyers pay a 5% booking advance on the total estimated seed value. The remaining 95% balance is payable before or at the time of hatchery packing/dispatch.</li>
                   <li><strong>Platform Facilitation Fee:</strong> AquaMark charges a transparent digital mediation/platform facilitation fee (2% of order value, adjusted within the 5% advance structure) while holding the Hatchery&apos;s advance share until packing completion.</li>
-                  <li><strong>Payment Gateway &amp; UPI Options:</strong> Buyers may pay via Direct UPI (zero gateway fee) or supported online payment gateways (Razorpay UPI / Cards / Netbanking, where applicable payment gateway charges + GST may apply as displayed at checkout).</li>
+                  <li><strong>Secure Online Payments (Razorpay):</strong> All booking advances and balance payments are processed securely via Razorpay supporting UPI (GPay / PhonePe / Paytm), Debit/Credit Cards, Netbanking, and Bank Transfer with instant automated verification.</li>
                   <li><strong>No Hidden Subscriptions:</strong> Creating a Farmer, Hatchery, or Broker account on AquaMark is completely free with zero recurring subscription fees.</li>
                 </ul>
               </>
@@ -4891,6 +4892,18 @@ function AquaMarkApp() {
                   <li><strong>Duplicate or Failed Payment Debits:</strong> If an amount is debited twice or debited without a confirmed booking due to a network/bank issue, the excess amount will be refunded in full upon verification of the payment ID / UTR.</li>
                   <li><strong>Refund Processing Timeline:</strong> All approved refunds are initiated within 48 hours of verification and credited back to the <strong>original payment method within 5–7 business days</strong>.</li>
                   <li><strong>Post-Dispatch Disputes:</strong> Once live seed is inspected and accepted at the hatchery packing gate, no refunds are processed by AquaMark; any quality concern must be resolved directly with the Hatchery as per our Terms &amp; Conditions.</li>
+                </ul>
+              </>
+            )}
+
+            {activePolicyPage === 'delivery' && (
+              <>
+                <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Service Delivery &amp; Shipping Policy</h4>
+                <p className="text-[11px] opacity-65">Last Updated: November 2026</p>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li><strong>Instant Digital Service Delivery:</strong> AquaMark is an online B2B slot-booking and mediation service. Upon successful 5% advance payment, your confirmed Booking ID, Digital Receipt, and Packing Gate QR Pass are delivered <strong>instantly inside your AquaMark account</strong> (0 shipping charges).</li>
+                  <li><strong>No Physical Courier / Shipping by AquaMark:</strong> Live shrimp seed (Post-Larvae / PL) is biological and cannot be shipped via standard courier. Physical oxygen-packing and handover happen directly at the respective <strong>Hatchery (Seller) packing gate</strong> on the booked date and time slot.</li>
+                  <li><strong>Dispatch &amp; Transport Responsibility:</strong> Buyers (or their authorized transport vehicles) inspect and collect packed seed boxes directly from the Hatchery. Any delay or schedule change is communicated via in-app notifications by the Hatchery.</li>
                 </ul>
               </>
             )}
@@ -6231,8 +6244,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                                ? 'bg-teal-600 text-white border-teal-600'
-                                : `${subCardBg} opacity-80 hover:opacity-100`
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -6342,7 +6355,7 @@ function AquaMarkApp() {
                                           <button
                                             type="button"
                                             onClick={() => {
-                                              setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                                              setPayRemainingForm({ paymentMethod: 'RAZORPAY', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
                                               setPayRemainingBooking(bk);
                                             }}
                                             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
@@ -7655,8 +7668,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : `${subCardBg} opacity-80 hover:opacity-100`
+                                    ? 'bg-teal-600 text-white border-teal-600'
+                                    : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -9709,8 +9722,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                        ? 'bg-teal-600 text-white border-teal-600'
-                        : `${subCardBg} opacity-80 hover:opacity-100`
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -9760,8 +9773,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -9843,7 +9856,7 @@ Please advise immediate treatment protocol.`;
                         type="button"
                         onClick={() => {
                           setInspectedBuyerBooking(null);
-                          setPayRemainingForm({ paymentMethod: 'DIRECT_UPI', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
+                          setPayRemainingForm({ paymentMethod: 'RAZORPAY', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
                           setPayRemainingBooking(bk);
                         }}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl inline-flex items-center gap-1 cursor-pointer"
@@ -10519,150 +10532,24 @@ Please advise immediate treatment protocol.`;
                 </div>
 
                 <div className="space-y-2 pt-1">
-                  <label className="text-xs font-bold opacity-75 block">{bookingForm.paymentOption === 'FULL' ? 'Select Full Payment Method' : t.paymentMethodLabel}</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'RAZORPAY', label: 'Razorpay', icon: CreditCard },
-                      { id: 'DIRECT_UPI', label: 'UPI (QR / App)', icon: QrCode },
-                      { id: 'BANK_TO_BANK', label: 'Bank-to-Bank', icon: Landmark }
-                    ].map(pm => {
-                      const Icon = pm.icon;
-                      const active = bookingForm.paymentMethod === pm.id;
-                      return (
-                        <button
-                          key={pm.id}
-                          type="button"
-                          onClick={() => { setModalError(''); setBookingForm({ ...bookingForm, paymentMethod: pm.id }); }}
-                          className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 cursor-pointer ${active ? 'border-teal-600 bg-teal-500/15 text-teal-600 font-extrabold' : subCardBg}`}
-                        >
-                          <Icon className="w-4 h-4 text-teal-600" />
-                          <span className="text-[11px]">{pm.label}</span>
-                        </button>
-                      );
-                    })}
+                  <div className={`border border-teal-500/40 bg-teal-500/10 rounded-xl p-3 flex items-center justify-between gap-2.5 text-xs`}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
+                        <CreditCard className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-extrabold text-teal-700 dark:text-teal-300 leading-tight">
+                          {L('Razorpay Secure Checkout', 'Razorpay సురక్షిత పేమెంట్')}
+                        </div>
+                        <div className="text-[11px] opacity-75 leading-snug">
+                          {L('UPI (GPay / PhonePe / Paytm), Cards, Netbanking & Bank Transfer • Instant Auto-Verify', 'UPI, కార్డ్స్, నెట్‌బ్యాంకింగ్ & బ్యాంక్ ట్రాన్స్‌ఫర్ • ఇన్‌స్టంట్ ఆటో-వెరిఫై')}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
+                      100% AUTO
+                    </span>
                   </div>
-
-                  {(() => {
-                    const qty = computeSeedCount(bookingForm.qtyAmount, bookingForm.qtyUnit);
-                    const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
-                    const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
-                    const fullTotal = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
-                    const advToken = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
-                    const customEntered = (bookingForm.customFullAmount !== undefined && bookingForm.customFullAmount !== '')
-                      ? Math.min(fullTotal, Math.max(0, Number(bookingForm.customFullAmount) || 0))
-                      : fullTotal;
-                    const token = bookingForm.paymentOption === 'FULL' ? (customEntered || fullTotal) : advToken;
-
-                    // UPI PAYMENT: BLURRED QR UNTIL "Show QR" CLICKED + "Pay By App" (NO REQUEST BY VPA)
-                    if (bookingForm.paymentMethod === 'DIRECT_UPI') {
-                      const isUpiCapped = token > MAX_UPI_AMOUNT_INR;
-                      const upiPayNow = isUpiCapped ? MAX_UPI_AMOUNT_INR : token;
-                      const remainingAtPackingDiff = Math.max(0, token - upiPayNow);
-                      const upiUri = `upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${upiPayNow}&cu=INR&tn=${bookingForm.paymentOption === 'FULL' && !isUpiCapped ? 'SeedFullPayment' : 'SeedUpiBooking'}`;
-                      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
-
-                      return (
-                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 space-y-3 text-xs">
-                          {isUpiCapped && (
-                            <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-2.5 space-y-1.5 text-[11px]">
-                              <div className="font-extrabold text-amber-500 flex items-center gap-1.5">
-                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                                <span>{L('UPI Max ₹80,000 Cap Applied', 'UPI గరిష్ట పరిమితి ₹80,000')}</span>
-                              </div>
-                              <p className="opacity-90 leading-snug">
-                                {L(
-                                  `Pay ₹80,000 via UPI now. Remaining ₹${remainingAtPackingDiff.toLocaleString('en-IN')} is payable at Packing / Hatchery (or switch to Bank Transfer for full payment).`,
-                                  `ఇప్పుడు UPI ద్వారా ₹80,000 చెల్లించండి. మిగిలిన ₹${remainingAtPackingDiff.toLocaleString('en-IN')} ప్యాకింగ్ వద్ద చెల్లించాలి (మొత్తం ఒకేసారి చెల్లించాలంటే Bank-to-Bank వాడండి).`
-                                )}
-                              </p>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
-                            <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
-                            <span>Pay Now: <b>₹{upiPayNow.toLocaleString('en-IN')}</b></span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setBookingForm({ ...bookingForm, upiSubMode: 'QR' })}
-                              className={`py-2 rounded-lg font-bold border text-xs flex items-center justify-center gap-1.5 cursor-pointer ${bookingForm.upiSubMode === 'QR' ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
-                            >
-                              <QrCode className="w-3.5 h-3.5" /> Generate QR
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBookingForm({ ...bookingForm, upiSubMode: 'APP' })}
-                              className={`py-2 rounded-lg font-bold border text-xs flex items-center justify-center gap-1.5 cursor-pointer ${bookingForm.upiSubMode === 'APP' ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
-                            >
-                              <Smartphone className="w-3.5 h-3.5" /> Pay By App
-                            </button>
-                          </div>
-
-                          {bookingForm.upiSubMode === 'QR' ? (
-                            <div className="flex flex-col items-center bg-white p-3 rounded-xl border border-emerald-300 text-slate-900 relative">
-                              <img
-                                src={qrApiUrl}
-                                alt="Scan UPI QR"
-                                className={`w-32 h-32 object-contain transition-all duration-300 ${bookingForm.qrRevealed ? '' : 'blur-md select-none'}`}
-                              />
-                              {!bookingForm.qrRevealed && (
-                                <button
-                                  type="button"
-                                  onClick={() => setBookingForm({ ...bookingForm, qrRevealed: true })}
-                                  className="absolute inset-0 m-auto h-9 w-24 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer"
-                                >
-                                  Show QR
-                                </button>
-                              )}
-                              <span className="text-xs font-extrabold mt-1">
-                                {bookingForm.qrRevealed ? `Scan QR with any UPI App • ₹${upiPayNow.toLocaleString('en-IN')}` : `Click Show QR to reveal ₹${upiPayNow.toLocaleString('en-IN')} code`}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="text-center space-y-2 py-2">
-                              <a
-                                href={upiUri}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs inline-flex items-center justify-center gap-2"
-                              >
-                                <Smartphone className="w-4 h-4" /> Open GPay / PhonePe / Paytm (₹{upiPayNow.toLocaleString('en-IN')})
-                              </a>
-                              <p className="text-[11px] opacity-70">After completing payment in your UPI app, enter the 12-digit UTR below.</p>
-                            </div>
-                          )}
-
-                          <input
-                            required
-                            type="text"
-                            placeholder={t.utrPlaceholder}
-                            value={bookingForm.utrReference}
-                            onChange={(e) => setBookingForm({ ...bookingForm, utrReference: e.target.value })}
-                            className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                          />
-                        </div>
-                      );
-                    }
-
-                    if (bookingForm.paymentMethod === 'BANK_TO_BANK') {
-                      return (
-                        <div className={`border rounded-xl p-3 space-y-2 text-xs ${subCardBg}`}>
-                          <div className="font-mono text-[11px] space-y-0.5 select-text">
-                            <div><b>Account Name:</b> Aqua Mark Settlement Account</div>
-                            <div><b>Account No:</b> 20419820112 | <b>IFSC:</b> SBIN0008812</div>
-                            <div><b>5% Advance Transfer:</b> ₹{token.toLocaleString('en-IN')} (IMPS / NEFT)</div>
-                          </div>
-                          <input
-                            required
-                            type="text"
-                            placeholder={t.utrPlaceholder}
-                            value={bookingForm.utrReference}
-                            onChange={(e) => setBookingForm({ ...bookingForm, utrReference: e.target.value })}
-                            className={`w-full border rounded-lg px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                          />
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
               </div>
 
@@ -10975,42 +10862,10 @@ Please advise immediate treatment protocol.`;
                   className={`w-full border rounded-xl px-3 py-2 text-sm font-bold select-text ${inputCls}`}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {['DIRECT_UPI', 'BANK_TO_BANK', 'RAZORPAY'].map(m => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setAddDepositMethod(m)}
-                    className={`py-2 rounded-lg font-bold border text-[11px] cursor-pointer ${addDepositMethod === m ? 'bg-teal-600 text-white border-teal-600' : cardBg}`}
-                  >
-                    {m === 'DIRECT_UPI' ? 'UPI' : m === 'BANK_TO_BANK' ? 'Bank' : 'Razorpay'}
-                  </button>
-                ))}
+              <div className="border border-teal-500/40 bg-teal-500/10 rounded-xl p-2.5 flex items-center gap-2 text-[11px] font-bold text-teal-700 dark:text-teal-300">
+                <CreditCard className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>{L('Razorpay Checkout — UPI, Cards, Netbanking & Bank Transfer', 'Razorpay — UPI, కార్డ్స్, నెట్‌బ్యాంకింగ్ & బ్యాంక్ ట్రాన్స్‌ఫర్')}</span>
               </div>
-              {addDepositMethod === 'DIRECT_UPI' && (
-                <div className="flex flex-col items-center bg-white p-2.5 rounded-xl border text-slate-900 relative">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=9959933166@ybl&pn=AquaMarkDeposit&am=${Number(addDepositAmount) || 5000}&cu=INR`)}`}
-                    alt="Add Deposit QR"
-                    className={`w-28 h-28 object-contain ${addDepositQrRevealed ? '' : 'blur-md select-none'}`}
-                  />
-                  {!addDepositQrRevealed && (
-                    <button type="button" onClick={() => setAddDepositQrRevealed(true)} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
-                      Show QR
-                    </button>
-                  )}
-                </div>
-              )}
-              {(addDepositMethod === 'DIRECT_UPI' || addDepositMethod === 'BANK_TO_BANK') && (
-                <input
-                  required
-                  type="text"
-                  placeholder={t.utrPlaceholder}
-                  value={addDepositUtr}
-                  onChange={(e) => setAddDepositUtr(e.target.value)}
-                  className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                />
-              )}
               <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">
                 + Add Money to Deposit
               </button>
@@ -11260,17 +11115,12 @@ Please advise immediate treatment protocol.`;
               <span className="text-2xl font-black text-emerald-600">₹{(payRemainingBooking.balanceAtPacking || 0).toLocaleString('en-IN')}</span>
             </div>
             <form onSubmit={handleBuyerPayRemainingSubmit} className="space-y-3 text-xs">
-              <div className="grid grid-cols-3 gap-2">
-                {['DIRECT_UPI', 'BANK_TO_BANK', 'RAZORPAY'].map(m => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setPayRemainingForm({ ...payRemainingForm, paymentMethod: m })}
-                    className={`py-2 rounded-xl border font-bold text-[11px] cursor-pointer ${payRemainingForm.paymentMethod === m ? 'bg-teal-600 text-white border-teal-600' : subCardBg}`}
-                  >
-                    {m === 'DIRECT_UPI' ? 'UPI (QR/App)' : m === 'BANK_TO_BANK' ? 'Bank Transfer' : 'Razorpay'}
-                  </button>
-                ))}
+              <div className="border border-teal-500/40 bg-teal-500/10 rounded-xl p-2.5 flex items-center justify-between gap-2 text-[11px] font-bold text-teal-700 dark:text-teal-300">
+                <span className="inline-flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-teal-600 shrink-0" />
+                  {L('Razorpay (UPI, Cards, Netbanking & Bank Transfer)', 'Razorpay (UPI, కార్డ్స్, నెట్‌బ్యాంకింగ్ & బ్యాంక్)')}
+                </span>
+                <span className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">AUTO</span>
               </div>
               {payRemainingError && (
                 <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 p-2.5 rounded-xl text-[11px] font-bold flex items-start gap-1.5">
@@ -11353,36 +11203,7 @@ Please advise immediate treatment protocol.`;
                         </p>
                       </div>
                     )}
-                    {payRemainingForm.paymentMethod === 'DIRECT_UPI' && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400">
-                          <span>UPI ID: <b className="font-mono select-text">{PLATFORM_UPI_ID}</b></span>
-                          <span>Pay Now: <b>₹{remPayNow.toLocaleString('en-IN')}</b></span>
-                        </div>
-                        <div className="flex flex-col items-center bg-white p-3 rounded-xl border text-slate-900 relative">
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${PLATFORM_UPI_ID}&pn=AquaMark&am=${remPayNow}&cu=INR&tn=Balance${payRemainingBooking.bookingId}`)}`}
-                            alt="Balance QR"
-                            className={`w-32 h-32 object-contain ${payRemainingForm.qrRevealed ? '' : 'blur-md select-none'}`}
-                          />
-                          {!payRemainingForm.qrRevealed && (
-                            <button type="button" onClick={() => setPayRemainingForm({ ...payRemainingForm, qrRevealed: true })} className="absolute inset-0 m-auto h-8 w-24 bg-teal-600 text-white font-bold text-xs rounded-lg cursor-pointer">
-                              Show QR
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    {(payRemainingForm.paymentMethod === 'DIRECT_UPI' || payRemainingForm.paymentMethod === 'BANK_TO_BANK') && (
-                      <input
-                        required
-                        type="text"
-                        placeholder={payRemainingForm.paymentMethod === 'DIRECT_UPI' ? L('Enter 12-digit UPI UTR Reference', '12 అంకెల UPI UTR నంబర్ ఇవ్వండి') : L('Enter 12–22 char Bank NEFT/RTGS UTR', 'బ్యాంక్ NEFT/RTGS UTR నంబర్ ఇవ్వండి')}
-                        value={payRemainingForm.utrReference}
-                        onChange={(e) => { setPayRemainingError(''); setPayRemainingForm({ ...payRemainingForm, utrReference: e.target.value }); }}
-                        className={`w-full border rounded-xl px-3 py-2 text-xs font-mono select-text ${inputCls}`}
-                      />
-                    )}
+
                     <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer">
                       Confirm & Pay ₹{remPayNow.toLocaleString('en-IN')} →
                     </button>
