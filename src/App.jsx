@@ -1210,6 +1210,179 @@ function AquaMarkApp() {
 
   // Dynamic Browser Tab Title based on Login / Active User Role
   useEffect(() => {
+    const POLICY_TABS = [
+      { id: 'about', label: 'About Us' },
+      { id: 'pricing', label: 'Pricing' },
+      { id: 'terms', label: 'Terms & Conditions' },
+      { id: 'privacy', label: 'Privacy Policy' },
+      { id: 'refund', label: 'Cancellation & Refund' },
+      { id: 'contact', label: 'Contact Us' }
+    ];
+
+    const renderPolicyFooter = () => (
+      <footer className="max-w-5xl mx-auto w-full px-4 py-6 mt-4 border-t border-slate-300/25 text-center space-y-2.5">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] sm:text-xs font-bold">
+          {POLICY_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => openPolicyPage(tab.id)}
+              className="text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] opacity-65 leading-relaxed max-w-2xl mx-auto">
+          AquaMark is an independent digital booking mediator connecting Shrimp Farmers (Buyers), Hatcheries (Sellers), and Brokers. AquaMark does not breed, inspect, or guarantee biological seed quality — seed quality &amp; delivery are solely the responsibility of the respective Hatchery.
+        </p>
+        <p className="text-[10px] sm:text-[11px] opacity-55">
+          AquaMark © 2026 • Online Digital Service Platform • Support: +91 9959933166 • nagavarunsandeep@gmail.com • Andhra Pradesh, India
+        </p>
+      </footer>
+    );
+
+    const renderPolicyModal = () => {
+      if (!activePolicyPage) return null;
+      return (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-[9990] flex items-center justify-center p-3 sm:p-5">
+          <div className={`rounded-2xl max-w-2xl w-full shadow-2xl border max-h-[90vh] flex flex-col overflow-hidden ${cardBg}`}>
+            <div className="px-5 py-4 border-b border-slate-300/25 flex items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <ShieldCheck className="w-5 h-5 text-teal-600 shrink-0" />
+                <h3 className="font-extrabold text-sm sm:text-base truncate">
+                  AquaMark — {POLICY_TABS.find((x) => x.id === activePolicyPage)?.label || 'Legal & Policies'}
+                </h3>
+              </div>
+              <button type="button" onClick={closePolicyPage} className="p-1 opacity-65 hover:opacity-100 font-bold text-lg cursor-pointer shrink-0">✕</button>
+            </div>
+
+            <div className="px-4 py-2.5 border-b border-slate-300/20 flex flex-wrap gap-1.5 shrink-0">
+              {POLICY_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => openPolicyPage(tab.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition ${activePolicyPage === tab.id ? 'bg-teal-600 text-white' : `${subCardBg} opacity-80 hover:opacity-100`
+                    }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-3.5 text-xs sm:text-[13px] leading-relaxed flex-1 select-text">
+              {activePolicyPage === 'about' && (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">About AquaMark</h4>
+                  <p>
+                    <strong>AquaMark</strong> (<code>https://aquamark.pages.dev</code>) is an independent online B2B digital mediation and slot-booking platform built for the Indian aquaculture industry. We provide software tools that connect verified Shrimp Farmers (Buyers), CAA-registered Hatcheries (Sellers), and Aquaculture Brokers across Coastal Andhra Pradesh.
+                  </p>
+                  <p>
+                    <strong>Our Role as a Technology Mediator:</strong> AquaMark operates strictly as a digital service intermediary facilitating transparent batch discovery, packing slot reservations, digital invoices, and settlement tracking. AquaMark does <strong>not</strong> own hatcheries, produce or stock shrimp seed (PL), conduct physical biological lab testing, or transport live seed.
+                  </p>
+                  <p>
+                    <strong>Business Model:</strong> Operated as an individual online digital service provider based in Andhra Pradesh, India, with no physical retail storefront. All services are delivered digitally via our web application.
+                  </p>
+                </>
+              )}
+
+              {activePolicyPage === 'pricing' && (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Pricing &amp; Service Fee Structure</h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Hatchery Seed Rates:</strong> Seed prices (typically ₹0.25 to ₹0.75 per Post-Larvae / PL seed depending on stage, broodstock, and season) are set directly by each independent Hatchery (Seller) and displayed transparently before booking.</li>
+                    <li><strong>5% Booking Advance:</strong> To reserve a confirmed packing slot and prevent no-shows, Buyers pay a 5% booking advance on the total estimated seed value. The remaining 95% balance is payable before or at the time of hatchery packing/dispatch.</li>
+                    <li><strong>Platform Facilitation Fee:</strong> AquaMark charges a transparent digital mediation/platform facilitation fee (2% of order value, adjusted within the 5% advance structure) while holding the Hatchery&apos;s advance share until packing completion.</li>
+                    <li><strong>Payment Gateway &amp; UPI Options:</strong> Buyers may pay via Direct UPI (zero gateway fee) or supported online payment gateways (Razorpay UPI / Cards / Netbanking, where applicable payment gateway charges + GST may apply as displayed at checkout).</li>
+                    <li><strong>No Hidden Subscriptions:</strong> Creating a Farmer, Hatchery, or Broker account on AquaMark is completely free with zero recurring subscription fees.</li>
+                  </ul>
+                </>
+              )}
+
+              {activePolicyPage === 'terms' && (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Terms &amp; Conditions (Mediator Safe-Harbor)</h4>
+                  <p className="text-[11px] opacity-65">Last Updated: November 2026 • Effective for all AquaMark Users</p>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Strictly an Intermediary / Mediator:</strong> AquaMark acts solely as a neutral online technology mediator between independent Buyers (Farmers), Sellers (Hatcheries), and Brokers. Every seed sale contract is strictly between the Buyer and the Hatchery.</li>
+                    <li><strong>Zero Liability for Seed Quality or Biological Outcomes:</strong> AquaMark does <strong>not</strong> breed, inspect, certify, pack, or transport live shrimp seed. Seed quality, PL stage accuracy, vigor, salinity levels, PCR lab test authenticity, count accuracy, transport survival, and post-stocking pond survival are the <strong>sole legal and commercial responsibility of the Hatchery (Seller)</strong>. AquaMark shall not be held liable for any quality defects, disease outbreaks, crop loss, or disputes between Buyer and Seller.</li>
+                    <li><strong>Verification Disclaimer:</strong> CAA license numbers, PCR reports, and batch photos/videos are uploaded directly by Hatcheries. Automated OCR/checks are convenience aids only; Buyers are advised to inspect seed physically at the hatchery packing gate before final acceptance.</li>
+                    <li><strong>Booking &amp; Packing Slots:</strong> Confirmed slots require a 5% advance. Buyers must arrive on time for scheduled packing; Hatcheries must honor locked rates and confirmed stock quantities.</li>
+                    <li><strong>Payment Integrity:</strong> Submitting fake UTR numbers, tampered screenshots, or fraudulent chargebacks will result in permanent account suspension and legal reporting.</li>
+                    <li><strong>Governing Law:</strong> These Terms are governed by the laws of India, with jurisdiction in courts of Andhra Pradesh, India.</li>
+                  </ul>
+                </>
+              )}
+
+              {activePolicyPage === 'privacy' && (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Privacy Policy</h4>
+                  <p className="text-[11px] opacity-65">Last Updated: November 2026</p>
+                  <p>
+                    AquaMark respects your privacy and processes personal information in accordance with Indian data protection laws (including the Digital Personal Data Protection Act, 2023).
+                  </p>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Information We Collect:</strong> Full name, email address (for OTP verification), 10-digit mobile number, portal role (Buyer/Seller/Broker), booking details, and (for Sellers/Brokers) bank account / UPI ID strictly for settlement payouts.</li>
+                    <li><strong>How We Use Data:</strong> Solely to authenticate accounts, connect Buyers with Hatcheries for confirmed bookings, generate digital receipts/QR passes, send booking/dispatch notifications, and prevent payment fraud. We never sell user data to third-party advertisers.</li>
+                    <li><strong>Payment Security:</strong> Online payments processed via Razorpay are handled directly on Razorpay&apos;s PCI-DSS compliant servers. AquaMark never stores debit/credit card numbers, CVV, or UPI PINs.</li>
+                    <li><strong>Your Rights:</strong> You can edit your profile, change your password, or permanently delete your account and personal records anytime from the <strong>Edit Profile</strong> menu inside AquaMark, or by emailing <code>nagavarunsandeep@gmail.com</code>.</li>
+                  </ul>
+                </>
+              )}
+
+              {activePolicyPage === 'refund' && (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Cancellation &amp; Refund Policy</h4>
+                  <p className="text-[11px] opacity-65">Last Updated: November 2026</p>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Buyer Cancellation / No-Show:</strong> Because Hatcheries reserve live biological seed stock and oxygen-packing slots specifically for confirmed bookings, the <strong>5% booking advance is non-refundable</strong> if the Buyer cancels after slot confirmation or fails to show up for packing.</li>
+                    <li><strong>Hatchery Cancellation / Stock Unavailability:</strong> If a Hatchery cancels a confirmed booking or fails to supply the reserved seed batch, the Buyer is entitled to a <strong>100% refund of the paid advance</strong> (or free transfer to an alternate slot/hatchery at the Buyer&apos;s choice).</li>
+                    <li><strong>Duplicate or Failed Payment Debits:</strong> If an amount is debited twice or debited without a confirmed booking due to a network/bank issue, the excess amount will be refunded in full upon verification of the payment ID / UTR.</li>
+                    <li><strong>Refund Processing Timeline:</strong> All approved refunds are initiated within 48 hours of verification and credited back to the <strong>original payment method within 5–7 business days</strong>.</li>
+                    <li><strong>Post-Dispatch Disputes:</strong> Once live seed is inspected and accepted at the hatchery packing gate, no refunds are processed by AquaMark; any quality concern must be resolved directly with the Hatchery as per our Terms &amp; Conditions.</li>
+                  </ul>
+                </>
+              )}
+
+              {activePolicyPage === 'contact' && (
+                <>
+                  <h4 className="font-extrabold text-sm sm:text-base text-teal-600">Contact Us &amp; Grievance Support</h4>
+                  <p>
+                    AquaMark operates as an individual online digital booking &amp; mediation service platform. For booking assistance, payment/refund queries, or grievance redressal, please reach out through our official support channels:
+                  </p>
+                  <div className={`rounded-xl border p-4 space-y-2 ${subCardBg}`}>
+                    <div><span className="opacity-65">Platform Name:</span> <strong>AquaMark (Online Aquaculture Mediation Service)</strong></div>
+                    <div><span className="opacity-65">Service Type:</span> <strong>Individual Digital Service Provider (Online Only — No Physical Storefront)</strong></div>
+                    <div><span className="opacity-65">Operating Region:</span> <strong>Kakinada, Andhra Pradesh, India</strong></div>
+                    <div><span className="opacity-65">Support Phone / WhatsApp:</span> <strong className="font-mono">+91 9959933166</strong></div>
+                    <div><span className="opacity-65">Official Email &amp; Grievance Contact:</span> <strong className="font-mono">nagavarunsandeep@gmail.com</strong></div>
+                    <div><span className="opacity-65">Support Hours:</span> <strong>Monday – Saturday, 09:00 AM – 07:00 PM IST</strong></div>
+                  </div>
+                  <p className="text-[11px] opacity-75">
+                    We acknowledge all payment, refund, and grievance emails within 24–48 business hours.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-slate-300/20 flex items-center justify-between gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleCopyText(window.location.href, L('Policy URL Copied!', 'లింక్ కాపీ అయింది!'))}
+                className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold inline-flex items-center gap-1.5 cursor-pointer ${subCardBg}`}
+              >
+                <Copy className="w-3.5 h-3.5 text-teal-600" /> Copy Page URL
+              </button>
+              <button type="button" onClick={closePolicyPage} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     if (!currentUser) {
       document.title = 'AquaMark | Login';
     } else if (currentUser.role === 'buyer') {
@@ -1648,7 +1821,7 @@ function AquaMarkApp() {
 
   // Buyer & Broker Edit Profile Modal States
   const [showBasicEditProfileModal, setShowBasicEditProfileModal] = useState(false);
-  const [editProfileDraft, setEditProfileDraft] = useState({ name: '', phone: '', phoneVerified: true, verifying: false });
+  const [editProfileDraft, setEditProfileDraft] = useState({ name: '', phone: '', originalEmail: '', email: '', emailVerified: true, otpSentTo: '', otpCode: '', sendingOtp: false, verifyingOtp: false, error: '' });
   const [pwdChangeForm, setPwdChangeForm] = useState({ oldPwd: '', newPwd: '', confirmPwd: '', showOld: false, showNew: false, saving: false, error: '', success: '' });
 
   // Account Deletion Verification Modal
@@ -1689,6 +1862,28 @@ function AquaMarkApp() {
   const [isEditingSellerProfile, setIsEditingSellerProfile] = useState(false);
   const [showSellerBankDetails, setShowSellerBankDetails] = useState(false);
   const [showBrokerBankDetails, setShowBrokerBankDetails] = useState(false);
+  const [activePolicyPage, setActivePolicyPage] = useState(() => {
+    try {
+      const p = new URLSearchParams(window.location.search).get('policy');
+      return ['about', 'pricing', 'terms', 'privacy', 'refund', 'contact'].includes(p) ? p : '';
+    } catch { return ''; }
+  });
+  const openPolicyPage = (policyKey) => {
+    setActivePolicyPage(policyKey);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('policy', policyKey);
+      window.history.replaceState(null, '', url.toString());
+    } catch { }
+  };
+  const closePolicyPage = () => {
+    setActivePolicyPage('');
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('policy');
+      window.history.replaceState(null, '', url.toString());
+    } catch { }
+  };
 
   const [buyerTab, setBuyerTab] = useState('marketplace');
   const [searchQuery, setSearchQuery] = useState('');
@@ -2543,87 +2738,190 @@ function AquaMarkApp() {
 
   const openBasicEditProfile = () => {
     if (!currentUser) return;
+    const cleanPhone = String(currentUser.phone || '').replace(/\D/g, '').slice(-10);
+    const roleKey = getUserKey(cleanPhone, currentUser.role);
+    const currentEmail = String(userEmails[roleKey] || currentUser.email || registeredUsers[roleKey]?.email || '').trim().toLowerCase();
     setPwdChangeForm({ oldPwd: '', newPwd: '', confirmPwd: '', showOld: false, showNew: false, saving: false, error: '', success: '' });
     setEditProfileDraft({
       name: currentUser.name || '',
-      phone: currentUser.phone || '',
-      phoneVerified: true,
-      verifying: false
+      phone: cleanPhone,
+      originalEmail: currentEmail,
+      email: currentEmail,
+      emailVerified: true,
+      otpSentTo: '',
+      otpCode: '',
+      sendingOtp: false,
+      verifyingOtp: false,
+      error: ''
     });
     setShowBasicEditProfileModal(true);
   };
 
-  const handleVerifyChangedPhoneInProfile = () => {
-    const cleanNew = (editProfileDraft.phone || '').replace(/\D/g, '').slice(-10);
-    if (cleanNew.length !== 10) {
-      showToast(t.toasts.invalidPhone);
+  const handleSendProfileEmailOtp = async () => {
+    if (!currentUser) return;
+    setEditProfileDraft(prev => ({ ...prev, error: '' }));
+    if (otpCooldown > 0) {
+      setEditProfileDraft(prev => ({ ...prev, error: L(`Please wait ${otpCooldown}s before requesting another OTP.`, `కొత్త OTP కోసం ${otpCooldown} సెకన్లు వేచి ఉండండి.`) }));
       return;
     }
-    setEditProfileDraft(prev => ({ ...prev, verifying: true }));
-    const waText = `Aqua Mark Profile Phone Update\nNew Mobile: +91 ${cleanNew}`;
-    const popup = window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
-    setTimeout(() => {
-      try { if (popup && !popup.closed) popup.close(); } catch { }
-      window.focus();
-      setEditProfileDraft(prev => ({ ...prev, verifying: false, phoneVerified: true }));
-      showToast('New mobile number verified via WhatsApp!');
-    }, 1500);
+    const cleanNewEmail = String(editProfileDraft.email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanNewEmail)) {
+      setEditProfileDraft(prev => ({ ...prev, error: L('Please enter a valid Email address.', 'దయచేసి సరైన Email చిరునామా ఇవ్వండి.') }));
+      return;
+    }
+    const emailDomain = cleanNewEmail.split('@')[1] || '';
+    if (BLOCKED_EMAIL_DOMAINS.includes(emailDomain)) {
+      setEditProfileDraft(prev => ({ ...prev, error: L('Please check email spelling or use a real Gmail/Email address.', 'దయచేసి సరైన Gmail / Email చిరునామా ఇవ్వండి.') }));
+      return;
+    }
+    if (cleanNewEmail === editProfileDraft.originalEmail) {
+      setEditProfileDraft(prev => ({ ...prev, emailVerified: true, error: '' }));
+      return;
+    }
+
+    setEditProfileDraft(prev => ({ ...prev, sendingOtp: true, error: '' }));
+    try {
+      const cleanPhone = String(currentUser.phone || '').replace(/\D/g, '').slice(-10);
+      const myRoleKey = getUserKey(cleanPhone, currentUser.role);
+      const latestEmails = await fetchLatestEmailsMap();
+      const existingOwnerKey = findRoleKeyByEmail(latestEmails, cleanNewEmail, currentUser.role);
+      if (existingOwnerKey && existingOwnerKey !== myRoleKey) {
+        setEditProfileDraft(prev => ({
+          ...prev,
+          sendingOtp: false,
+          error: L('This email is already in use by another account in this portal.', 'ఈ Email ఇప్పటికే వేరే ఖాతాలో వాడుకలో ఉంది.')
+        }));
+        return;
+      }
+
+      if (!checkOtpDeviceQuota()) {
+        setEditProfileDraft(prev => ({
+          ...prev,
+          sendingOtp: false,
+          error: L('Too many OTP requests from this device. Please wait 1 hour.', 'ఈ డివైస్ నుండి ఎక్కువ OTP రిక్వెస్ట్‌లు వచ్చాయి. దయచేసి 1 గంట వేచి ఉండండి.')
+        }));
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: cleanNewEmail,
+        options: { shouldCreateUser: true }
+      });
+      if (error) {
+        setEditProfileDraft(prev => ({ ...prev, sendingOtp: false, error: error.message || 'Failed to send OTP.' }));
+      } else {
+        setOtpCooldown(60);
+        setEditProfileDraft(prev => ({
+          ...prev,
+          sendingOtp: false,
+          otpSentTo: cleanNewEmail,
+          otpCode: '',
+          emailVerified: false,
+          error: ''
+        }));
+        showToast(L(`OTP sent to ${cleanNewEmail}! Check Inbox & Spam.`, `${cleanNewEmail} కు OTP పంపబడింది! Inbox & Spam చెక్ చేయండి.`));
+      }
+    } catch (err) {
+      setEditProfileDraft(prev => ({ ...prev, sendingOtp: false, error: err?.message || 'Network error while sending OTP.' }));
+    }
+  };
+
+  const handleVerifyProfileEmailOtp = async () => {
+    const codeStr = String(editProfileDraft.otpCode || '').replace(/\D/g, '');
+    if (codeStr.length < 6) {
+      setEditProfileDraft(prev => ({ ...prev, error: L('Please enter the 6-digit OTP sent to your new email.', 'మీ కొత్త Email కు వచ్చిన 6 అంకెల OTP నమోదు చేయండి.') }));
+      return;
+    }
+    setEditProfileDraft(prev => ({ ...prev, verifyingOtp: true, error: '' }));
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: editProfileDraft.otpSentTo,
+        token: codeStr,
+        type: 'email'
+      });
+      if (error || !data?.user) {
+        setEditProfileDraft(prev => ({
+          ...prev,
+          verifyingOtp: false,
+          error: error?.message || L('Invalid or expired OTP. Please try again.', 'తప్పు లేదా గడువు ముగిసిన OTP. మళ్ళీ ప్రయత్నించండి.')
+        }));
+      } else {
+        supabase.auth.signOut().catch(() => { });
+        setOtpCooldown(0);
+        setEditProfileDraft(prev => ({
+          ...prev,
+          verifyingOtp: false,
+          email: prev.otpSentTo,
+          emailVerified: true,
+          otpSentTo: '',
+          otpCode: '',
+          error: ''
+        }));
+        showToast(L('New email verified! Click Save to update your account.', 'కొత్త Email వెరిఫై అయింది! సేవ్ చేయడానికి Save నొక్కండి.'));
+      }
+    } catch (err) {
+      setEditProfileDraft(prev => ({ ...prev, verifyingOtp: false, error: err?.message || 'OTP verification failed.' }));
+    }
   };
 
   const handleSaveBasicProfile = async (e) => {
     e.preventDefault();
     if (!currentUser) return;
-    const cleanNewPhone = (editProfileDraft.phone || '').replace(/\D/g, '').slice(-10);
-    if (cleanNewPhone.length !== 10) {
-      showToast(t.toasts.invalidPhone);
-      return;
-    }
-    if (!editProfileDraft.phoneVerified) {
-      showToast('Please verify your new mobile number first.');
+    const cleanPhone = String(currentUser.phone || '').replace(/\D/g, '').slice(-10);
+    const cleanNewEmail = String(editProfileDraft.email || '').trim().toLowerCase();
+    const emailChanged = cleanNewEmail !== editProfileDraft.originalEmail;
+
+    if (emailChanged && !editProfileDraft.emailVerified) {
+      setEditProfileDraft(prev => ({ ...prev, error: L('Please verify your new Email via OTP before saving.', 'సేవ్ చేసే ముందు మీ కొత్త Email ను OTP తో వెరిఫై చేయండి.') }));
       return;
     }
 
-    const oldKey = getUserKey(currentUser.phone, currentUser.role);
-    const newKey = getUserKey(cleanNewPhone, currentUser.role);
-    const oldRecord = registeredUsers[oldKey] || { password: '' };
+    const roleKey = getUserKey(cleanPhone, currentUser.role);
+    const oldRecord = registeredUsers[roleKey] || { password: '' };
+    const finalEmail = cleanNewEmail || editProfileDraft.originalEmail || '';
 
     const updatedRecord = {
       ...oldRecord,
-      phone: cleanNewPhone,
+      phone: cleanPhone,
       name: editProfileDraft.name.trim(),
+      email: finalEmail,
       role: currentUser.role
     };
 
-    setRegisteredUsers(prev => {
-      const next = { ...prev };
-      if (oldKey !== newKey) delete next[oldKey];
-      next[newKey] = updatedRecord;
-      return next;
-    });
+    setRegisteredUsers(prev => ({
+      ...prev,
+      [roleKey]: updatedRecord
+    }));
 
-    if (oldKey !== newKey) {
-      await supabase.from('app_users').delete().eq('phone', oldKey);
-    }
     await supabase.from('app_users').upsert({
-      phone: newKey,
+      phone: roleKey,
       name: updatedRecord.name,
       role: currentUser.role,
       password: updatedRecord.password,
       last_login: new Date().toISOString()
     });
 
-    if (currentUser.role === 'mediator' && brokerProfiles[currentUser.phone]) {
+    if (emailChanged && finalEmail) {
+      // Replace old email with new verified email bound strictly to existing roleKey (same mobile number)
+      const latestEmails = await fetchLatestEmailsMap();
+      const nextEmails = { ...latestEmails, [roleKey]: finalEmail };
+      setUserEmails(nextEmails);
+      await saveKvToSupabase('user_emails', nextEmails);
+    }
+
+    if (currentUser.role === 'mediator' && brokerProfiles[cleanPhone]) {
       const nextBrokers = { ...brokerProfiles };
-      const bp = { ...nextBrokers[currentUser.phone], brokerPhone: cleanNewPhone, brokerName: updatedRecord.name };
-      if (currentUser.phone !== cleanNewPhone) delete nextBrokers[currentUser.phone];
-      nextBrokers[cleanNewPhone] = bp;
+      nextBrokers[cleanPhone] = { ...nextBrokers[cleanPhone], brokerName: updatedRecord.name };
       setBrokerProfiles(nextBrokers);
       await saveKvToSupabase('brokers', nextBrokers);
     }
 
-    setCurrentUser({ ...currentUser, name: updatedRecord.name, phone: cleanNewPhone });
+    setCurrentUser({ ...currentUser, name: updatedRecord.name, phone: cleanPhone, email: finalEmail });
     setShowBasicEditProfileModal(false);
-    showToast(t.toasts.profileUpdated);
+    showToast(emailChanged
+      ? L('Profile & new verified Email saved to your account!', 'ప్రొఫైల్ & కొత్త Email మీ మొబైల్ నంబర్‌కు విజయవంతంగా లింక్ అయ్యాయి!')
+      : t.toasts.profileUpdated
+    );
   };
 
   // =========================================================================
@@ -5042,9 +5340,8 @@ function AquaMarkApp() {
           </div>
         </div>
 
-        <footer className="text-center py-4 text-[11px] opacity-50">
-          Aqua Mark © 2026 • Live Cloud Database Connected
-        </footer>
+        {renderPolicyFooter()}
+        {renderPolicyModal()}
         {/* NO INTERNET CONNECTION POPUP OVERLAY (KEEPS USER ON EXACT SAME PAGE) */}
         {(!isOnline || networkError) && (
           <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[9998] flex items-center justify-center p-4">
@@ -5933,8 +6230,8 @@ function AquaMarkApp() {
                             type="button"
                             onClick={() => setBookingStatusFilter(tab.id)}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${bookingStatusFilter === tab.id
-                              ? 'bg-teal-600 text-white border-teal-600'
-                              : `${subCardBg} opacity-80 hover:opacity-100`
+                                ? 'bg-teal-600 text-white border-teal-600'
+                                : `${subCardBg} opacity-80 hover:opacity-100`
                               }`}
                           >
                             {tab.label} ({tab.count})
@@ -7357,8 +7654,8 @@ Please advise immediate treatment protocol.`;
                                   type="button"
                                   onClick={() => setSellerBatchFilter(st.id)}
                                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${sellerBatchFilter === st.id
-                                    ? 'bg-teal-600 text-white border-teal-600'
-                                    : `${subCardBg} opacity-80 hover:opacity-100`
+                                      ? 'bg-teal-600 text-white border-teal-600'
+                                      : `${subCardBg} opacity-80 hover:opacity-100`
                                     }`}
                                 >
                                   {st.label} ({st.cnt})
@@ -8876,39 +9173,92 @@ Please advise immediate treatment protocol.`;
                 />
               </div>
 
+              {/* LOCKED MOBILE NUMBER (DISPLAY ONLY) */}
               <div>
-                <label className="font-bold opacity-75 block mb-1">Mobile Number (10 Digits)</label>
-                <div className="flex gap-2">
+                <label className="font-bold opacity-75 block mb-1">{L('Registered Mobile Number (Locked)', 'రిజిస్టర్డ్ మొబైల్ నంబర్ (లాక్ చేయబడింది)')}</label>
+                <div className={`flex items-center justify-between gap-2 border rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold opacity-80 ${subCardBg}`}>
+                  <span className="inline-flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-teal-600 shrink-0" />
+                    +91 {editProfileDraft.phone}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-sans font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                    <Lock className="w-3 h-3" /> {L('Locked', 'లాక్')}
+                  </span>
+                </div>
+              </div>
+
+              {/* EDITABLE EMAIL ADDRESS WITH 6-DIGIT OTP VERIFICATION */}
+              <div className="space-y-2">
+                <label className="font-bold opacity-75 block">{L('Email Address (OTP Verified)', 'Email చిరునామా (OTP వెరిఫైడ్)')}</label>
+                {editProfileDraft.error && (
+                  <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-xl p-2.5 text-xs font-bold">
+                    {editProfileDraft.error}
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     required
-                    type="tel"
-                    maxLength={10}
-                    value={editProfileDraft.phone}
+                    type="email"
+                    placeholder="yourname@gmail.com"
+                    value={editProfileDraft.email}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                      setEditProfileDraft({
-                        ...editProfileDraft,
-                        phone: val,
-                        phoneVerified: val === currentUser?.phone
-                      });
+                      const val = e.target.value;
+                      const cleanVal = val.trim().toLowerCase();
+                      setEditProfileDraft(prev => ({
+                        ...prev,
+                        email: val,
+                        emailVerified: cleanVal === prev.originalEmail,
+                        otpSentTo: cleanVal === prev.otpSentTo ? prev.otpSentTo : '',
+                        otpCode: cleanVal === prev.otpSentTo ? prev.otpCode : '',
+                        error: ''
+                      }));
                     }}
-                    className={`flex-1 border rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold select-text ${inputCls}`}
+                    className={`flex-1 min-w-0 border rounded-xl px-3.5 py-2.5 text-sm font-bold select-text ${inputCls}`}
                   />
-                  {!editProfileDraft.phoneVerified && (
+                  {!editProfileDraft.emailVerified && (
                     <button
                       type="button"
-                      disabled={editProfileDraft.verifying}
-                      onClick={handleVerifyChangedPhoneInProfile}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold px-3.5 rounded-xl text-xs cursor-pointer shrink-0"
+                      disabled={editProfileDraft.sendingOtp || otpCooldown > 0}
+                      onClick={handleSendProfileEmailOtp}
+                      className="bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
                     >
-                      {editProfileDraft.verifying ? 'Verifying...' : 'Verify'}
+                      {editProfileDraft.sendingOtp ? L('Sending...', 'పంపుతోంది...') : otpCooldown > 0 ? L(`Wait ${otpCooldown}s`, `${otpCooldown}సె`) : editProfileDraft.otpSentTo ? L('Resend OTP', 'మళ్ళీ పంపు') : L('Send OTP', 'OTP పంపు')}
                     </button>
                   )}
                 </div>
-                {!editProfileDraft.phoneVerified && (
-                  <span className="text-[11px] text-amber-500 font-bold mt-1 block">
-                    Mobile number changed — click Verify to confirm via WhatsApp before saving.
-                  </span>
+
+                {editProfileDraft.otpSentTo && !editProfileDraft.emailVerified && (
+                  <div className="border border-teal-500/40 bg-teal-500/5 rounded-xl p-3 space-y-2.5">
+                    <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5 leading-snug">
+                      {L('📩 Check both Inbox & Spam folder for the 6-digit OTP sent to your new email.', '📩 కొత్త Email కు వచ్చిన 6 అంకెల OTP కోసం Inbox & Spam ఫోల్డర్ చెక్ చేయండి.')}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={8}
+                        placeholder="6-digit OTP"
+                        value={editProfileDraft.otpCode}
+                        onChange={(e) => setEditProfileDraft(prev => ({ ...prev, otpCode: e.target.value.replace(/\D/g, '').slice(0, 8), error: '' }))}
+                        className={`flex-1 min-w-0 border-2 border-teal-500 rounded-xl px-3 py-2 text-sm font-mono font-black tracking-widest text-center select-text ${inputCls}`}
+                      />
+                      <button
+                        type="button"
+                        disabled={editProfileDraft.verifyingOtp}
+                        onClick={handleVerifyProfileEmailOtp}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        {editProfileDraft.verifyingOtp ? L('Checking...', 'చెక్...') : L('Verify OTP', 'వెరిఫై')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {editProfileDraft.emailVerified && editProfileDraft.email.trim().toLowerCase() !== editProfileDraft.originalEmail && (
+                  <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                    ✓ {L('New email verified! Click Save to replace your old email.', 'కొత్త Email వెరిఫై అయింది! పాత Email మార్చడానికి Save క్లిక్ చేయండి.')}
+                  </div>
                 )}
               </div>
 
@@ -8926,7 +9276,7 @@ Please advise immediate treatment protocol.`;
                   </button>
                   <button
                     type="submit"
-                    disabled={!editProfileDraft.phoneVerified}
+                    disabled={!editProfileDraft.emailVerified}
                     className="bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold px-4 py-2 rounded-xl cursor-pointer"
                   >
                     {t.saveBtn}
@@ -9358,8 +9708,8 @@ Please advise immediate treatment protocol.`;
                     type="button"
                     onClick={() => setVideoReqFilter(tab.id)}
                     className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${videoReqFilter === tab.id
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : `${subCardBg} opacity-80 hover:opacity-100`
+                        ? 'bg-teal-600 text-white border-teal-600'
+                        : `${subCardBg} opacity-80 hover:opacity-100`
                       }`}
                   >
                     {tab.label} ({tab.cnt})
@@ -9409,8 +9759,8 @@ Please advise immediate treatment protocol.`;
                             type="button"
                             onClick={() => handleToggleVideoRequestStatus(req.id)}
                             className={`flex-1 sm:flex-none justify-center font-bold text-[11px] sm:text-xs px-3 py-2 rounded-xl border inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isDone
-                              ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
-                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                               }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -11365,6 +11715,9 @@ Please advise immediate treatment protocol.`;
           </div>
         </div>
       )}
+      {renderPolicyFooter()}
+      {renderPolicyModal()}
+
       {/* NO INTERNET CONNECTION POPUP OVERLAY (KEEPS USER ON EXACT SAME PAGE) */}
       {(!isOnline || networkError) && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[9998] flex items-center justify-center p-4">
