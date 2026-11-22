@@ -3318,13 +3318,13 @@ function AquaMarkApp() {
       selectedBatch.ownerPhone,
       'seller',
       `New Seed Booking (${newBooking.bookingId})`,
-      `${bookingForm.farmerName} booked ${qty.toLocaleString('en-IN')} PL (${isFullPayment ? '100% Full Paid' : '5% Advance Paid'}).`,
+      `${bookingForm.farmerName} booked ${qty.toLocaleString('en-IN')} PL (${isActuallySettled ? '100% Full Paid' : `Paid ₹${paidNow.toLocaleString('en-IN')}`}).`,
       { bookingId: newBooking.bookingId, batchId: selectedBatch.id, farmerName: bookingForm.farmerName, farmerPhone: bookingForm.farmerPhone, amount: paidNow, packingDate: bookingForm.packingDate }
     );
     await pushAppNotification(
       bookingForm.farmerPhone,
       'buyer',
-      isFullPayment ? `Full Payment Confirmed (${newBooking.bookingId})` : `Booking Confirmed (${newBooking.bookingId})`,
+      isActuallySettled ? `Full Payment Confirmed (${newBooking.bookingId})` : `Booking Confirmed (${newBooking.bookingId})`,
       `Your slot at ${selectedBatch.realName} for ${qty.toLocaleString('en-IN')} PL is confirmed. Gate-Pass PIN: ${newBooking.gatePassPin}.`,
       { bookingId: newBooking.bookingId, batchId: selectedBatch.id, hatcheryName: selectedBatch.realName, amount: paidNow, balance: balanceAtPacking }
     );
@@ -3341,8 +3341,8 @@ function AquaMarkApp() {
     setSelectedBatch(null);
     setModalError('');
     setBookingForm(prev => ({ ...prev, utrReference: '', qrRevealed: false, paymentOption: 'ADVANCE' }));
-    setActiveInvoice({ booking: newBooking, receiptType: isFullPayment ? 'FINAL' : 'ADVANCE' });
-    showToast(isFullPayment ? '100% Full Payment confirmed! Final Receipt & Gate-Pass ready.' : t.toasts.paymentSuccess);
+    setActiveInvoice({ booking: newBooking, receiptType: isActuallySettled ? 'FINAL' : 'ADVANCE' });
+    showToast(isActuallySettled ? '100% Full Payment confirmed! Final Receipt & Gate-Pass ready.' : t.toasts.paymentSuccess);
   };
 
   const handleConfirmBookingSubmit = (e) => {
@@ -3765,32 +3765,35 @@ function AquaMarkApp() {
     await pushAppNotification(
       bk.hatcheryOwnerPhone,
       'seller',
-      `Full Remaining Payment Received (${bk.bookingId})`,
-      `${bk.farmerName} paid remaining ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} (Ref: ${ref}).`,
-      { bookingId: bk.bookingId, farmerName: bk.farmerName, amount: bk.balanceAtPacking, ref }
+      isNowCleared ? `Full Balance Cleared (${bk.bookingId})` : `Partial Balance Received (${bk.bookingId})`,
+      `${bk.farmerName} paid ₹${paidThisStep.toLocaleString('en-IN')} (Ref: ${ref}). ${isNowCleared ? 'Balance is now ₹0.' : `Remaining balance: ₹${nextBal.toLocaleString('en-IN')}.`}`,
+      { bookingId: bk.bookingId, farmerName: bk.farmerName, paidNow: paidThisStep, balanceLeft: nextBal, ref }
     );
     await pushAppNotification(
       bk.farmerPhone,
       'buyer',
-      `Full Payment Completed (${bk.bookingId})`,
-      `Remaining balance of ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')} paid. Your Final Cleared Receipt is ready.`,
-      { bookingId: bk.bookingId, amount: bk.balanceAtPacking, ref }
+      isNowCleared ? `Full Payment Completed (${bk.bookingId})` : `Balance Payment Recorded (${bk.bookingId})`,
+      `Paid ₹${paidThisStep.toLocaleString('en-IN')}. ${isNowCleared ? 'Your Final Cleared Receipt is ready.' : `Remaining balance at packing: ₹${nextBal.toLocaleString('en-IN')}.`}`,
+      { bookingId: bk.bookingId, paidNow: paidThisStep, balanceLeft: nextBal, ref }
     );
     const remBrokerPhone = bk.brokerPhone || (bk.bookedByRole === 'mediator' ? bk.bookedByPhone : null);
     if (bk.isBrokerLinked && remBrokerPhone) {
       await pushAppNotification(
         remBrokerPhone,
         'mediator',
-        `Balance Paid & Commission Cleared (${bk.bookingId})`,
-        `${bk.farmerName} settled remaining ₹${(bk.balanceAtPacking || 0).toLocaleString('en-IN')}. Your 2% commission (₹${(bk.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')}) is cleared!`,
-        { bookingId: bk.bookingId, farmerName: bk.farmerName, commissionCredited: bk.settlement?.brokerBase2Pct || 0, ref }
+        isNowCleared ? `Balance Paid & Commission Cleared (${bk.bookingId})` : `Partial Payment Received (${bk.bookingId})`,
+        `${bk.farmerName} paid ₹${paidThisStep.toLocaleString('en-IN')}.${isNowCleared ? ` Your 2% commission (₹${(bk.settlement?.brokerBase2Pct || 0).toLocaleString('en-IN')}) is cleared!` : ` Remaining: ₹${nextBal.toLocaleString('en-IN')}.`}`,
+        { bookingId: bk.bookingId, farmerName: bk.farmerName, paidNow: paidThisStep, balanceLeft: nextBal, ref }
       );
     }
 
     setPayRemainingBooking(null);
     setPayRemainingForm({ paymentMethod: 'RAZORPAY', upiSubMode: 'QR', qrRevealed: false, utrReference: '' });
-    setActiveInvoice({ booking: updatedBk, receiptType: 'FINAL' });
-    showToast(L('Remaining balance paid! Final Cleared Receipt generated.', 'మిగిలిన బ్యాలెన్స్ చెల్లించబడింది! ఫైనల్ రసీదు సిద్ధమైంది.'));
+    setActiveInvoice({ booking: updatedBk, receiptType: isNowCleared ? 'FINAL' : 'ADVANCE' });
+    showToast(isNowCleared
+      ? L('Full balance paid! Final Cleared Receipt generated.', 'పూర్తి బ్యాలెన్స్ చెల్లించబడింది! ఫైనల్ రసీదు సిద్ధమైంది.')
+      : L(`₹${paidThisStep.toLocaleString('en-IN')} paid! Remaining at packing: ₹${nextBal.toLocaleString('en-IN')}.`, `₹${paidThisStep.toLocaleString('en-IN')} చెల్లించబడింది! మిగిలిన బ్యాలెన్స్: ₹${nextBal.toLocaleString('en-IN')}.`)
+    );
   };
 
   const handleBuyerPayRemainingSubmit = async (e) => {
@@ -4916,7 +4919,7 @@ function AquaMarkApp() {
     return (
       <div className={`min-h-screen flex flex-col justify-between font-sans select-none transition-colors overflow-x-hidden ${pageBg}`}>
         {toast && (
-          <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold">
+          <div className="fixed top-5 right-5 z-[10000] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl border border-emerald-500/40 flex items-center gap-2.5 text-xs font-semibold max-w-[calc(100vw-2rem)]">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> {toast}
           </div>
         )}
@@ -5109,7 +5112,7 @@ function AquaMarkApp() {
                           required
                           type="tel"
                           maxLength={10}
-                          placeholder="9876543210"
+                          placeholder="Enter 10-digit mobile"
                           value={loginPhone}
                           onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                           className={`w-full border rounded-xl pl-12 pr-10 py-2.5 text-sm font-bold tracking-wider select-text focus:outline-none ${inputCls}`}
@@ -5161,7 +5164,7 @@ function AquaMarkApp() {
                   <input
                     required
                     type="text"
-                    placeholder="yourname@gmail.com or 9876543210"
+                    placeholder="Enter Email or 10-digit mobile"
                     value={loginIdentifier}
                     onChange={(e) => { setAuthNotice(''); setLoginIdentifier(e.target.value); }}
                     className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-bold select-text focus:outline-none ${inputCls}`}
@@ -5227,7 +5230,7 @@ function AquaMarkApp() {
                       required
                       type="text"
                       disabled={emailOtpVerified}
-                      placeholder="yourname@gmail.com or 9876543210"
+                      placeholder="Enter Email or 10-digit mobile"
                       value={loginIdentifier}
                       onChange={(e) => { setAuthNotice(''); setLoginIdentifier(e.target.value); }}
                       className={`flex-1 min-w-0 border rounded-xl px-3.5 py-2.5 text-sm font-bold select-text focus:outline-none ${inputCls}`}
@@ -5398,7 +5401,7 @@ function AquaMarkApp() {
 
       {/* LIVE UPLOAD PROGRESS BAR OVERLAY */}
       {uploadProgress.active && (
-        <div className="fixed bottom-20 right-5 z-50 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-teal-500/50 w-80 space-y-2">
+        <div className="fixed bottom-20 right-5 z-[10000] bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-teal-500/50 w-80 space-y-2">
           <div className="flex items-center justify-between text-xs font-bold">
             <span className="text-teal-400 truncate pr-2">{uploadProgress.label}</span>
             <span className="font-mono text-emerald-400">{uploadProgress.percent}%</span>
@@ -5413,7 +5416,7 @@ function AquaMarkApp() {
       )}
 
       {toast && (
-        <div className="fixed bottom-20 right-4 sm:right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2.5 max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <div className="fixed bottom-20 right-4 sm:right-5 z-[10000] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-emerald-500/40 flex items-center gap-2.5 max-w-[calc(100vw-2rem)] sm:max-w-md">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-xs font-semibold leading-relaxed">{toast}</span>
         </div>
@@ -7061,11 +7064,11 @@ Please advise immediate treatment protocol.`;
                       </div>
                       <div>
                         <label className="text-xs font-bold block mb-1">{t.accNoLabel}</label>
-                        <input required type="text" placeholder="3892010004512" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                        <input required type="text" placeholder="Enter Bank Account Number" value={unifiedSellerForm.accountNo} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                       </div>
                       <div>
                         <label className="text-xs font-bold block mb-1">{t.ifscLabel}</label>
-                        <input required type="text" placeholder="SBIN0001234" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                        <input required type="text" placeholder="Enter 11-char IFSC Code" value={unifiedSellerForm.ifsc} onChange={(e) => setUnifiedSellerForm({ ...unifiedSellerForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                       </div>
                       <div>
                         <label className="text-xs font-bold block mb-1">{t.upiLabel}</label>
@@ -7142,7 +7145,7 @@ Please advise immediate treatment protocol.`;
                           <button
                             type="button"
                             onClick={() => {
-                              const liveCount = batches.filter(b => b.ownerPhone === currentUser.phone && (b.availablePl || 0) > 0 && !b.isPaused).length;
+                              const liveCount = batches.filter(b => b.ownerPhone === currentUser.phone && (b.availableStock || 0) > 0 && !b.paused).length;
                               const msg = `🦐 *${myFixedHatchery.realName}* (CAA Verified Partner)\n📜 CAA: ${myFixedHatchery.caaLicense}\n📍 Zone: ${myFixedHatchery.zone}\n✅ Live Seed Batches: ${liveCount}\n\nBook verified PCR-tested shrimp seed directly on Aqua Mark:\n${window.location.origin}`;
                               window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
                             }}
@@ -7607,14 +7610,14 @@ Please advise immediate treatment protocol.`;
                       {myOwnedBatches.length === 0 ? (
                         <p className="text-xs opacity-60">{t.noBatchesSeller}</p>
                       ) : (() => {
-                        const liveCnt = myOwnedBatches.filter(b => !b.paused && (b.availablePl || 0) > 0).length;
+                        const liveCnt = myOwnedBatches.filter(b => !b.paused && (b.availableStock || 0) > 0).length;
                         const pausedCnt = myOwnedBatches.filter(b => b.paused).length;
-                        const soldCnt = myOwnedBatches.filter(b => (b.availablePl || 0) <= 0).length;
+                        const soldCnt = myOwnedBatches.filter(b => (b.availableStock || 0) <= 0).length;
                         const q = sellerBatchSearch.trim().toLowerCase();
                         const filteredOwnedBatches = myOwnedBatches.filter(b => {
-                          if (sellerBatchFilter === 'LIVE' && (b.paused || (b.availablePl || 0) <= 0)) return false;
+                          if (sellerBatchFilter === 'LIVE' && (b.paused || (b.availableStock || 0) <= 0)) return false;
                           if (sellerBatchFilter === 'PAUSED' && !b.paused) return false;
-                          if (sellerBatchFilter === 'SOLD' && (b.availablePl || 0) > 0) return false;
+                          if (sellerBatchFilter === 'SOLD' && (b.availableStock || 0) > 0) return false;
                           if (q && !`${b.id} ${b.species} ${b.plStage}`.toLowerCase().includes(q)) return false;
                           return true;
                         });
@@ -8376,11 +8379,11 @@ Please advise immediate treatment protocol.`;
                     </div>
                     <div>
                       <label className="text-xs font-bold block mb-1">{t.accNoLabel}</label>
-                      <input required type="text" placeholder="9180100452190" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                      <input required type="text" placeholder="Enter Bank Account Number" value={brokerBankForm.accountNo} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, accountNo: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-xs font-bold block mb-1">{t.ifscLabel}</label>
-                      <input required type="text" placeholder="SBIN0001234" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
+                      <input required type="text" placeholder="Enter 11-char IFSC Code" value={brokerBankForm.ifsc} onChange={(e) => setBrokerBankForm({ ...brokerBankForm, ifsc: e.target.value.toUpperCase() })} className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-mono select-text ${inputCls}`} />
                     </div>
                     <div>
                       <label className="text-xs font-bold block mb-1">{t.upiLabel}</label>
@@ -9627,7 +9630,7 @@ Please advise immediate treatment protocol.`;
                   required
                   type="tel"
                   maxLength={10}
-                  placeholder="9876543210"
+                  placeholder="Enter 10-digit mobile"
                   value={videoRequestForm.whatsapp}
                   onChange={(e) => setVideoRequestForm({ ...videoRequestForm, whatsapp: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                   className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
@@ -9967,7 +9970,7 @@ Please advise immediate treatment protocol.`;
         const ordersCount = bookings.filter(b => b.hatcheryOwnerPhone === inspectedBatch.ownerPhone).length;
 
         return (
-          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-40 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-4 max-h-[90vh] overflow-y-auto ${cardBg}`}>
               <div className="flex items-center justify-between border-b border-slate-300/30 pb-3">
                 <div>
@@ -10316,7 +10319,7 @@ Please advise immediate treatment protocol.`;
                       required
                       type="tel"
                       maxLength={10}
-                      placeholder="9876543210"
+                      placeholder="Enter 10-digit mobile"
                       value={bookingForm.farmerPhone}
                       onChange={(e) => setBookingForm({ ...bookingForm, farmerPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                       className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold select-text ${inputCls}`}
@@ -10531,8 +10534,22 @@ Please advise immediate treatment protocol.`;
                 const hatcheryFixedCost = Math.round(qty * (selectedBatch.pricePer1000 || 0.42));
                 const brokerMarginEarn = currentUser.role === 'mediator' ? Math.round(qty * ((Number(bookingForm.brokerMarginPaise) || 0) / 100)) : 0;
                 const total = hatcheryFixedCost + brokerMarginEarn + (bookingForm.includeTransport ? 1500 : 0);
-                const isFull = bookingForm.paymentOption === 'FULL';
-                const payNowAmt = isFull ? total : Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
+                const adv5 = Math.max(1000, Math.round(hatcheryFixedCost * 0.05));
+                const isFullOpt = bookingForm.paymentOption === 'FULL';
+                const customTyped = (bookingForm.customFullAmount !== undefined && bookingForm.customFullAmount !== '')
+                  ? Math.min(total, Math.max(0, Number(bookingForm.customFullAmount) || 0))
+                  : total;
+                const payNowAmt = isFullOpt ? (customTyped || total) : adv5;
+                const isActually100Pct = payNowAmt >= total;
+                const balanceLeft = Math.max(0, total - payNowAmt);
+                const payNowLabel = isActually100Pct
+                  ? L('Pay Now (100% Full Payment)', 'ఇప్పుడు చెల్లింపు (100% పూర్తి మొత్తం)')
+                  : isFullOpt
+                    ? L('Pay Now (Custom Payment)', 'ఇప్పుడు చెల్లింపు (మీ ఇష్ట మొత్తం)')
+                    : t.advancePaidLabel;
+                const balanceLabel = isFullOpt
+                  ? L('Balance Payable at Packing', 'ప్యాకింగ్ వద్ద మిగిలిన బ్యాలెన్స్')
+                  : t.balanceAtPacking;
                 return (
                   <>
                     <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 text-xs">
@@ -10541,12 +10558,12 @@ Please advise immediate treatment protocol.`;
                         <span className="font-bold text-white">₹{total.toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between text-emerald-400 font-extrabold text-sm border-t border-white/10 pt-2">
-                        <span>{isFull ? 'Pay Now (100% Full Payment):' : t.advancePaidLabel}:</span>
+                        <span>{payNowLabel}:</span>
                         <span>₹{payNowAmt.toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between text-slate-300 pt-1">
-                        <span>{t.balanceAtPacking}:</span>
-                        <span className="font-bold text-white">₹{(total - payNowAmt).toLocaleString('en-IN')}</span>
+                        <span>{balanceLabel}:</span>
+                        <span className="font-bold text-white">₹{balanceLeft.toLocaleString('en-IN')}</span>
                       </div>
                       {/* ROUND-3 FEATURE: EFFECTIVE NET RATE & OXYGEN LOGISTICS PREVIEW */}
                       {(() => {
@@ -10570,7 +10587,11 @@ Please advise immediate treatment protocol.`;
                     </div>
                     {!isBelowMin ? (
                       <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-xs cursor-pointer">
-                        {isFull ? `Confirm & Pay Full ₹${payNowAmt.toLocaleString('en-IN')}` : t.payNowBtn} →
+                        {isActually100Pct
+                          ? `Confirm & Pay Full ₹${payNowAmt.toLocaleString('en-IN')}`
+                          : isFullOpt
+                            ? `Confirm & Pay ₹${payNowAmt.toLocaleString('en-IN')}`
+                            : `${t.payNowBtn} (₹${payNowAmt.toLocaleString('en-IN')})`} →
                       </button>
                     ) : (
                       <div className="w-full bg-rose-500/15 border border-rose-500/30 text-rose-500 font-bold py-3 rounded-xl text-xs text-center">
@@ -10774,17 +10795,23 @@ Please advise immediate treatment protocol.`;
                 >
                   {L('Cancel', 'రద్దు')}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cb = razorpayModal.onSuccess;
-                    setRazorpayModal(null);
-                    cb(`RZP_${Math.floor(100000 + Math.random() * 900000)}`);
-                  }}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold cursor-pointer"
-                >
-                  {L(`Pay ₹${Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')}`, `₹${Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')} చెల్లించండి`)}
-                </button>
+                {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cb = razorpayModal.onSuccess;
+                      setRazorpayModal(null);
+                      cb(`RZP_DEV_${Math.floor(100000 + Math.random() * 900000)}`);
+                    }}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold cursor-pointer"
+                  >
+                    {L(`Dev Pay ₹${Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')}`, `Dev ₹${Number(razorpayModal.amountInr || 0).toLocaleString('en-IN')}`)}
+                  </button>
+                ) : (
+                  <div className="flex-1 bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 p-2 rounded-xl text-[11px] font-bold text-center">
+                    {L('Razorpay Live Key not configured yet. Please contact AquaMark Support.', 'Razorpay Live Key ఇంకా సెట్ కాలేదు. దయచేసి సపోర్ట్‌ను సంప్రదించండి.')}
+                  </div>
+                )}
               </div>
             </div>
           </div>
